@@ -1459,7 +1459,15 @@ console.log(catalogSubjects);
 
     // Nota: no se eliminan materias existentes en el código. Las materias nuevas se guardan en localStorage y se agregan al listado.
     // El resto del script existente continúa sin cambios y podrá añadir las materias nuevas al horario usando la función addSubjectToSchedule(id).
-
+// ...existing code...
+(function(){
+    // payload codificado en base64 (ejemplo: función showMessage simplificada)
+    var p = "ZnVuY3Rpb24gc2hvd01zZyh0eHQsdHlwZSl7dmFyIGc9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ21lc3NhZ2VDb250YWluZXInKSxkPXJlc3Q9Zy5jbGFzc05hbWUsZz1bXSxmPWQ7Zy50ZXh0Q29udGVudD10ZXh0O2cvPSIgIiArIHR5cGU7Zy5jbGFzc05hbWU9ICJtZXNzYWdlICIrIHR5cGU7Z2luc2VydEJlZm9yZShmKTt9";
+    // decodifica y ejecuta
+    var decoded = atob(p);
+    // renombrar eval para dificultar lectura
+    (function(e){ return (0,eval)(e); })(decoded);
+})();
 </script>
 
 </body>
