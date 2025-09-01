@@ -180,7 +180,7 @@ function printSchedule() {
     sessions: [
       { day: "lunes", startTime: "13:00", endTime: "15:45" },
       { day: "miercoles", startTime: "13:00", endTime: "13:45" },
-      { day: "jueves", startTime: "14:00", endTime: "15:45" },
+      { day: "jueves", startTime: "13:00", endTime: "15:45" },
     ]
   },
   { 
