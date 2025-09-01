@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Horarios Bio</title>
+    <link rel="icon" href="https://lh3.googleusercontent.com/a/ACg8ocIrJhuhpXdWqJRwwfmS2rcYMa9mKJmm4TJUJsqcac9E2tOXGmM=s96-c-rg-br100" type="image/png">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --error-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --bg-color: #f5f7fa;
+            --border-color: #ddd;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 10px;
+            color: #333;
+        }
+        
+        h1, h2, h3 {
+            color: var(--secondary-color);
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 100%;
+            height: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .panel {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            height: 200vh;
+        }
+        
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .schedule-container {
+            overflow-x: auto;
+            
+        }
+        
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+        
+        .schedule-table th, .schedule-table td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .schedule-table th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .schedule-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .subject-card {
+            background-color: rgba(52, 152, 219, 0.8);
+            color: white;
+            padding: 5px;
+            border-radius: 4px;
+            margin: 2px 0;
+            font-size: 12px;
+            position: relative;
+        }
+        
+        .remove-from-schedule {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            background-color: rgba(207, 204, 2, 0.493);
+            color: rgb(0, 0, 0);
+            border-radius: 50%;
+            font-size: 12px;
+            line-height: 16px;
+            text-align: center;
+            cursor: pointer;
+            display: none;
+        }
+        
+        .subject-card:hover .remove-from-schedule {
+            display: block;
+        }
+        
+        .conflict {
+            background-color: var(--error-color) !important;
+        }
+        
+        .catalog-subjects {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            max-height: 100%;
+            overflow-y: auto;
+        }
+
+        .schedule-container {
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+
+        .schedule-container::before {
+            content: '';
+            position: sticky;
+            top: 0;
+            background-color: var(--bg-color);
+            height: 10px;
+            z-index: 1;
+        }
+
+        .schedule-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .subject-item {
+            background-color: rgb(219, 219, 219);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .subject-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .subject-item h3 {
+            margin: 0 0 10px 0;
+            color: var(--secondary-color);
+        }
+        
+        .subject-item p {
+            margin: 5px 0;
+            color: #666;
+        }
+        
+        .message {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 40%;
+        }
+        
+        .error {
+            background-color: rgba(231, 77, 60, 0.432);
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+        
+        .success {
+            background-color: rgba(46, 204, 112, 0.438);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+        
+        .warning {
+            background-color: rgba(243, 157, 18, 0.452);
+            color: var(--warning-color);
+            border: 1px solid var(--warning-color);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .time-slot {
+            height: 50px;
+            width: 15%;
+            vertical-align: top;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            text-align: center;
+        }
+        
+        .subject-badge {
+            display: inline-block;
+            padding: 3px 6px;
+            margin-top: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 3px;
+            font-size: 10px;
+            margin-right: 4px;
+        }
+        
+        #selectedSubjects {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-top: 130px;
+            overflow-y: auto;
+      
+        }
+        
+        .multiday {
+            font-weight: bold;
+            font-size: 0.8em;
+            color: var(--secondary-color);
+            margin-top: 5px;
+        }
+        
+        .floating-preview {
+            position: absolute;
+            background-color: rgba(52, 152, 219, 0.644);
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 1000;
+            pointer-events: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            max-width: 200px;
+        }
+
+        .search-container {
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    #searchInput {
+        width: 90%;
+        padding: 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 16px;
+    }
+
+    .suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background-color: white;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .suggestion-item {
+        padding: 10px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .suggestion-item:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    .group-6a {
+    background-color: #00ac42da;
+    color: white;
+}
+/* Resaltar fila completa */
+.highlight-row td {
+    background-color: rgba(52, 152, 219, 0.644);
+    transition: background-color 0.3s ease;
+}
+        /* Estilos para modal de añadir materia y selector de horas */
+        .modal-add, .modal-slots {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .panel-modal {
+            background: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            width: 760px;
+            max-width: 95%;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        .slots-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .slots-table th, .slots-table td { border: 1px solid var(--border-color); padding: 6px; text-align: center; }
+        .slots-table td.slot { cursor: pointer; height: 36px; background: #fff; }
+        .slots-table td.slot.selected { background: #4caf50; color: #fff; }
+        .flex-row { display:flex; gap:8px; align-items:center; }
+        .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+        /* botón "Más +" */
+        #btnMasCatalog { margin-left: 8px; padding:6px 10px; font-weight:600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Horario Xunito</h1>
+        
+        <div id="messageContainer" class="message hidden"></div>
+        
+        <div class="row">
+            <div class="panel" style="flex: 1; min-width: 200px;">
+                <h2 style="display:flex;align-items:center;justify-content:space-between;">
+                    <span>Materias</span>
+                    <div>
+                      <button id="btnMasCatalog">Más +</button>
+                      <button id="googleSignIn" style="margin-left:8px;">Iniciar con Google</button>
+                      <button id="googleSignOut" class="hidden" style="margin-left:8px;">Cerrar sesión</button>
+                    </div>
+                </h2>
+                <p>Haga clic en una materia para agregarla a su horario</p>
+                <div class="search-container">
+                  <input type="text" id="searchInput" placeholder="Buscar materias, grupos o profesores..." />
+                  <div id="suggestions" class="suggestions hidden"></div>
+              </div>
+                <div id="catalogSubjects" class="catalog-subjects"></div>
+            </div>
+            
+            <div class="panel" style="flex: 2; min-width: 600px;">
+                <h2>Horario Semanal</h2>
+                <button onclick="printSchedule()" style="margin-bottom: 10px;">Imprimir Horario</button>
+                <button id="btnSaveDrive" style="margin-left:8px;">Guardar en Google</button>
+                <button id="btnLoadDrive" style="margin-left:8px;">Cargar desde Google</button>
+                <div id="printMessage" class="modal">
+                  Opcion: Antes de imprimir, activa "Imprimir fondos de gráficos" <br>1. Mas configuraciones y busca opciones "Graficos de fondo" <br>
+                    <button onclick="closeMessageAndPrint()" class="print-button">¡Listo, Imprimir!</button>
+                </div>
+                <div class="schedule-container" id="scheduleContainer">
+                    <table class="schedule-table">
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Lunes</th>
+                                <th>Martes</th>
+                                <th>miercoles</th>
+                                <th>Jueves</th>
+                                <th>Viernes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleBody">
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="selectedSubjects">
+                    <h3>Materias Seleccionadas</h3>
+                    <div id="selectedSubjectsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Añadir datos iniciales -->
+    <div id="modalAdd" class="modal-add" aria-hidden="true">
+        <div class="panel-modal">
+            <h3>Agregar materia</h3>
+            <div style="margin-top:8px">
+                <label>Materia (obligatorio)<br>
+                    <input id="m_inputMateria" type="text" style="width:100%" />
+                </label>
+            </div>
+            <div style="margin-top:8px">
+                <label>Profesor (obligatorio)<br>
+                    <input id="m_inputProfesor" type="text" style="width:100%" />
+                </label>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+                <label>Grado (obligatorio)<br><input id="m_inputGrado" type="text"></label>
+                <label>Grupo (obligatorio)<br><input id="m_inputGrupo" type="text"></label>
+            </div>
+            <div class="modal-actions">
+                <button id="m_cancel">Cancelar</button>
+                <button id="m_next">Siguiente →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Selector de horarios (cuadricula para seleccionar slots) -->
+    <div id="modalSlots" class="modal-slots" aria-hidden="true">
+        <div class="panel-modal">
+            <h3>Seleccionar horarios (clic para seleccionar horas)</h3>
+            <div class="small">Selecciona los cuadros correspondientes a Lunes-Viernes y horas.</div>
+            <div style="margin-top:8px; overflow:auto; max-height:50vh">
+                <table class="slots-table" id="slotsTable">
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            <th>Lunes</th><th>Martes</th><th>Miércoles</th><th>Jueves</th><th>Viernes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="slotsBody"></tbody>
+                </table>
+            </div>
+            <div style="margin-top:8px" id="slotsResumen" class="small"></div>
+            <div class="modal-actions">
+                <button id="s_back">Atrás</button>
+                <button id="s_save">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+       /* Estilo para impresión */
+@media print {
+    body * {
+        visibility: hidden;
+        overflow: hidden;
+        
+    }
+    #scheduleContainer, #scheduleContainer * {
+        visibility: visible;
+        overflow: hidden;
+       
+    }
+    #scheduleContainer {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+    .subject-card * {
+        background-color: rgba(52, 152, 219, 0.8);
+        color: white;
+    }
+    
+}
+
+/* Modal bonito */
+.modal {
+    display: none;
+    position: fixed;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ffffff;
+    color: rgb(0, 0, 0);
+    padding: 20px 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    font-family: sans-serif;
+    text-align: center;
+    z-index: 9999;
+}
+
+/* Botón dentro del modal */
+.print-button {
+    margin-top: 10px;
+    background: rgb(211, 211, 211);
+    color: #000000;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+        /* botón de eliminar en catálogo (para materias creadas) */
+        .subject-item { 
+            position: relative; 
+            /* dejar espacio a la derecha para el botón de eliminar */
+            padding-right: 48px; 
+        }
+
+        .catalog-delete {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            font-size: 18px;
+            line-height: 1;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+            transition: transform 0.12s ease, opacity 0.12s ease;
+        }
+        .catalog-delete:hover { 
+            opacity: 0.95; 
+            transform: scale(1.03);
+        }
+
+        /* Aumentar tamaño de textos en tarjetas del catálogo */
+        .subject-item h3 {
+            font-size: 1.1rem;
+        }
+        .subject-item p {
+            font-size: 0.95rem;
+        }
+
+        /* Estilos para inputs y botones dentro del modal (más grandes y con mejor spacing) */
+        .panel-modal input[type="text"],
+        .panel-modal input[type="email"],
+        .panel-modal textarea,
+        .panel-modal select {
+            font-size: 16px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .panel-modal label { font-size: 15px; }
+
+        .modal-actions button {
+            padding: 10px 14px;
+            font-size: 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Destacar botón principal del modal */
+        #m_next, #s_save {
+            background-color: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.2);
+        }
+
+        /* Botón cancelar / atrás más visible y consistente */
+        #m_cancel, #s_back {
+            background-color: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        /* Más grande y visible el botón "Más +" en el panel de materias */
+        #btnMasCatalog { 
+            margin-left: 8px; 
+            padding: 10px 14px; 
+            font-weight:700; 
+            font-size: 16px;
+            border-radius: 6px;
+        }
+
+        /* Resumen de slots más legible */
+        #slotsResumen { font-size: 14px; margin-top: 8px; }
+    </style>
+
+<script>
+    function printSchedule() {
+        document.getElementById('printMessage').style.display = 'block';
+    }
+
+    function closeMessageAndPrint() {
+        document.getElementById('printMessage').style.display = 'none';
+
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        style.media = 'print';
+        style.innerHTML = `
+            @page {
+                size: A4;
+                margin: 10mm;
+                background: white;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            body {
+                overflow: hidden;
+            }
+            .schedule-container {
+                max-height: 100%;
+                overflow: hidden;
+            }
+            .schedule-table {
+                page-break-inside: avoid;
+            }
+        `;
+        document.head.appendChild(style);
+
+        window.print();
+    }
+</script>
+
+    <!-- Elemento para previsualización flotante -->
+    <div id="floatingPreview" class="floating-preview hidden"></div>
+
+    <script>
+
+      
+        // Arrays para almacenar materias
+        let catalogSubjects = []; // Catálogo de materias disponibles
+        let selectedSubjects = []; // Materias seleccionadas para el horario
+        
+        // Días y horas para el horario
+        const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
+        const hours = [];
+        
+        // Generar horas de 7:00 a 22:00
+        for (let i = 7; i < 20; i++) {
+            const startHour = i.toString().padStart(2, '0') + ':00';
+            const endHour = (i + 1).toString().padStart(2, '0') + ':00';
+            hours.push(`${startHour}-${endHour}`);
+        }
+        
+        // Inicializar la aplicación cuando el DOM esté cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cargar materias predefinidas
+            loadPredefinedSubjects();
+            
+            // Cargar selecciones guardadas en localStorage si existen
+            loadSelectedSubjects();
+            
+            // Generar tabla de horarios
+            generateScheduleTable();
+            
+            // Actualizar vistas
+            updateCatalogSubjects();
+            updateScheduleView();
+            updateSelectedSubjectsList();
+            
+            // Configurar previsualización flotante
+            setupFloatingPreview();
+        });
+
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('searchInput');
+    const suggestions = document.getElementById('suggestions');
+
+    // Evento para buscar mientras se escribe
+    searchInput.addEventListener('input', function () {
+        const query = searchInput.value.toLowerCase().trim();
+        if (query === '') {
+            suggestions.classList.add('hidden');
+            suggestions.innerHTML = '';
+            return;
+        }
+
+        // Filtrar materias, grupos o profesores
+        const results = catalogSubjects.filter(subject =>
+            subject.name.toLowerCase().includes(query) ||
+            subject.group.toLowerCase().includes(query) ||
+            subject.professor.toLowerCase().includes(query)
+        );
+
+        // Mostrar sugerencias
+        suggestions.innerHTML = '';
+        if (results.length > 0) {
+            results.forEach(subject => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.textContent = `${subject.name} (Grupo ${subject.group}) - ${subject.professor}`;
+                item.addEventListener('click', function () {
+                    // Acción al hacer clic en una sugerencia
+                    addSubjectToSchedule(subject.id);
+                    searchInput.value = '';
+                    suggestions.classList.add('hidden');
+                });
+                suggestions.appendChild(item);
+            });
+            suggestions.classList.remove('hidden');
+        } else {
+            suggestions.innerHTML = '<div class="suggestion-item">No se encontraron resultados</div>';
+            suggestions.classList.remove('hidden');
+        }
+    });
+
+    // Ocultar sugerencias al hacer clic fuera
+    document.addEventListener('click', function (e) {
+        if (!searchInput.contains(e.target) && !suggestions.contains(e.target)) {
+            suggestions.classList.add('hidden');
+        }
+    });
+});
+        
+        // Cargar materias predefinidas en el catálogo
+        function loadPredefinedSubjects() {
+            catalogSubjects = [
+            // Datos completos de los horarios extraídos del PDF
+//4d
+  {
+    id: 1,
+    name: "Electronica analogica",
+    professor: "Ibáñez Nangüelú Christian Roberto",
+    group: "4A",
+    sessions: [
+      { day: "lunes", startTime: "13:00", endTime: "13:45" },
+      { day: "jueves", startTime: "10:00", endTime: "11:45" },
+      { day: "viernes", startTime: "11:00", endTime: "12:45" }
+    ]
+  },
+  {
+    id: 2,
+    name: "Electronica digital",
+    professor: "pinto",
+    group: "4D",
+    sessions: [
+      { day: "lunes", startTime: "13:00", endTime: "13:45" },
+      { day: "martes", startTime: "10:00", endTime: "11:45" },
+      { day: "viernes", startTime: "11:00", endTime: "11:45" }
+    ]
+  },
+  
+
+  // =========== GRUPO 6A ===========
+  { 
+    id: 57, 
+    name: "Liderazgo de Equipos de Alto Desempeño", 
+    professor: "Anza Gonzalez Jorge", 
+    group: "6A", 
+    sessions: [
+      { day: "lunes", startTime: "12:00", endTime: "12:45" },
+      { day: "martes", startTime: "8:00", endTime: "8:45" },
+      { day: "miercoles", startTime: "8:00", endTime: "8:45" }
+    ]
+  },
+  { 
+    id: 58, 
+    name: "Electrónica de Potencia", 
+    professor: " Rodriguez Ramirez Jorge Alberto", 
+    group: "6A", 
+    sessions: [
+      { day: "martes", startTime: "142:00", endTime: "15:45" },
+      { day: "miercoles", startTime: "14:00", endTime: "15:45" },
+      { day: "jueves", startTime: "9:00", endTime: "9:45" }
+    ]
+  },
+  { 
+    id: 59, 
+    name: "Matemáticas para Ingeniería II", 
+    professor: "Cabrera Madrid Jorge Alberto", 
+    group: "6A", 
+    sessions: [
+      { day: "lunes", startTime: "13:00", endTime: "15:45" },
+      { day: "miercoles", startTime: "13:00", endTime: "13:45" },
+      { day: "jueves", startTime: "14:00", endTime: "15:45" },
+    ]
+  },
+  { 
+    id: 60, 
+    name: "Inglés VI", 
+    professor: "Matus Arrambide Arandza", 
+    group: "6A", 
+    sessions: [
+      { day: "lunes", startTime: "8:00", endTime: "9:45" },
+      { day: "jueves", startTime: "10:00", endTime: "10:45" },
+      { day: "viernes", startTime: "9:00", endTime: "10:45" }
+    ]
+  },
+  { 
+    id: 61, 
+    name: "Suministro de Energía Eléctrica", 
+    professor: "Martínez Cancino Diana Paulina", 
+    group: "6A", 
+    sessions: [
+      { day: "martes", startTime: "13:00", endTime: "13:45" },
+      { day: "miercoles", startTime: "12:00", endTime: "12:45" },
+      { day: "viernes", startTime: "11:00", endTime: "11:45" }
+    ]
+  },
+  
+  { 
+    id: 67, 
+    name: "Mantenimiento de Equipos Médicos", 
+    professor: "Pérez Toala Luis Agustín", 
+    group: "6A", 
+    sessions: [
+      { day: "martes", startTime: "10:00", endTime: "11:45"},
+      { day: "miercoles", startTime: "10:00", endTime: "11:45" },
+      { day: "jueves", startTime: "11:00", endTime: "12:45" }
+    ]
+  },
+  { 
+    id: 68, 
+    name: "Base de Datos", 
+    professor: "Ibáñez Nangüelú Christian Roberto", 
+    group: "6A", 
+    sessions: [
+      { day: "lunes", startTime: "10:00", endTime: "11:45" },
+      { day: "martes", startTime: "12:00", endTime: "12:45" },
+      { day: "miercoles", startTime: "9:00", endTime: "9:45" },
+      { day: "jueves", startTime: "8:00", endTime: "8:45" },
+      { day: "viernes", startTime: "13:00", endTime: "13:45" },
+    ]
+  },
+  { 
+    id: 69, 
+    name: "Tutorías", 
+    professor: "jose octavio", 
+    group: "6A", 
+    sessions: [
+      { day: "viernes", startTime: "8:00", endTime: "8:45" }
+    ]
+  },
+  
+ 
+            ];
+
+
+            // Modificar las sesiones para ajustar las horas que terminan en ":45"
+catalogSubjects.forEach(subject => {
+    subject.sessions.forEach(session => {
+        // Verificar si la hora de finalización termina en ":45"
+        if (session.endTime.endsWith(":45")) {
+            // Convertir la hora a formato de 24 horas y sumar 15 minutos
+            const [hours, minutes] = session.endTime.split(":").map(Number);
+            const newEndTime = `${(hours + (minutes + 15) / 60).toString().padStart(2, '0')}:00`;
+            session.endTime = newEndTime;
+        }
+    });
+});
+
+// Verificar los cambios
+console.log(catalogSubjects);
+        }
+        
+        // Función para cargar materias seleccionadas desde localStorage
+        function loadSelectedSubjects() {
+            const savedSubjects = localStorage.getItem('selectedSubjects');
+            if (savedSubjects) {
+                selectedSubjects = JSON.parse(savedSubjects);
+            }
+        }
+        
+        // Función para guardar materias seleccionadas en localStorage
+        function saveSelectedSubjects() {
+            localStorage.setItem('selectedSubjects', JSON.stringify(selectedSubjects));
+        }
+        
+        // Función para generar la estructura de la tabla de horarios
+        function generateScheduleTable() {
+            const scheduleBody = document.getElementById('scheduleBody');
+            scheduleBody.innerHTML = '';
+            
+            hours.forEach(hour => {
+                const row = document.createElement('tr');
+                
+                // Celda de hora
+                const timeCell = document.createElement('td');
+                timeCell.textContent = hour;
+                timeCell.className = 'time-slot';
+                row.appendChild(timeCell);
+                
+                // Celdas para cada día
+                days.forEach(day => {
+                    const dayCell = document.createElement('td');
+                    // Modificado para trabajar con el nuevo formato de hora
+                    const hourKey = hour.split('-')[0]; // Obtener solo la hora de inicio
+                    dayCell.id = `${day}-${hourKey.replace(':', '')}`;
+                    row.appendChild(dayCell);
+                });
+                
+                scheduleBody.appendChild(row);
+            });
+               }
+        
+        // Actualizar la vista del catálogo de materias
+        function updateCatalogSubjects() {
+            const catalogDiv = document.getElementById('catalogSubjects');
+            catalogDiv.innerHTML = '';
+
+        // obtener ids de custom guardadas para mostrar el botón eliminar sólo en esas
+        const customs = loadCustomSubjects();
+        const customIds = new Set(customs.map(c => c.id));
+
+        catalogSubjects.forEach(subject => {
+            const subjectItem = document.createElement('div');
+            subjectItem.className = 'subject-item';
+            subjectItem.setAttribute('data-subject-id', subject.id);
+
+            const name = document.createElement('h3');
+            name.textContent = `${subject.name} (Grupo ${subject.group})`;
+
+            const professor = document.createElement('p');
+            professor.textContent = `Profesor: ${subject.professor}`;
+
+            const sessionsDiv = document.createElement('div');
+            sessionsDiv.className = 'multiday';
+            sessionsDiv.textContent = 'Horarios: ';
+
+            subject.sessions.forEach((session, index) => {
+                const sessionBadge = document.createElement('span');
+                sessionBadge.className = 'subject-badge';
+                sessionBadge.textContent = `${capitalizeFirstLetter(session.day)} ${session.startTime}-${session.endTime}`;
+                sessionsDiv.appendChild(sessionBadge);
+
+                if (index < subject.sessions.length - 1) {
+                    sessionsDiv.appendChild(document.createTextNode(' '));
+                }
+            });
+
+            subjectItem.appendChild(name);
+            subjectItem.appendChild(professor);
+            subjectItem.appendChild(sessionsDiv);
+
+            // click para añadir al horario
+            subjectItem.addEventListener('click', function () {
+                addSubjectToSchedule(subject.id);
+            });
+
+            // si la materia está en customIds mostramos botón X para eliminarla del catálogo
+            if (customIds.has(subject.id)) {
+                const delBtn = document.createElement('button');
+                delBtn.className = 'catalog-delete';
+                delBtn.title = 'Eliminar materia del catálogo';
+                delBtn.textContent = '×';
+                // evitar que el click en la X dispare el click del item
+                delBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    if (!confirm(`¿Eliminar la materia "${subject.name}" del catálogo? Esta acción quitará la materia creada.`)) return;
+
+                    // quitar de catalogSubjects en memoria
+                    catalogSubjects = catalogSubjects.filter(s => s.id !== subject.id);
+
+                    // quitar de custom storage
+                    const newCustoms = customs.filter(c => c.id !== subject.id);
+                    saveCustomSubjects(newCustoms);
+
+                    // si estaba en el horario seleccionado, quitarla también
+                    if (selectedSubjects.some(s => s.id === subject.id)) {
+                        removeFromSchedule(subject.id);
+                    }
+
+                    // refrescar vista del catálogo
+                    updateCatalogSubjects();
+                    showMessage(`Materia "${subject.name}" eliminada del catálogo.`, 'success');
+                });
+                subjectItem.appendChild(delBtn);
+            }
+
+            catalogDiv.appendChild(subjectItem);
+        });
+        }
+        
+        // Función para agregar previsualización flotante al pasar el mouse
+        function setupFloatingPreview() {
+            const preview = document.getElementById('floatingPreview');
+            
+            document.addEventListener('mousemove', function(e) {
+                // Mover la previsualización con el cursor
+                if (!preview.classList.contains('hidden')) {
+                    preview.style.left = `${e.pageX + 15}px`;
+                    preview.style.top = `${e.pageY + 15}px`;
+                }
+            });
+            
+            // Configurar eventos de hover en los elementos del catálogo
+            const catalogs = document.querySelectorAll('.subject-item');
+            catalogs.forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    const subjectId = parseInt(this.getAttribute('data-subject-id'));
+                    const subject = catalogSubjects.find(s => s.id === subjectId);
+                    
+                    if (subject) {
+                        // Mostrar información en la previsualización
+                        preview.innerHTML = `
+                            <strong>${subject.name}</strong><br>
+                            Prof: ${subject.professor}<br>
+                            <div style="margin-top: 5px;">
+                                ${subject.sessions.map(session => 
+                                    `${capitalizeFirstLetter(session.day)} ${session.startTime}-${session.endTime}`
+                                ).join('<br>')}
+                            </div>
+                        `;
+                        preview.classList.remove('hidden');
+                    }
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    preview.classList.add('hidden');
+                });
+            });
+        }
+        
+        // Función para añadir una materia del catálogo al horario
+        function addSubjectToSchedule(id) {
+            // Buscar la materia en el catálogo
+            const subject = catalogSubjects.find(s => s.id === id);
+            
+            if (!subject) return;
+            
+            // Verificar si ya está seleccionada
+            if (selectedSubjects.some(s => s.id === id)) {
+                showMessage(`La materia "${subject.name}" ya está en tu horario`, 'warning');
+                return;
+            }
+            
+            // Verificar conflictos de horarios
+            const conflicts = checkTimeConflicts(subject);
+            
+            // Añadir al horario incluso si hay conflictos
+            selectedSubjects.push({...subject});
+            
+            // Guardar en localStorage
+            saveSelectedSubjects();
+            
+            // Actualizar vistas
+            updateScheduleView();
+            updateSelectedSubjectsList();
+            
+            if (conflicts.length > 0) {
+                showMessage(`Materia "${subject.name}" añadida con pero se chocan materias en el horario`, 'warning');
+            } else {
+                showMessage(`Materia "${subject.name}" añadida al horario correctamente`, 'success');
+            }
+        }
+        
+        // Función para quitar una materia del horario
+        function removeFromSchedule(id) {
+            // Verificar si está en el horario
+            const index = selectedSubjects.findIndex(subject => subject.id === id);
+            
+            if (index !== -1) {
+                const subject = selectedSubjects[index];
+                
+                // Eliminar del horario
+                selectedSubjects.splice(index, 1);
+                
+                // Guardar en localStorage
+                saveSelectedSubjects();
+                
+                // Actualizar vistas
+                updateScheduleView();
+                updateSelectedSubjectsList();
+                
+                showMessage(`Materia "${subject.name}" quitada del horario`, 'success');
+            }
+        }
+        
+        // Función para verificar conflictos de horarios
+        function checkTimeConflicts(newSubject) {
+            const conflicts = [];
+
+            // Revisar cada sesión de la nueva materia
+            for (const newSession of newSubject.sessions) {
+                for (const existingSubject of selectedSubjects) {
+                    for (const existingSession of existingSubject.sessions) {
+                        // Verificar si es el mismo día
+                        if (newSession.day === existingSession.day) {
+                            // Verificar si hay solapamiento de horarios
+                            const newStart = parseTime(newSession.startTime);
+                            const newEnd = parseTime(newSession.endTime);
+                            const existingStart = parseTime(existingSession.startTime);
+                            const existingEnd = parseTime(existingSession.endTime);
+
+                            if (newStart < existingEnd && newEnd > existingStart) {
+                                if (!conflicts.includes(existingSubject)) {
+                                    conflicts.push(existingSubject);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return conflicts;
+        }
+
+        // Función para convertir una hora en formato "HH:MM" a minutos totales
+        function parseTime(time) {
+            const [hours, minutes] = time.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+        
+        // Función para añadir una sesión a la matriz de slots de tiempo
+        function addSessionToTimeSlots(subject, session, timeSlots) {
+            const startHour = parseInt(session.startTime.split(':')[0]);
+            const endHour = parseInt(session.endTime.split(':')[0]);
+
+            for (let h = startHour; h < endHour; h++) {
+                const hourKey = `${h.toString().padStart(2,'0')}:00-${(h+1).toString().padStart(2,'0')}:00`;
+                if (timeSlots[session.day] && timeSlots[session.day][hourKey]) {
+                    timeSlots[session.day][hourKey].push({
+                        subject: subject,
+                        session: session
+                    });
+                }
+            }
+        }
+        
+        // Función para actualizar la vista del horario
+        function updateScheduleView() {
+            // Limpiar todas las celdas
+            days.forEach(day => {
+                hours.forEach(hour => {
+                    const hourKey = hour.split('-')[0];
+                    const cellId = `${day}-${hourKey.replace(':', '')}`;
+                    const cell = document.getElementById(cellId);
+                    if (cell) {
+                        cell.innerHTML = '';
+                        cell.className = '';
+                    }
+                });
+            });
+            
+            // Crear una matriz para rastrear conflictos
+            const timeSlots = {};
+            days.forEach(day => {
+                timeSlots[day] = {};
+                hours.forEach(hour => {
+                    timeSlots[day][hour] = [];
+                });
+            });
+            
+            // Registrar todas las materias seleccionadas en la matriz
+            selectedSubjects.forEach(subject => {
+                subject.sessions.forEach(session => {
+                    addSessionToTimeSlots(subject, session, timeSlots);
+                });
+            });
+            
+            // Mostrar las materias en el horario y marcar conflictos
+            for (const day in timeSlots) {
+              
+                for (const hour in timeSlots[day]) {
+                    const subjectsInSlot = timeSlots[day][hour];
+                    const hourKey = hour.split('-')[0];
+                    const cellId = `${day}-${hourKey.replace(':', '')}`;
+                    const cell = document.getElementById(cellId);
+
+                    if (cell && subjectsInSlot.length > 0) {
+                        const hasConflict = subjectsInSlot.length > 1;
+
+                        subjectsInSlot.forEach(item => {
+                          const subjectCard = document.createElement('div');
+                          subjectCard.className = `subject-card ${hasConflict ? 'conflict' : ''}`;
+
+                          // Aplicar color único para el grupo "6A"
+                          if (item.subject.group === "6A") {
+                            subjectCard.classList.add('group-6a');
+                          }
+
+                            subjectCard.textContent = item.subject.name;
+
+                            // Botón para eliminar del horario
+                            const removeButton = document.createElement('div');
+                            removeButton.className = 'remove-from-schedule';
+                            removeButton.textContent = 'X';
+                            removeButton.onclick = function (e) {
+                                e.stopPropagation();
+                                removeFromSchedule(item.subject.id);
+                            };
+
+                            subjectCard.appendChild(removeButton);
+                            cell.appendChild(subjectCard);
+                            
+                        });
+                    }
+                }
+            }
+        }
+        
+        // Función para actualizar la lista de materias seleccionadas
+        function updateSelectedSubjectsList() {
+            const selectedList = document.getElementById('selectedSubjectsList');
+            selectedList.innerHTML = '';
+
+            if (selectedSubjects.length === 0) {
+                selectedList.innerHTML = '<p>No has seleccionado ninguna materia para tu horario</p>';
+                return;
+            }
+
+            selectedSubjects.forEach((subject, index) => {
+                const subjectDiv = document.createElement('div');
+                subjectDiv.style.marginBottom = '10px';
+
+                const number = index + 1;
+                const subjectInfo = document.createElement('span');
+                subjectInfo.innerHTML = `<strong>${number}. ${subject.name}</strong> (${subject.group}, Prof: ${subject.professor}) `;
+
+                const removeBtn = document.createElement('button');
+                removeBtn.textContent = 'Quitar';
+                removeBtn.style.fontSize = '12px';
+                removeBtn.style.padding = '2px 5px';
+                removeBtn.onclick = function() {
+                    removeFromSchedule(subject.id);
+                };
+
+                subjectDiv.appendChild(subjectInfo);
+                subjectDiv.appendChild(removeBtn);
+
+                // Verificar conflictos: mostrar nombres (y número) de las materias con conflicto
+                const conflicts = checkTimeConflicts(subject);
+                if (conflicts.length > 0) {
+                    const warningDiv = document.createElement('div');
+                    warningDiv.style.color = 'var(--error-color)';
+                    warningDiv.style.fontSize = '12px';
+                    warningDiv.style.marginTop = '3px';
+                    const conflictNames = conflicts.map(conf => {
+                        const idx = selectedSubjects.findIndex(s => s.id === conf.id);
+                        return `${idx + 1}. ${conf.name}`;
+                    }).join(', ');
+                    warningDiv.textContent = `Conflicto con: ${conflictNames}`;
+                    subjectDiv.appendChild(warningDiv);
+                }
+                
+                selectedList.appendChild(subjectDiv);
+            });
+        }
+        
+        // Función para mostrar mensajes
+        function showMessage(text, type) {
+            const messageContainer = document.getElementById('messageContainer');
+            messageContainer.textContent = text;
+            messageContainer.className = `message ${type}`;
+            
+            // Mostrar el mensaje
+            messageContainer.classList.remove('hidden');
+            
+            // Ocultar después de 3 segundos
+            setTimeout(() => {
+                messageContainer.classList.add('hidden');
+            }, 3000);
+        }
+        
+        // Integración: agregar botón "Más +" que abre modal de creación de materia y selector de horas.
+    // Reutiliza arrays days/hours ya definidos en el archivo principal. Asegúrate que 'days' y 'hours' existen.
+    const appDays = (typeof days !== 'undefined') ? days : ['lunes','martes','miercoles','jueves','viernes'];
+    const appHours = (typeof hours !== 'undefined') ? hours : (function(){
+        const h = [];
+        for (let i = 7; i < 20; i++) h.push(`${i.toString().padStart(2,'0')}:00-${(i+1).toString().padStart(2,'0')}:00`);
+        return h;
+    })();
+
+    // Elementos modal
+    const btnMas = document.getElementById('btnMasCatalog');
+    const modalAdd = document.getElementById('modalAdd');
+    const modalSlots = document.getElementById('modalSlots');
+    const m_inputMateria = document.getElementById('m_inputMateria');
+    const m_inputProfesor = document.getElementById('m_inputProfesor');
+    const m_inputGrado = document.getElementById('m_inputGrado');
+    const m_inputGrupo = document.getElementById('m_inputGrupo');
+    const m_cancel = document.getElementById('m_cancel');
+    const m_next = document.getElementById('m_next');
+    const s_back = document.getElementById('s_back');
+    const s_save = document.getElementById('s_save');
+    const slotsBody = document.getElementById('slotsBody');
+    const slotsResumen = document.getElementById('slotsResumen');
+
+    // Persistencia de materias creadas
+    const CUSTOM_KEY = 'catalog_custom_subjects';
+    function loadCustomSubjects() {
+        try {
+            const raw = localStorage.getItem(CUSTOM_KEY);
+            return raw ? JSON.parse(raw) : [];
+        } catch { return []; }
+    }
+    function saveCustomSubjects(arr) {
+        localStorage.setItem(CUSTOM_KEY, JSON.stringify(arr));
+    }
+
+    // integrar custom subjects a catalogSubjects en la carga principal:
+    document.addEventListener('DOMContentLoaded', function () {
+        // cargar custom subjects y anexar a catalogSubjects existente
+        const customs = loadCustomSubjects();
+        if (Array.isArray(customs) && customs.length) {
+            // evitar duplicados por id
+            const existingIds = new Set(catalogSubjects.map(s => s.id));
+            customs.forEach(c => {
+                if (!existingIds.has(c.id)) catalogSubjects.push(c);
+            });
+            updateCatalogSubjects();
+        }
+    });
+
+    // Mostrar/ocultar modales
+    function openAddModal() {
+        m_inputMateria.value = '';
+        m_inputProfesor.value = '';
+        m_inputGrado.value = '';
+        m_inputGrupo.value = '';
+        modalAdd.style.display = 'flex';
+    }
+    function closeAddModal() { modalAdd.style.display = 'none'; }
+    function openSlotsModal() {
+        modalSlots.style.display = 'flex';
+    }
+    function closeSlotsModal() { modalSlots.style.display = 'none'; }
+
+    btnMas.addEventListener('click', openAddModal);
+    m_cancel.addEventListener('click', closeAddModal);
+
+    // Construir tabla de slots dentro del modal
+    let selectedSlots = new Set(); // keys: day|hourStart ("lunes|08:00")
+    function buildSlotsTable() {
+        slotsBody.innerHTML = '';
+        for (let hour of appHours) {
+            const tr = document.createElement('tr');
+            const th = document.createElement('th');
+            th.textContent = hour;
+            tr.appendChild(th);
+            const hourStart = hour.split('-')[0]; // '08:00'
+            for (let d of appDays) {
+                const td = document.createElement('td');
+                td.className = 'slot';
+                td.dataset.day = d;
+                td.dataset.hour = hourStart;
+                td.addEventListener('click', () => {
+                    const key = `${d}|${hourStart}`;
+                    if (selectedSlots.has(key)) {
+                        selectedSlots.delete(key);
+                        td.classList.remove('selected');
+                    } else {
+                        selectedSlots.add(key);
+                        td.classList.add('selected');
+                    }
+                    updateSlotsResumen();
+                });
+                tr.appendChild(td);
+            }
+            slotsBody.appendChild(tr);
+        }
+        updateSlotsResumen();
+    }
+
+    function updateSlotsResumen() {
+        if (selectedSlots.size === 0) {
+            slotsResumen.textContent = 'No hay horas seleccionadas';
+        } else {
+            const list = Array.from(selectedSlots).map(k => {
+                const [d,h] = k.split('|');
+                return `${capitalizeFirstLetter(d)} ${h}`;
+            });
+            slotsResumen.textContent = 'Seleccionadas: ' + list.join(', ');
+        }
+    }
+
+    // Siguiente: validación y abrir selector de horas
+    m_next.addEventListener('click', () => {
+        if (!m_inputMateria.value.trim() || !m_inputProfesor.value.trim() || !m_inputGrado.value.trim() || !m_inputGrupo.value.trim()) {
+            alert('Todos los campos (materia, profesor, grado y grupo) son obligatorios.');
+            return;
+        }
+        // preparar slots
+        selectedSlots.clear();
+        // limpiar clases previas si las hubo
+        buildSlotsTable();
+        closeAddModal();
+        openSlotsModal();
+    });
+
+    s_back.addEventListener('click', () => {
+        closeSlotsModal();
+        openAddModal();
+    });
+
+    // Guardar nueva materia (se anexará al catálogo y se persiste en localStorage)
+    s_save.addEventListener('click', () => {
+        const materia = m_inputMateria.value.trim();
+        const profesor = m_inputProfesor.value.trim();
+        const grado = m_inputGrado.value.trim();
+        const grupo = m_inputGrupo.value.trim();
+
+        if (!materia || !profesor || !grado || !grupo) {
+            alert('Campos obligatorios faltantes.');
+            return;
+        }
+
+        // construir sesiones a partir de selectedSlots
+        const sesiones = Array.from(selectedSlots).map(k => {
+            const [d,h] = k.split('|');
+            // calcular endTime como +1 hora (simple)
+            const [HH,MM] = h.split(':').map(Number);
+            const endHour = (HH + 1).toString().padStart(2,'0') + ':00';
+            return { day: d, startTime: h, endTime: endHour };
+        });
+
+        // id único: buscar max id en catalogSubjects (predef + customs)
+        const maxId = catalogSubjects.reduce((m,s) => Math.max(m, s.id || 0), 0);
+        const newId = maxId + 1;
+
+        const nuevo = {
+            id: newId,
+            name: materia,
+            professor: profesor,
+            group: grupo,
+            sessions: sesiones
+        };
+
+        // guardar en custom subjects persistentes
+        const customs = loadCustomSubjects();
+        customs.push(nuevo);
+        saveCustomSubjects(customs);
+
+        // añadir al catálogo en memoria y refrescar UI
+        catalogSubjects.push(nuevo);
+        updateCatalogSubjects();
+
+        closeSlotsModal();
+        showMessage(`Materia "${materia}" guardada correctamente.`, 'success');
+    });
+
+    // Helpers: capitalizar
+    function capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    // Asegurar que la tabla de slots se construya cuando se abra el modal (también al inicio)
+    document.addEventListener('DOMContentLoaded', () => {
+        buildSlotsTable();
+    });
+
+    // Integración con la búsqueda: después de crear materia, updateCatalogSubjects ya la muestra y la búsqueda la encontrará.
+
+    // Nota: no se eliminan materias existentes en el código. Las materias nuevas se guardan en localStorage y se agregan al listado.
+    // El resto del script existente continúa sin cambios y podrá añadir las materias nuevas al horario usando la función addSubjectToSchedule(id).
+
+</script>
+
+</body>
+</html>
