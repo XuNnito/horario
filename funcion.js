@@ -229,17 +229,22 @@ function printSchedule() {
 
 
             // Modificar las sesiones para ajustar las horas que terminan en ":45"
-catalogSubjects.forEach(subject => {
-    subject.sessions.forEach(session => {
-        // Verificar si la hora de finalización termina en ":45"
-        if (session.endTime.endsWith(":45")) {
-            // Convertir la hora a formato de 24 horas y sumar 15 minutos
-            const [hours, minutes] = session.endTime.split(":").map(Number);
-            const newEndTime = `${(hours + (minutes + 15) / 60).toString().padStart(2, '0')}:00`;
-            session.endTime = newEndTime;
-        }
-    });
-});
+            catalogSubjects.forEach(subject => {
+                subject.sessions.forEach(session => {
+                    // Verificar si la hora de finalización termina en ":45"
+                    if (typeof session.endTime === 'string' && session.endTime.endsWith(':45')) {
+                        // Convertir correctamente sumando 15 minutos
+                        const [hh, mm] = session.endTime.split(':').map(Number);
+                        let hour = hh;
+                        let minute = mm + 15;
+                        if (minute >= 60) {
+                            hour += 1;
+                            minute -= 60;
+                        }
+                        session.endTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+                    }
+                });
+            });
 
 // Verificar los cambios
 console.log(catalogSubjects);
@@ -334,6 +339,39 @@ console.log(catalogSubjects);
 
             // si la materia está en customIds mostramos botón X para eliminarla del catálogo
             if (customIds.has(subject.id)) {
+                // BOTÓN EDITAR
+                const editBtn = document.createElement('button');
+                editBtn.className = 'catalog-edit';
+                editBtn.type = 'button'; // evitar submit por accidente
+                editBtn.setAttribute('aria-label', 'Editar materia');
+                editBtn.title = 'Editar materia';
+                editBtn.textContent = '✎';
+                editBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    // preparar modal con datos de la materia
+                    editingSubjectId = subject.id;
+                    openAddModal();
+                    // rellenar campos
+                    m_inputMateria.value = subject.name || '';
+                    m_inputProfesor.value = subject.professor || '';
+                    // grado puede no existir en predefinidos
+                    try { m_inputGrado.value = subject.grado || ''; } catch(e){}
+                    try { m_inputGrupo.value = subject.group || ''; } catch(e){}
+                    try { if (typeof m_inputAula !== 'undefined') m_inputAula.value = subject.aula || ''; } catch(e){}
+    
+                    // preparar selectedSlots con las sesiones actuales para que al pulsar "Siguiente"
+                    // se muestren las horas ya seleccionadas (no borramos selectedSlots aquí)
+                    selectedSlots = new Set();
+                    (subject.sessions || []).forEach(sess => {
+                        if (sess && sess.day && sess.startTime) {
+                            selectedSlots.add(`${sess.day}|${sess.startTime}`);
+                        }
+                    });
+                    // actualizar el resumen en el modal de añadir
+                    updateSlotsResumen();
+                });
+                subjectItem.appendChild(editBtn);
+
                 const delBtn = document.createElement('button');
                 delBtn.className = 'catalog-delete';
                 delBtn.title = 'Eliminar materia del catálogo';
@@ -355,15 +393,13 @@ console.log(catalogSubjects);
                         removeFromSchedule(subject.id);
                     }
 
-                    // Si hay sesión Google activa, sincronizar cambios en Drive
-                    if (typeof gAccessToken !== 'undefined' && gAccessToken) {
-                        saveToDrive().then(() => {
-                            showMessage('Cambio sincronizado en Google Drive', 'success');
-                        }).catch(err => {
-                            console.warn('No se pudo sincronizar eliminación en Drive', err);
-                            showMessage('No se pudo sincronizar en Drive', 'warning');
-                        });
-                    }
+                    // Intentar sincronizar cambios en Drive (intentará pedir login si es necesario)
+                    ensureSaveToDrive().then(() => {
+                        showMessage('Cambio sincronizado en Google Drive', 'success');
+                    }).catch(err => {
+                        console.warn('No se pudo sincronizar eliminación en Drive', err);
+                        showMessage('No se pudo sincronizar en Drive', 'warning');
+                    });
 
                     // refrescar vista del catálogo
                     updateCatalogSubjects();
@@ -745,6 +781,9 @@ console.log(catalogSubjects);
         localStorage.setItem(CUSTOM_KEY, JSON.stringify(arr));
     }
 
+    // ID de materia en edición (null = crear nueva)
+    let editingSubjectId = null;
+
     // integrar custom subjects a catalogSubjects en la carga principal:
     document.addEventListener('DOMContentLoaded', function () {
         // cargar custom subjects y anexar a catalogSubjects existente
@@ -774,7 +813,7 @@ console.log(catalogSubjects);
     function closeSlotsModal() { modalSlots.style.display = 'none'; }
 
     btnMas.addEventListener('click', openAddModal);
-    m_cancel.addEventListener('click', closeAddModal);
+    m_cancel.addEventListener('click', () => { editingSubjectId = null; closeAddModal(); });
 
     // Construir tabla de slots dentro del modal
     let selectedSlots = new Set(); // keys: day|hourStart ("lunes|08:00")
@@ -828,8 +867,10 @@ console.log(catalogSubjects);
             return;
         }
         // preparar slots
-        selectedSlots.clear();
-        // limpiar clases previas si las hubo
+        // Si estamos en edición, mantener selectedSlots (ya fue preparado por el botón editar).
+        // Si NO estamos en edición, reiniciamos la selección.
+        if (!editingSubjectId) selectedSlots.clear();
+        // construir tabla con selectedSlots actuales (marcará las seleccionadas)
         buildSlotsTable();
         closeAddModal();
         openSlotsModal();
@@ -852,7 +893,7 @@ console.log(catalogSubjects);
             alert('Campos obligatorios faltantes.');
             return;
         }
- 
+
         // construir sesiones a partir de selectedSlots
         const sesiones = Array.from(selectedSlots).map(k => {
             const [d,h] = k.split('|');
@@ -861,43 +902,86 @@ console.log(catalogSubjects);
             const endTime = `${HH.toString().padStart(2,'0')}:45`;
             return { day: d, startTime: h, endTime: endTime };
         });
- 
-        // id único: buscar max id en catalogSubjects (predef + customs)
-        const maxId = catalogSubjects.reduce((m,s) => Math.max(m, s.id || 0), 0);
-        const newId = maxId + 1;
- 
-        const nuevo = {
-            id: newId,
-            name: materia,
-            professor: profesor,
-            group: grupo,
-            aula: aula, // <-- guardar aula si existe
-            sessions: sesiones
-        };
- 
-        // guardar en custom subjects persistentes
+
         const customs = loadCustomSubjects();
-        customs.push(nuevo);
-        saveCustomSubjects(customs);
- 
-        // añadir al catálogo en memoria y refrescar UI
-        catalogSubjects.push(nuevo);
-        updateCatalogSubjects();
- 
-        // Si hay sesión Google activa, sincronizar cambios en Drive (no bloqueante)
-        if (typeof gAccessToken !== 'undefined' && gAccessToken) {
-            saveToDrive().then(() => {
-                showMessage('Materia sincronizada en Google Drive', 'success');
-            }).catch(err => {
-                console.warn('No se pudo sincronizar nueva materia en Drive', err);
-                showMessage('No se pudo sincronizar en Drive', 'warning');
-            });
+
+        if (editingSubjectId !== null && typeof editingSubjectId !== 'undefined') {
+            // actualizar existente
+            const id = editingSubjectId;
+            let found = false;
+            for (let i = 0; i < customs.length; i++) {
+                if (customs[i].id === id) {
+                    customs[i].name = materia;
+                    customs[i].professor = profesor;
+                    customs[i].grado = grado;
+                    customs[i].group = grupo;
+                    customs[i].aula = aula;
+                    customs[i].sessions = sesiones;
+                    found = true;
+                    break;
+                }
+            }
+            // Si no estaba en customs (por alguna razón), agregarla con el mismo id
+            if (!found) {
+                customs.push({
+                    id: id,
+                    name: materia,
+                    professor: profesor,
+                    grado: grado,
+                    group: grupo,
+                    aula: aula,
+                    sessions: sesiones
+                });
+            }
+            saveCustomSubjects(customs);
+
+            // actualizar en catalogSubjects en memoria
+            catalogSubjects = catalogSubjects.map(s => s.id === id ? { ...s, name: materia, professor: profesor, grado: grado, group: grupo, aula: aula, sessions: sesiones } : s);
+
+            // actualizar selectedSubjects si la materia estaba en el horario
+            selectedSubjects = selectedSubjects.map(s => s.id === id ? { ...s, name: materia, professor: profesor, group: grupo, aula: aula, sessions: sesiones } : s);
+            saveSelectedSubjects();
+
+            updateCatalogSubjects();
+            updateScheduleView();
+            updateSelectedSubjectsList();
+            editingSubjectId = null;
+        } else {
+            // crear nueva materia
+            const maxId = catalogSubjects.reduce((m,s) => Math.max(m, s.id || 0), 0);
+            const newId = maxId + 1;
+
+            const nuevo = {
+                id: newId,
+                name: materia,
+                professor: profesor,
+                grado: grado,
+                group: grupo,
+                aula: aula,
+                sessions: sesiones
+            };
+
+            // guardar en custom subjects persistentes
+            customs.push(nuevo);
+            saveCustomSubjects(customs);
+
+            // añadir al catálogo en memoria y refrescar UI
+            catalogSubjects.push(nuevo);
+            updateCatalogSubjects();
         }
- 
+
+        // Intentar sincronizar cambios en Drive (intentará pedir login si es necesario)
+        ensureSaveToDrive().then(() => {
+            showMessage('Materia sincronizada en Google Drive', 'success');
+        }).catch(err => {
+            console.warn('No se pudo sincronizar nueva materia en Drive', err);
+            showMessage('No se pudo sincronizar en Drive', 'warning');
+        });
+
         closeSlotsModal();
         showMessage(`Materia "${materia}" guardada correctamente.`, 'success');
     });
- 
+
     // Helpers: capitalizar
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
@@ -1143,10 +1227,6 @@ async function findAppDataFile(fileName) {
 
 // Guardar estado en Drive (actualiza o crea). Incluye metadatos.
 async function saveToDrive() {
-    if (!gAccessToken) {
-        showMessage('Primero inicia sesión con Google', 'warning');
-        return;
-    }
     const fileName = 'horario_data.json';
     // incluir metadatos para recuperación
     const payload = {
@@ -1202,6 +1282,31 @@ async function saveToDrive() {
         showMessage('Horario guardado en Google Drive (privado de la app).', 'success');
     } catch (err) {
         handleAuthError(err);
+    }
+}
+
+// NUEVA FUNCION: intentar sincronizar en Drive pidiendo login si hace falta
+async function ensureSaveToDrive() {
+    try {
+        // si ya hay token válido, intentar guardar
+        if (gAccessToken) {
+            await saveToDrive();
+            return;
+        }
+
+        // intentar restaurar token desde storage (silencioso)
+        if (restoreTokenFromStorage()) {
+            await saveToDrive();
+            return;
+        }
+
+        // pedir sign-in interactivo (se mostrará el diálogo si es necesario)
+        requestGoogleSignIn(false); // prompt normal
+        await waitForToken(15000); // esperar hasta 15s por token
+        await saveToDrive();
+    } catch (e) {
+        // propagar para que el llamador muestre mensaje o lo maneje
+        throw e;
     }
 }
 

@@ -418,8 +418,8 @@
         /* botón de eliminar en catálogo (para materias creadas) */
         .subject-item { 
             position: relative; 
-            /* dejar espacio a la derecha para el botón de eliminar */
-            padding-right: 48px; 
+            /* dejar espacio a la derecha para los botones */
+            padding-right: 110px; 
         }
 
         .catalog-delete {
@@ -447,7 +447,33 @@
             transform: scale(1.03);
         }
 
-        /* Aumentar tamaño de textos en tarjetas del catálogo */
+        /* botón editar (a la izquierda del botón eliminar) */
+.catalog-edit {
+    position: absolute;
+    top: 12px;
+    right: 56px; /* deja espacio para el botón eliminar a la derecha */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffc107;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    transition: transform 0.12s ease, opacity 0.12s ease;
+    z-index: 4;
+}
+.catalog-edit:hover { 
+    transform: scale(1.03);
+    opacity: 0.95;
+}
+
+/* Aumentar tamaño de textos en tarjetas del catálogo */
         .subject-item h3 {
             font-size: 1.1rem;
         }
