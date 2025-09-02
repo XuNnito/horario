@@ -1332,11 +1332,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try { signOutGoogle(); } catch (e) { console.error('signOutGoogle error', e); showMessage('Error cerrando sesión', 'error'); }
     });
     if (circle) circle.addEventListener('click', () => {
+        // Si no hay sesión, pedir inicio; si ya hay sesión, no cerrar sesión aquí.
+        // El script del modal (index.html) ya maneja abrir el modal al hacer click en el círculo.
         if (!gUserProfile) {
             try { requestGoogleSignIn(); } catch (e) { console.error('requestGoogleSignIn error', e); }
-        } else {
-            // al hacer click en el círculo cuando ya hay perfil, podemos mostrar menú o cerrar sesión
-            try { signOutGoogle(); } catch (e) { console.error('signOutGoogle error', e); }
         }
     });
 

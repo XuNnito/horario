@@ -16,8 +16,8 @@
         <div id="googleProfileCircle" class="profile-circle" title="Iniciar sesión" role="button" tabindex="0" aria-label="Perfil"></div>
         <span id="googleUserName" class="user-name"></span>
         <div class="google-btns">
-            <button id="googleSignIn">Iniciar con Google</button>
-            <button id="googleSignOut" class="hidden">Cerrar sesión</button>
+            <button id="googleSignIn" type="button" aria-label="Iniciar sesión con Google">Iniciar con Google</button>
+            <button id="googleSignOut" class="hidden" style="pointer-events: auto;">Cerrar sesión</button>
         </div>
     </div>
 
@@ -25,7 +25,7 @@
     <div id="profileModal" class="profile-modal hidden" aria-hidden="true">
         <div class="profile-backdrop" data-close="true"></div>
         <div class="profile-panel" role="dialog" aria-modal="true" aria-labelledby="pmName">
-            <button class="pm-close" id="pmClose" aria-label="Cerrar">&times;</button>
+            <button type="button" class="pm-close" id="pmClose" aria-label="Cerrar">&times;</button>
             <div class="pm-avatar" id="pmAvatar" aria-hidden="true"></div>
             <h3 id="pmName">Sin sesión</h3>
             <div class="pm-details">
@@ -58,7 +58,15 @@
     .pm-close {
         position:absolute; right:8px; top:6px;
         background:transparent; border:0; font-size:20px; line-height:1; cursor:pointer;
-    }
+        border: 1px solid rgba(0,0,0,0.12);
+        padding: 4px 8px;
+        border-radius: 6px; 
+        color: #444;
+        background: #ffffff5b;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        transition: background .12s ease, transform .08s ease;
+        }
+    
     .pm-avatar {
         width:96px; height:96px; margin:6px auto 10px;
         border-radius:50%;
