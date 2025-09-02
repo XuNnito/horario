@@ -13,7 +13,14 @@
             background-color: var(--bg-color);
             margin: 0;
             padding: 10px;
+            background-color: var(--bg-color);
+            background-image: linear-gradient(rgba(245,247,250,0.85), rgba(245,247,250,0.85)), url("https://tse4.mm.bing.net/th/id/OIP.iS5BZ-QzaZISx8l_ixh4OQHaHZ?r=0&rs=1&pid=ImgDetMain&o=7&rm=3");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-attachment: fixed;
             color: #333;
+            height: 200%;
         }
         
         h1, h2, h3 {
