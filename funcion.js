@@ -145,7 +145,7 @@ function printSchedule() {
     group: "6A", 
     aula: "104",
     sessions: [
-      { day: "martes", startTime: "142:00", endTime: "15:45" },
+      { day: "martes", startTime: "14:00", endTime: "15:45" },
       { day: "miercoles", startTime: "14:00", endTime: "15:45" },
       { day: "jueves", startTime: "9:00", endTime: "9:45" }
     ]
