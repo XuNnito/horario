@@ -368,6 +368,16 @@ console.log(catalogSubjects);
                         removeFromSchedule(subject.id);
                     }
 
+                    // Si hay sesión Google activa, sincronizar cambios en Drive
+                    if (typeof gAccessToken !== 'undefined' && gAccessToken) {
+                        saveToDrive().then(() => {
+                            showMessage('Cambio sincronizado en Google Drive', 'success');
+                        }).catch(err => {
+                            console.warn('No se pudo sincronizar eliminación en Drive', err);
+                            showMessage('No se pudo sincronizar en Drive', 'warning');
+                        });
+                    }
+
                     // refrescar vista del catálogo
                     updateCatalogSubjects();
                     showMessage(`Materia "${subject.name}" eliminada del catálogo.`, 'success');
@@ -377,6 +387,10 @@ console.log(catalogSubjects);
 
             catalogDiv.appendChild(subjectItem);
         });
+
+        // Asegurar que los handlers de hover/click se (re)asignen a los items recién renderizados
+        // de esta forma las materias creadas se pueden ver, añadir y eliminar inmediatamente.
+        setupFloatingPreview();
         }
         
         // Función para agregar previsualización flotante al pasar el mouse
@@ -839,6 +853,16 @@ console.log(catalogSubjects);
         // añadir al catálogo en memoria y refrescar UI
         catalogSubjects.push(nuevo);
         updateCatalogSubjects();
+ 
+        // Si hay sesión Google activa, sincronizar cambios en Drive (no bloqueante)
+        if (typeof gAccessToken !== 'undefined' && gAccessToken) {
+            saveToDrive().then(() => {
+                showMessage('Materia sincronizada en Google Drive', 'success');
+            }).catch(err => {
+                console.warn('No se pudo sincronizar nueva materia en Drive', err);
+                showMessage('No se pudo sincronizar en Drive', 'warning');
+            });
+        }
  
         closeSlotsModal();
         showMessage(`Materia "${materia}" guardada correctamente.`, 'success');

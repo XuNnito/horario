@@ -545,3 +545,52 @@
 
 .hidden { display: none !important; }
 
+/* Responsive: añadir al final del CSS */
+
+/* Mejor scroll en móviles */
+.schedule-container {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Breakpoint para tablets grandes / pantallas medias */
+@media (max-width: 1024px) {
+    .container { padding: 14px; }
+    .schedule-table { min-width: 600px; font-size: 14px; }
+    #searchInput { width: 100%; }
+}
+
+/* Breakpoint para tablets / móviles horizontales */
+@media (max-width: 768px) {
+    .row { flex-direction: column; gap: 12px; }
+    .panel { padding: 14px; }
+    .catalog-subjects { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    .schedule-table { min-width: 520px; font-size: 13px; }
+    .time-slot { height: 44px; font-size: 11px; width: auto; }
+    #selectedSubjects { margin-top: 90px; max-height: 28vh; }
+    .message { width: 90%; max-width: 90%; left: 50%; transform: translate(-50%, -50%); }
+    .panel-modal { width: 95%; padding: 12px; }
+}
+
+/* Breakpoint para móviles pequeños */
+@media (max-width: 480px) {
+    .container { padding: 8px; }
+    .panel { padding: 12px; }
+    .row { gap: 8px; }
+    .catalog-subjects { grid-template-columns: 1fr; gap: 10px; }
+    .subject-item { padding: 10px; }
+    .subject-item h3 { font-size: 1rem; }
+    .subject-item p { font-size: 0.9rem; }
+    .schedule-table { min-width: 420px; font-size: 12px; }
+    .schedule-table th, .schedule-table td { padding: 6px; }
+    .time-slot { height: 36px; font-size: 10px; }
+    .subject-card { font-size: 11px; padding: 4px 6px; }
+    .remove-from-schedule { width: 14px; height: 14px; font-size: 10px; line-height: 14px; }
+    .message { width: 95%; max-width: 95%; left: 50%; transform: translate(-50%, -50%); }
+    #searchInput { width: 100%; padding: 8px; font-size: 14px; }
+    #btnMasCatalog { padding: 8px 10px; font-size: 14px; margin-left: 4px; }
+}
+
+/* Opcional: evitar que celdas rompan el diseño (si quieres forzar scroll horizontal) */
+.schedule-table td, .schedule-table th {
+    white-space: nowrap;
+}
