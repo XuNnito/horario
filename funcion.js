@@ -124,30 +124,6 @@ function printSchedule() {
         function loadPredefinedSubjects() {
             catalogSubjects = [
             // Datos completos de los horarios extraídos del PDF
-//4d
-  {
-    id: 1,
-    name: "Electronica analogica",
-    professor: "Ibáñez Nangüelú Christian Roberto",
-    group: "4A",
-    sessions: [
-      { day: "lunes", startTime: "13:00", endTime: "13:45" },
-      { day: "jueves", startTime: "10:00", endTime: "11:45" },
-      { day: "viernes", startTime: "11:00", endTime: "12:45" }
-    ]
-  },
-  {
-    id: 2,
-    name: "Electronica digital",
-    professor: "pinto",
-    group: "4D",
-    sessions: [
-      { day: "lunes", startTime: "13:00", endTime: "13:45" },
-      { day: "martes", startTime: "10:00", endTime: "11:45" },
-      { day: "viernes", startTime: "11:00", endTime: "11:45" }
-    ]
-  },
-  
 
   // =========== GRUPO 6A ===========
   { 
@@ -155,6 +131,7 @@ function printSchedule() {
     name: "Liderazgo de Equipos de Alto Desempeño", 
     professor: "Anza Gonzalez Jorge", 
     group: "6A", 
+    aula: "104",
     sessions: [
       { day: "lunes", startTime: "12:00", endTime: "12:45" },
       { day: "martes", startTime: "8:00", endTime: "8:45" },
@@ -166,6 +143,7 @@ function printSchedule() {
     name: "Electrónica de Potencia", 
     professor: " Rodriguez Ramirez Jorge Alberto", 
     group: "6A", 
+    aula: "104",
     sessions: [
       { day: "martes", startTime: "142:00", endTime: "15:45" },
       { day: "miercoles", startTime: "14:00", endTime: "15:45" },
@@ -177,6 +155,7 @@ function printSchedule() {
     name: "Matemáticas para Ingeniería II", 
     professor: "Cabrera Madrid Jorge Alberto", 
     group: "6A", 
+    aula: "104",
     sessions: [
       { day: "lunes", startTime: "13:00", endTime: "15:45" },
       { day: "miercoles", startTime: "13:00", endTime: "13:45" },
@@ -188,6 +167,7 @@ function printSchedule() {
     name: "Inglés VI", 
     professor: "Matus Arrambide Arandza", 
     group: "6A", 
+    aula: "104",
     sessions: [
       { day: "lunes", startTime: "8:00", endTime: "9:45" },
       { day: "jueves", startTime: "10:00", endTime: "10:45" },
@@ -199,6 +179,7 @@ function printSchedule() {
     name: "Suministro de Energía Eléctrica", 
     professor: "Martínez Cancino Diana Paulina", 
     group: "6A", 
+    aula: "104",
     sessions: [
       { day: "martes", startTime: "13:00", endTime: "13:45" },
       { day: "miercoles", startTime: "12:00", endTime: "12:45" },
@@ -211,6 +192,7 @@ function printSchedule() {
     name: "Mantenimiento de Equipos Médicos", 
     professor: "Pérez Toala Luis Agustín", 
     group: "6A", 
+    aula: "104",
     sessions: [
       { day: "martes", startTime: "10:00", endTime: "11:45"},
       { day: "miercoles", startTime: "10:00", endTime: "11:45" },
@@ -222,6 +204,7 @@ function printSchedule() {
     name: "Base de Datos", 
     professor: "Ibáñez Nangüelú Christian Roberto",
     group: "6A", 
+    aula: "104",
     sessions: [
       { day: "lunes", startTime: "10:00", endTime: "11:45" },
       { day: "martes", startTime: "12:00", endTime: "12:45" },
@@ -235,6 +218,7 @@ function printSchedule() {
     name: "Tutorías", 
     professor: "jose octavio", 
     group: "6A", 
+    aula: "104",
     sessions: [
       { day: "viernes", startTime: "8:00", endTime: "8:45" }
     ]
@@ -299,7 +283,10 @@ console.log(catalogSubjects);
                 
                 scheduleBody.appendChild(row);
             });
-               }
+
+    // Vincular tooltips a las celdas (se puede llamar varias veces sin duplicar handlers)
+    setupScheduleCellTooltips();
+        }
         
         // Actualizar la vista del catálogo de materias
         function updateCatalogSubjects() {
@@ -413,13 +400,13 @@ console.log(catalogSubjects);
                     const subject = catalogSubjects.find(s => s.id === subjectId);
                     
                     if (subject) {
-                        // Mostrar información en la previsualización
+                        // Mostrar información en la previsualización (AHORA INCLUYE AULA por sesión)
                         preview.innerHTML = `
                             <strong>${subject.name}</strong><br>
                             Prof: ${subject.professor}<br>
                             <div style="margin-top: 5px;">
                                 ${subject.sessions.map(session => 
-                                    `${capitalizeFirstLetter(session.day)} ${session.startTime}-${session.endTime}`
+                                    `${capitalizeFirstLetter(session.day)} ${session.startTime}-${session.endTime} — Aula: ${subject.aula || '-'}`
                                 ).join('<br>')}
                             </div>
                         `;
@@ -598,6 +585,7 @@ console.log(catalogSubjects);
                             subjectCard.classList.add('group-6a');
                           }
 
+                            // Mostrar nombre en la tarjeta
                             subjectCard.textContent = item.subject.name;
 
                             // Botón para eliminar del horario
@@ -610,6 +598,35 @@ console.log(catalogSubjects);
                             };
 
                             subjectCard.appendChild(removeButton);
+
+                            // --- NUEVO: titulo y tooltip dentro de la tarjeta mostrando hora y aula ---
+                            // obtener aula preferida en el sujeto, si no existe buscar en catalogSubjects
+                            const aulaCard = item.subject.aula ?? (catalogSubjects.find(cs => cs.id === item.subject.id) || {}).aula ?? '-';
+                            const sessionLabel = `${item.session.startTime}-${item.session.endTime} — Aula: ${aulaCard}`;
+                            // quitar title nativo para que no aparezca el tooltip del navegador duplicado
+                            subjectCard.removeAttribute('title');
+
+                            // Mostrar floatingPreview al pasar sobre la tarjeta (coordinado con preview global)
+                            subjectCard.addEventListener('mouseenter', function (e) {
+                                const preview = document.getElementById('floatingPreview');
+                                if (!preview) return;
+                                preview.innerHTML = `<strong>${item.subject.name}</strong><br>${capitalizeFirstLetter(item.session.day)} ${sessionLabel}`;
+                                preview.classList.remove('hidden');
+                                preview.style.left = `${e.pageX + 12}px`;
+                                preview.style.top = `${e.pageY + 12}px`;
+                            });
+                            subjectCard.addEventListener('mousemove', function (e) {
+                                const preview = document.getElementById('floatingPreview');
+                                if (!preview || preview.classList.contains('hidden')) return;
+                                preview.style.left = `${e.pageX + 12}px`;
+                                preview.style.top = `${e.pageY + 12}px`;
+                            });
+                            subjectCard.addEventListener('mouseleave', function () {
+                                const preview = document.getElementById('floatingPreview');
+                                if (preview) preview.classList.add('hidden');
+                            });
+                            // --- FIN NUEVO ---
+
                             cell.appendChild(subjectCard);
                             
                         });
@@ -633,8 +650,19 @@ console.log(catalogSubjects);
                 subjectDiv.style.marginBottom = '10px';
 
                 const number = index + 1;
-                const subjectInfo = document.createElement('span');
-                subjectInfo.innerHTML = `<strong>${number}. ${subject.name}</strong> (${subject.group}, Prof: ${subject.professor}) `;
+                const subjectInfo = document.createElement('div');
+                subjectInfo.innerHTML = `<strong>${number}. ${subject.name}</strong> (${subject.group}, Prof: ${subject.professor})`;
+
+                // agregar sesiones (con aula)
+                const subjectAula = subject.aula ?? (catalogSubjects.find(cs => cs.id === subject.id) || {}).aula ?? '-';
+                const sessionsHtml = (subject.sessions || []).map(s => {
+                    return `${capitalizeFirstLetter(s.day)} ${s.startTime}-${s.endTime} — Aula: ${subjectAula}`;
+                }).join('<br>');
+                const sessionsDiv = document.createElement('div');
+                sessionsDiv.style.fontSize = '13px';
+                sessionsDiv.style.marginTop = '4px';
+                sessionsDiv.innerHTML = sessionsHtml;
+                subjectInfo.appendChild(sessionsDiv);
 
                 const removeBtn = document.createElement('button');
                 removeBtn.textContent = 'Quitar';
@@ -646,7 +674,7 @@ console.log(catalogSubjects);
 
                 subjectDiv.appendChild(subjectInfo);
                 subjectDiv.appendChild(removeBtn);
-
+                
                 // Verificar conflictos: mostrar nombres (y número) de las materias con conflicto
                 const conflicts = checkTimeConflicts(subject);
                 if (conflicts.length > 0) {
@@ -818,7 +846,8 @@ console.log(catalogSubjects);
         const profesor = m_inputProfesor.value.trim();
         const grado = m_inputGrado.value.trim();
         const grupo = m_inputGrupo.value.trim();
- 
+        const aula = (typeof m_inputAula !== 'undefined' && m_inputAula) ? m_inputAula.value.trim() : '';
+
         if (!materia || !profesor || !grado || !grupo) {
             alert('Campos obligatorios faltantes.');
             return;
@@ -842,6 +871,7 @@ console.log(catalogSubjects);
             name: materia,
             professor: profesor,
             group: grupo,
+            aula: aula, // <-- guardar aula si existe
             sessions: sesiones
         };
  
@@ -1419,5 +1449,101 @@ function signOutGoogle() {
         // limpiar persistencia local al cerrar sesión explícita
         try { localStorage.removeItem('google_signed_in'); localStorage.removeItem('google_profile'); } catch(e){}
         showMessage('Sesión cerrada', 'success');
+    });
+}
+
+// Función para configurar tooltips en las celdas del horario
+function setupScheduleCellTooltips() {
+    const preview = document.getElementById('floatingPreview');
+    if (!preview) return;
+
+    function formatMinutes(total) {
+        const hh = Math.floor(total / 60) % 24;
+        const mm = total % 60;
+        return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+    }
+
+    // Ocultar preview al entrar en la tabla (salvo si el target es una tarjeta .subject-card)
+    const scheduleTable = document.querySelector('.schedule-table');
+    if (scheduleTable) {
+        // cuando el mouse entra en la tabla y no está sobre una tarjeta, ocultar preview
+        scheduleTable.addEventListener('mouseenter', (ev) => {
+            if (!ev.target.closest || !ev.target.closest('.subject-card')) {
+                preview.classList.add('hidden');
+            }
+        });
+        // opcional: ocultar también al mover dentro de la tabla fuera de tarjetas
+        scheduleTable.addEventListener('mousemove', (ev) => {
+            if (!ev.target.closest('.subject-card')) preview.classList.add('hidden');
+        });
+    }
+
+    // attach to every schedule cell except the time column
+    const cells = document.querySelectorAll('.schedule-table td:not(.time-slot)');
+    cells.forEach(td => {
+        // avoid adding multiple listeners
+        if (td._tooltipBound) return;
+        td._tooltipBound = true;
+
+        td.addEventListener('mouseenter', function (e) {
+            // Resaltar toda la fila (todos los td del tr)
+            const tr = this.closest('tr');
+            if (tr) {
+                // aplicar color directo para asegurar que se vea aunque no haya CSS
+                Array.from(tr.querySelectorAll('td')).forEach(tdCell => {
+                    tdCell.dataset._prevBg = tdCell.style.backgroundColor || '';
+                    tdCell.style.backgroundColor = 'rgba(37, 152, 228, 0.41)'; // color ligero
+                });
+                tr.classList.add('highlight-row');
+            }
+
+            const id = this.id || '';
+            if (!id.includes('-')) return;
+            const [day, timeKey] = id.split('-');
+            if (!timeKey) return;
+            const hourStart = timeKey.length === 4 ? `${timeKey.slice(0,2)}:${timeKey.slice(2)}` : timeKey.replace(/^(\d{2})(\d{2})$/, '$1:$2');
+            const slotStartMin = parseTime(hourStart);
+            const slotEndMin = slotStartMin + 45;
+
+            // buscar sesiones que se solapan con este slot
+            const overlapping = [];
+            selectedSubjects.forEach(sub => {
+                (sub.sessions || []).forEach(sess => {
+                    if (sess.day !== day) return;
+                    const s = parseTime(sess.startTime);
+                    const t = parseTime(sess.endTime);
+                    if (s < slotEndMin && t > slotStartMin) {
+                        // obtener aula: preferir la del objeto, si no existe buscar en catalogSubjects por id
+                        const aula = sub.aula ?? (catalogSubjects.find(cs => cs.id === sub.id) || {}).aula ?? '-';
+                        overlapping.push({
+                            text: `${sub.name} — ${sess.startTime}-${sess.endTime} — Aula: ${aula}`,
+                            subject: sub
+                        });
+                    }
+                });
+            });
+
+            if (overlapping.length === 0) {
+                preview.innerHTML = `<strong>${capitalizeFirstLetter(day)} ${hourStart}-${formatMinutes(slotEndMin)}</strong><br>Libre`;
+            } else {
+                const lines = overlapping.map(o => o.text).join('<br>');
+                preview.innerHTML = `<strong>${capitalizeFirstLetter(day)} ${hourStart}-${formatMinutes(slotEndMin)}</strong><br>${lines}`;
+            }
+
+            preview.classList.remove('hidden');
+        });
+
+        td.addEventListener('mouseleave', function () {
+            // quitar resaltado de la fila
+            const tr = this.closest('tr');
+            if (tr) {
+                Array.from(tr.querySelectorAll('td')).forEach(tdCell => {
+                    tdCell.style.backgroundColor = tdCell.dataset._prevBg || '';
+                    delete tdCell.dataset._prevBg;
+                });
+                tr.classList.remove('highlight-row');
+            }
+            preview.classList.add('hidden');
+        });
     });
 }
