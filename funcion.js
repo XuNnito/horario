@@ -180,7 +180,7 @@ function printSchedule() {
     sessions: [
       { day: "lunes", startTime: "13:00", endTime: "15:45" },
       { day: "miercoles", startTime: "13:00", endTime: "13:45" },
-      { day: "jueves", startTime: "14:00", endTime: "15:45" },
+      { day: "jueves", startTime: "13:00", endTime: "15:45" },
     ]
   },
   { 
@@ -896,6 +896,17 @@ function initGoogleAuth() {
                 return;
             }
             gAccessToken = resp.access_token;
+
+            // Guardar token y expiry en localStorage para persistir sesión entre recargas
+            try {
+                localStorage.setItem('google_token', gAccessToken);
+                if (resp.expires_in) {
+                    const expiryTs = Date.now() + (resp.expires_in * 1000);
+                    localStorage.setItem('google_token_expiry', String(expiryTs));
+                }
+                localStorage.setItem('google_signed_in', '1');
+            } catch(e){ console.warn('No se pudo persistir token', e); }
+
             // Inicializar gapi client usando discoveryDocs (más robusto)
             try {
                 gapi.load('client', () => {
@@ -911,7 +922,6 @@ function initGoogleAuth() {
                     }).then(() => {
                         showMessage('Conectado a Google', 'success');
                     }).catch(err => {
-                        // mostrar error detallado para diagnostico
                         console.error('Drive init error:', err);
                         const msg = (err && err.result && err.result.error && err.result.error.message) || err.message || JSON.stringify(err);
                         showMessage('Error inicializando Drive API: ' + msg, 'error');
@@ -922,6 +932,52 @@ function initGoogleAuth() {
                 showMessage('Error inicializando cliente Google', 'error');
             }
         }
+    });
+}
+
+/* -- FUNCIONES ADICIONADAS: restaurar token desde localStorage y esperar token -- */
+function restoreTokenFromStorage() {
+    try {
+        const token = localStorage.getItem('google_token');
+        const expiry = Number(localStorage.getItem('google_token_expiry') || '0');
+        if (token && expiry && expiry > Date.now()) {
+            gAccessToken = token;
+            // Si gapi está listo, aseguramos el token en el cliente
+            if (typeof gapi !== 'undefined' && gapi.client) {
+                try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { /* no crítico */ }
+            }
+            // Cargar perfil (silencioso) y actualizar UI
+            fetchGoogleProfile().then(() => {
+                updateGoogleButtons(true);
+                try { onSignedIn(); } catch(e){/*opcional*/ }
+            }).catch(()=>{/*silencioso*/});
+            return true;
+        }
+        // token ausente o expirado -> limpiar
+        localStorage.removeItem('google_token');
+        localStorage.removeItem('google_token_expiry');
+        // mantener google_signed_in para intentar silent renew si se desea
+    } catch (e) {
+        console.warn('restoreTokenFromStorage error', e);
+    }
+    return false;
+}
+
+/* Espera hasta que gAccessToken sea establecido (útil tras requestGoogleSignIn) */
+function waitForToken(timeoutMs = 10000) {
+    return new Promise((resolve, reject) => {
+        if (gAccessToken) return resolve(gAccessToken);
+        const start = Date.now();
+        const iv = setInterval(() => {
+            if (gAccessToken) {
+                clearInterval(iv);
+                return resolve(gAccessToken);
+            }
+            if (Date.now() - start > timeoutMs) {
+                clearInterval(iv);
+                return reject(new Error('timeout waiting for token'));
+            }
+        }, 200);
     });
 }
 
@@ -938,6 +994,11 @@ async function fetchGoogleProfile() {
             return null;
         }
         gUserProfile = await resp.json();
+        // Persistir perfil y flag de sesión para mantener estado entre recargas
+        try {
+            localStorage.setItem('google_profile', JSON.stringify(gUserProfile));
+            localStorage.setItem('google_signed_in', '1');
+        } catch(e){ console.warn('No se pudo guardar perfil localmente', e); }
         onProfileLoaded();
         return gUserProfile;
     } catch (e) {
@@ -968,12 +1029,24 @@ function onProfileLoaded() {
     if (!circle || !nameSpan) return;
 
     if (!gUserProfile) {
+        // intentar restaurar perfil desde localStorage para mantener UI
+        try {
+            const raw = localStorage.getItem('google_profile');
+            if (raw) {
+                gUserProfile = JSON.parse(raw);
+            }
+        } catch(e){}
+    }
+
+    if (!gUserProfile) {
         // estado por defecto: sin imagen ni texto
         circle.style.backgroundImage = '';
         circle.textContent = '';
         nameSpan.textContent = '';
         circle.title = 'Iniciar sesión';
         updateGoogleButtons(false);
+        // borrar flag si no hay perfil válido
+        try { localStorage.removeItem('google_signed_in'); } catch(e){}
         return;
     }
 
@@ -988,6 +1061,12 @@ function onProfileLoaded() {
     }
     nameSpan.textContent = gUserProfile.name || '';
     circle.title = gUserProfile.email || '';
+
+    // marcar como conectado en almacenamiento (persistencia entre pestañas)
+    try {
+        localStorage.setItem('google_profile', JSON.stringify(gUserProfile));
+        localStorage.setItem('google_signed_in', '1');
+    } catch(e){}
 
     updateGoogleButtons(true);
 }
@@ -1157,17 +1236,28 @@ async function onSignedIn() {
 }
 
 // Mejorar requestGoogleSignIn: reintenta inicializar tokenClient si hace falta
-function requestGoogleSignIn() {
+function requestGoogleSignIn(silent = false) {
     if (!tokenClient) {
         initGoogleAuth();
         // esperar un poco y luego pedir token
         setTimeout(() => {
-            if (tokenClient) tokenClient.requestAccessToken({ prompt: 'consent' });
+            if (tokenClient) {
+                // Si silent=true, no pasamos prompt para intentar flujo silencioso
+                try {
+                    if (silent) tokenClient.requestAccessToken(); else tokenClient.requestAccessToken({ prompt: 'consent' });
+                } catch(e){ console.warn('requestAccessToken fallo', e); tokenClient.requestAccessToken({ prompt: 'consent' }); }
+            }
         }, 400);
         return;
     }
-    // pedir token (si ya se ha consentido, puede no mostrar diálogo)
-    tokenClient.requestAccessToken({ prompt: 'consent' });
+    // pedir token (si silent true se intenta sin forzar diálogo)
+    try {
+        if (silent) tokenClient.requestAccessToken(); else tokenClient.requestAccessToken({ prompt: 'consent' });
+    } catch(e){
+        console.warn('requestAccessToken error', e);
+        // fallback a pedir con prompt si el intento silencioso falla
+        try { tokenClient.requestAccessToken({ prompt: 'consent' }); } catch(e2){ console.error(e2); }
+    }
 }
 
 /*
@@ -1187,6 +1277,29 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 initGoogleAuth();
                 console.log('initGoogleAuth llamada correctamente');
+
+                // Primero intentar restaurar token desde localStorage (si aún es válido)
+                try {
+                    if (restoreTokenFromStorage()) {
+                        try { gapi.client.setToken({ access_token: gAccessToken }); } catch(e){}
+                        // cargar perfil y estado sin prompt
+                        fetchGoogleProfile().then(() => {
+                            onSignedIn();
+                            console.log('Sesión restaurada desde token en localStorage');
+                        }).catch(()=>{ /*silencioso*/ });
+                    } else if (localStorage.getItem('google_signed_in') === '1') {
+                        // token expiro o no está, intentar request silencioso para renovar sin UI
+                        requestGoogleSignIn(true);
+                        console.log('Intentando restaurar sesión silenciosamente desde localStorage');
+                    } else {
+                        // si existe perfil guardado solo para UI, sincronizar
+                        const raw = localStorage.getItem('google_profile');
+                        if (raw) {
+                            gUserProfile = JSON.parse(raw);
+                            onProfileLoaded();
+                        }
+                    }
+                } catch(e){ console.warn('restore session failed', e); }
             } catch (e) {
                 console.warn('initGoogleAuth fallo:', e);
             }
@@ -1195,6 +1308,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tries >= maxTries) {
             clearInterval(iv);
             console.warn('Librerías Google no cargaron en 10s. Revisa network o bloqueo por extensión.');
+            try {
+                const raw = localStorage.getItem('google_profile');
+                if (raw) {
+                    gUserProfile = JSON.parse(raw);
+                    onProfileLoaded();
+                }
+            } catch(e){}
         }
     }, 250);
 
@@ -1246,12 +1366,16 @@ function testDriveAPI() {
 window.testDriveAPI = testDriveAPI;
 
 function signOutGoogle() {
+    // limpiar persistencia local al cerrar sesión explícita
+    try { localStorage.removeItem('google_signed_in'); localStorage.removeItem('google_profile'); localStorage.removeItem('google_token'); localStorage.removeItem('google_token_expiry'); } catch(e){}
     // Si no hay token, limpiar UI y estado
     if (!gAccessToken) {
         gAccessToken = null;
         gUserProfile = null;
         try { if (window.gapi && gapi.client) gapi.client.setToken(null); } catch(e){}
         onProfileLoaded();
+        // limpiar persistencia local
+        try { localStorage.removeItem('google_signed_in'); localStorage.removeItem('google_profile'); } catch(e){}
         showMessage('Sesión cerrada', 'success');
         return;
     }
@@ -1269,6 +1393,8 @@ function signOutGoogle() {
         gUserProfile = null;
         try { if (window.gapi && gapi.client) gapi.client.setToken(null); } catch(e){}
         onProfileLoaded();
+        // limpiar persistencia local al cerrar sesión explícita
+        try { localStorage.removeItem('google_signed_in'); localStorage.removeItem('google_profile'); } catch(e){}
         showMessage('Sesión cerrada', 'success');
     });
 }

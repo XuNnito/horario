@@ -13,13 +13,147 @@
 <body>
     <!-- TOP BAR: perfil y botones Google -->
     <div id="topBar">
-        <div id="googleProfileCircle" class="profile-circle" title="Iniciar sesión"></div>
+        <div id="googleProfileCircle" class="profile-circle" title="Iniciar sesión" role="button" tabindex="0" aria-label="Perfil"></div>
         <span id="googleUserName" class="user-name"></span>
         <div class="google-btns">
             <button id="googleSignIn">Iniciar con Google</button>
             <button id="googleSignOut" class="hidden">Cerrar sesión</button>
         </div>
     </div>
+
+    <!-- Perfil: Modal -->
+    <div id="profileModal" class="profile-modal hidden" aria-hidden="true">
+        <div class="profile-backdrop" data-close="true"></div>
+        <div class="profile-panel" role="dialog" aria-modal="true" aria-labelledby="pmName">
+            <button class="pm-close" id="pmClose" aria-label="Cerrar">&times;</button>
+            <div class="pm-avatar" id="pmAvatar" aria-hidden="true"></div>
+            <h3 id="pmName">Sin sesión</h3>
+            <div class="pm-details">
+                <div><strong>Carrera:</strong> <span id="pmCareer">-</span></div>
+                <div><strong>Fecha:</strong> <span id="pmDate">-</span></div>
+            </div>
+            <button id="pmSignOut" class="pm-signout">Cerrar sesión</button>
+        </div>
+    </div>
+
+    <style>
+   
+    /* Modal */
+    .profile-modal.hidden { display:none; }
+    .profile-modal { position:fixed; inset:0; z-index:1200; display:flex; align-items:center; justify-content:center; }
+    .profile-backdrop {
+        position:absolute; inset:0; background:rgba(0,0,0,0.45);
+    }
+    .profile-panel {
+        position:relative;
+        background:#fff;
+        border-radius:10px;
+        box-shadow:0 10px 30px rgba(0,0,0,0.25);
+        padding:20px;
+        width:320px;
+        max-width:90%;
+        text-align:center;
+        z-index:1;
+    }
+    .pm-close {
+        position:absolute; right:8px; top:6px;
+        background:transparent; border:0; font-size:20px; line-height:1; cursor:pointer;
+    }
+    .pm-avatar {
+        width:96px; height:96px; margin:6px auto 10px;
+        border-radius:50%;
+        background:#ddd center/cover no-repeat;
+        border:3px solid #fff;
+        box-shadow:0 4px 12px rgba(0,0,0,0.12);
+    }
+    .pm-details { color:#444; margin:8px 0 14px; font-size:14px; display:flex; flex-direction:column; gap:6px; align-items:flex-start; }
+    .pm-details div { width:100%; display:flex; justify-content:space-between; }
+    .pm-signout {
+        background:#d9534f; color:#fff; border:0; padding:8px 12px; border-radius:6px; cursor:pointer;
+        width:100%;
+    }
+    .pm-signout:hover { filter:brightness(0.95); }
+    </style>
+
+    <script>
+    (function(){
+        const profileCircle = document.getElementById('googleProfileCircle');
+        const modal = document.getElementById('profileModal');
+        const pmClose = document.getElementById('pmClose');
+        const pmAvatar = document.getElementById('pmAvatar');
+        const pmName = document.getElementById('pmName');
+        const pmCareer = document.getElementById('pmCareer');
+        const pmDate = document.getElementById('pmDate');
+        const pmSignOut = document.getElementById('pmSignOut');
+        
+        const googleSignOutBtn = document.getElementById('googleSignOut');
+        const googleUserName = document.getElementById('googleUserName');
+
+        function formatDate(d){
+            const dd = String(d.getDate()).padStart(2,'0');
+            const mm = String(d.getMonth()+1).padStart(2,'0');
+            const yy = d.getFullYear();
+            return dd + '/' + mm + '/' + yy;
+        }
+
+        function openProfileModal(){
+            // set avatar from top circle background if present
+            const bg = window.getComputedStyle(profileCircle).backgroundImage;
+            if(bg && bg !== 'none'){
+                pmAvatar.style.backgroundImage = bg;
+                profileCircle.style.backgroundSize && (pmAvatar.style.backgroundSize = window.getComputedStyle(profileCircle).backgroundSize);
+            }
+            // fill name/career/date (career can be populated elsewhere in your app)
+            pmName.textContent = googleUserName.textContent.trim() || 'Sin sesión';
+            // try to get career from data attribute (optional)
+            pmCareer.textContent = profileCircle.dataset.career || 'No especificada';
+            pmDate.textContent = formatDate(new Date());
+            modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden','false');
+            // focus for keyboard users
+            pmClose.focus();
+        }
+        function closeProfileModal(){
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden','true');
+            profileCircle.focus();
+        }
+
+        profileCircle.addEventListener('click', openProfileModal);
+        profileCircle.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProfileModal(); } });
+
+        pmClose.addEventListener('click', closeProfileModal);
+        modal.addEventListener('click', (e)=>{
+            if(e.target && e.target.dataset && e.target.dataset.close === 'true') closeProfileModal();
+        });
+        document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && !modal.classList.contains('hidden')) closeProfileModal(); });
+
+        pmSignOut.addEventListener('click', ()=>{
+            // trigger existing sign out control if present
+            if(googleSignOutBtn){
+                googleSignOutBtn.click();
+            }
+            closeProfileModal();
+        });
+
+        // Expose a helper to update modal content from other scripts (e.g., after Google sign-in)
+        window.profileModalUpdate = function(opts){
+            // opts: { name, avatarUrl, career }
+            if(opts){
+                if(opts.name) { googleUserName.textContent = opts.name; pmName.textContent = opts.name; }
+                if(opts.avatarUrl){
+                    const url = 'url("' + opts.avatarUrl + '")';
+                    profileCircle.style.backgroundImage = url;
+                    pmAvatar.style.backgroundImage = url;
+                }
+                if(opts.career){
+                    profileCircle.dataset.career = opts.career;
+                    pmCareer.textContent = opts.career;
+                }
+            }
+        };
+    })();
+    </script>
 
     <div class="container">
         <h1>Horario Xunito</h1>
