@@ -132,17 +132,10 @@
 
         pmClose.addEventListener('click', closeProfileModal);
         modal.addEventListener('click', (e)=>{
-            if(e.target && e.target.dataset && e.target.dataset.close === 'true') closeProfileModal();
+            if(e.target && e.target.datast && e.target.dataset.close === 'true') closeProfileModal();
         });
         document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && !modal.classList.contains('hidden')) closeProfileModal(); });
 
-        pmSignOut.addEventListener('click', ()=>{
-            // trigger existing sign out control if present
-            if(googleSignOutBtn){
-                googleSignOutBtn.click();
-            }
-            closeProfileModal();
-        });
 
         // Expose a helper to update modal content from other scripts (e.g., after Google sign-in)
         window.profileModalUpdate = function(opts){
@@ -234,7 +227,7 @@
                 </label>
             </div>
             <div style="display:flex;gap:8px;margin-top:8px">
-                <label>Grado (obligatorio)<br><input id="m_inputGrupo" type="text"></label>
+                <label>Grado (obligatorio)<br><input id="m_inputGrado" type="text"></label>
                 <label>Grupo (obligatorio)<br><input id="m_inputGrupo" type="text"></label>
             </div>
             <div style="margin-top:8px">
@@ -292,4 +285,4 @@
 })();
 </script>
 </body>
-</html>
+</html>z
