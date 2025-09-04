@@ -36,6 +36,9 @@ function printSchedule() {
         // Arrays para almacenar materias
         let catalogSubjects = []; // Catálogo de materias disponibles
         let selectedSubjects = []; // Materias seleccionadas para el horario
+
+        // NUEVO: copia de las materias predefinidas para reconstruir el catálogo
+        let predefinedSubjects = [];
         
         // Días y horas para el horario
         const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
@@ -227,7 +230,6 @@ function printSchedule() {
  
             ];
 
-
             // Modificar las sesiones para ajustar las horas que terminan en ":45"
             catalogSubjects.forEach(subject => {
                 subject.sessions.forEach(session => {
@@ -245,6 +247,9 @@ function printSchedule() {
                     }
                 });
             });
+
+    // Guardar una copia inmutable de las materias predefinidas para poder reconstruir el catálogo
+    predefinedSubjects = JSON.parse(JSON.stringify(catalogSubjects));
 
 // Verificar los cambios
 console.log(catalogSubjects);
@@ -359,7 +364,7 @@ console.log(catalogSubjects);
                     try { m_inputGrupo.value = subject.group || ''; } catch(e){}
                     try { if (typeof m_inputAula !== 'undefined') m_inputAula.value = subject.aula || ''; } catch(e){}
     
-                    // preparar selectedSlots con las sesiones actuales para que al pulsar "Siguiente"
+                    // preparar selectedSlots with las sesiones actuales para que al pulsar "Siguiente"
                     // se muestren las horas ya seleccionadas (no borramos selectedSlots aquí)
                     selectedSlots = new Set();
                     (subject.sessions || []).forEach(sess => {
@@ -381,12 +386,12 @@ console.log(catalogSubjects);
                     e.stopPropagation();
                     if (!confirm(`¿Eliminar la materia "${subject.name}" del catálogo? Esta acción quitará la materia creada.`)) return;
 
-                    // quitar de catalogSubjects en memoria
-                    catalogSubjects = catalogSubjects.filter(s => s.id !== subject.id);
-
                     // quitar de custom storage
                     const newCustoms = customs.filter(c => c.id !== subject.id);
                     saveCustomSubjects(newCustoms);
+
+                    // Reconstruir catálogo (predefinidos + customs actualizados)
+                    rebuildCatalogFromPredefinedAndCustoms();
 
                     // si estaba en el horario seleccionado, quitarla también
                     if (selectedSubjects.some(s => s.id === subject.id)) {
@@ -478,6 +483,23 @@ console.log(catalogSubjects);
             // Guardar en localStorage
             saveSelectedSubjects();
             
+            // Sincronizar en Drive: si ya hay token y gapi inicializado, guardar directamente.
+            // Si no, usar ensureSaveToDrive() que pedirá login o restaurará token.
+            (async () => {
+                try {
+                    if (gAccessToken && typeof gapi !== 'undefined' && gapi.client && gapi.client.request) {
+                        await saveToDrive();
+                        showMessage('Horario sincronizado en Google Drive', 'success');
+                    } else {
+                        await ensureSaveToDrive();
+                        showMessage('Horario sincronizado en Google Drive', 'success');
+                    }
+                } catch (err) {
+                    console.warn('Error sincronizando tras añadir materia:', err);
+                    showMessage('No se pudo sincronizar en Drive (añadir materia)', 'warning');
+                }
+            })();
+            
             // Actualizar vistas
             updateScheduleView();
             updateSelectedSubjectsList();
@@ -502,6 +524,18 @@ console.log(catalogSubjects);
                 
                 // Guardar en localStorage
                 saveSelectedSubjects();
+                
+                // Intentar sincronizar en Drive (no bloqueante)
+                try {
+                    ensureSaveToDrive().then(() => {
+                        showMessage('Cambio guardado en Google Drive', 'success');
+                    }).catch(err => {
+                        console.warn('Error sincronizando tras quitar materia:', err);
+                        showMessage('No se pudo sincronizar en Drive (quitar materia)', 'warning');
+                    });
+                } catch (e) {
+                    console.warn('ensureSaveToDrive fallo (quitar):', e);
+                }
                 
                 // Actualizar vistas
                 updateScheduleView();
@@ -787,15 +821,8 @@ console.log(catalogSubjects);
     // integrar custom subjects a catalogSubjects en la carga principal:
     document.addEventListener('DOMContentLoaded', function () {
         // cargar custom subjects y anexar a catalogSubjects existente
-        const customs = loadCustomSubjects();
-        if (Array.isArray(customs) && customs.length) {
-            // evitar duplicados por id
-            const existingIds = new Set(catalogSubjects.map(s => s.id));
-            customs.forEach(c => {
-                if (!existingIds.has(c.id)) catalogSubjects.push(c);
-            });
-            updateCatalogSubjects();
-        }
+        rebuildCatalogFromPredefinedAndCustoms();
+        updateCatalogSubjects();
     });
 
     // Mostrar/ocultar modales
@@ -965,8 +992,8 @@ console.log(catalogSubjects);
             customs.push(nuevo);
             saveCustomSubjects(customs);
 
-            // añadir al catálogo en memoria y refrescar UI
-            catalogSubjects.push(nuevo);
+            // Reconstruir catálogo completo usando predefinidos + customs
+            rebuildCatalogFromPredefinedAndCustoms();
             updateCatalogSubjects();
         }
 
@@ -1358,10 +1385,9 @@ async function loadFromDrive() {
                 updateSelectedSubjectsList();
             }
             if (Array.isArray(data.customSubjects)) {
+                // Sobrescribir customs locales con lo que haya en Drive y reconstruir catálogo
                 saveCustomSubjects(data.customSubjects);
-                const customs = loadCustomSubjects();
-                const existingIds = new Set(catalogSubjects.map(s => s.id));
-                customs.forEach(c => { if (!existingIds.has(c.id)) catalogSubjects.push(c); });
+                rebuildCatalogFromPredefinedAndCustoms();
                 updateCatalogSubjects();
             }
             showMessage('Datos cargados desde Google Drive', 'success');
@@ -1651,4 +1677,60 @@ function setupScheduleCellTooltips() {
             preview.classList.add('hidden');
         });
     });
+}
+
+/**
+ * Maneja errores de autorización/Drive.
+ * - Limpia token expirado en localStorage.
+ * - Actualiza UI y solicita re-login interactivo.
+ * No lanza error para que los catch previos sigan su flujo.
+ */
+function handleAuthError(err) {
+    console.error('handleAuthError:', err);
+
+    // Determinar código de estado si está disponible
+    const status = err && (err.status || (err.result && err.result.error && err.result.error.code));
+
+    // Si parece un problema de autorización/expirado => limpiar y solicitar login
+    if (status === 401 || status === 403 || (err && /invalid_token|unauthorized|access_denied/i.test(String(err)))) {
+        try {
+            localStorage.removeItem('google_token');
+            localStorage.removeItem('google_token_expiry');
+            // marcar como no conectado
+            localStorage.removeItem('google_signed_in');
+        } catch (e) { /* ignore */ }
+
+        gAccessToken = null;
+        gUserProfile = null;
+        try { if (window.gapi && gapi.client) gapi.client.setToken(null); } catch(e){}
+
+        // Actualizar botones/estado UI
+        try { onProfileLoaded(); } catch(e){}
+
+        // Mostrar mensaje que se requiere re-autenticación y solicitar login interactivo
+        try {
+            showMessage('Se requiere inicio de sesión para sincronizar. Por favor, inicia sesión con Google.', 'warning');
+        } catch(e){}
+
+        // Intentar iniciar flujo interactivo para que el usuario autorice de nuevo
+        try { requestGoogleSignIn(false); } catch(e){ console.warn('requestGoogleSignIn fallo desde handleAuthError', e); }
+    } else {
+        // Mensaje genérico para otros errores
+        try { showMessage('Error al acceder a Google Drive. Revisa la consola.', 'error'); } catch(e){}
+    }
+}
+
+// Helper: reconstruir catalogSubjects usando predefined + custom (evita duplicados y permite borrar)
+function rebuildCatalogFromPredefinedAndCustoms() {
+    try {
+        const customs = loadCustomSubjects() || [];
+        // evitar mutar predefinedSubjects por accidente
+        catalogSubjects = JSON.parse(JSON.stringify(predefinedSubjects));
+        // añadir customs (si hay ids duplicados, los customs sobrescriben)
+        const existing = new Map(catalogSubjects.map(s => [s.id, s]));
+        customs.forEach(c => existing.set(c.id, c));
+        catalogSubjects = Array.from(existing.values());
+    } catch (e) {
+        console.warn('rebuildCatalogFromPredefinedAndCustoms error', e);
+    }
 }
