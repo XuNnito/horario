@@ -353,27 +353,38 @@ console.log(catalogSubjects);
                 editBtn.textContent = '✎';
                 editBtn.addEventListener('click', function (e) {
                     e.stopPropagation();
-                    // preparar modal con datos de la materia
-                    editingSubjectId = subject.id;
-                    openAddModal();
-                    // rellenar campos
-                    m_inputMateria.value = subject.name || '';
-                    m_inputProfesor.value = subject.professor || '';
-                    // grado puede no existir en predefinidos
-                    try { m_inputGrado.value = subject.grado || ''; } catch(e){}
-                    try { m_inputGrupo.value = subject.group || ''; } catch(e){}
-                    try { if (typeof m_inputAula !== 'undefined') m_inputAula.value = subject.aula || ''; } catch(e){}
-    
-                    // preparar selectedSlots with las sesiones actuales para que al pulsar "Siguiente"
-                    // se muestren las horas ya seleccionadas (no borramos selectedSlots aquí)
-                    selectedSlots = new Set();
-                    (subject.sessions || []).forEach(sess => {
-                        if (sess && sess.day && sess.startTime) {
-                            selectedSlots.add(`${sess.day}|${sess.startTime}`);
-                        }
-                    });
-                    // actualizar el resumen en el modal de añadir
-                    updateSlotsResumen();
+
+                    // Recuperar el ID de la materia seleccionada
+                    const subjectId = subject.id;
+
+                    // Buscar la materia en el catálogo
+                    const selectedSubject = catalogSubjects.find(s => s.id === subjectId);
+
+                    if (selectedSubject) {
+                        // Preparar el modal con los datos de la materia seleccionada
+                        editingSubjectId = subjectId;
+                        openAddModal();
+
+                        // Rellenar los campos del modal con los datos de la materia
+                        m_inputMateria.value = selectedSubject.name || '';
+                        m_inputProfesor.value = selectedSubject.professor || '';
+                        try { m_inputGrado.value = selectedSubject.grado || ''; } catch (e) {}
+                        try { m_inputGrupo.value = selectedSubject.group || ''; } catch (e) {}
+                        try { if (typeof m_inputAula !== 'undefined') m_inputAula.value = selectedSubject.aula || ''; } catch (e) {}
+
+                        // Preparar los horarios seleccionados para mostrarlos en el modal
+                        selectedSlots = new Set();
+                        (selectedSubject.sessions || []).forEach(session => {
+                            if (session && session.day && session.startTime) {
+                                selectedSlots.add(`${session.day}|${session.startTime}`);
+                            }
+                        });
+
+                        // Actualizar el resumen de horarios en el modal
+                        updateSlotsResumen();
+                    } else {
+                        showMessage('No se pudo encontrar la materia seleccionada.', 'error');
+                    }
                 });
                 subjectItem.appendChild(editBtn);
 
@@ -857,8 +868,14 @@ console.log(catalogSubjects);
                 td.className = 'slot';
                 td.dataset.day = d;
                 td.dataset.hour = hourStart;
+
+                // Marcar como seleccionado si está en `selectedSlots`
+                const key = `${d}|${hourStart}`;
+                if (selectedSlots.has(key)) {
+                    td.classList.add('selected');
+                }
+
                 td.addEventListener('click', () => {
-                    const key = `${d}|${hourStart}`;
                     if (selectedSlots.has(key)) {
                         selectedSlots.delete(key);
                         td.classList.remove('selected');
@@ -1255,7 +1272,6 @@ async function findAppDataFile(fileName) {
 // Guardar estado en Drive (actualiza o crea). Incluye metadatos.
 async function saveToDrive() {
     const fileName = 'horario_data.json';
-    // incluir metadatos para recuperación
     const payload = {
         _meta: {
             savedAt: new Date().toISOString(),
@@ -1263,27 +1279,24 @@ async function saveToDrive() {
             name: gUserProfile ? gUserProfile.name : null
         },
         selectedSubjects,
-        customSubjects: loadCustomSubjects()
+        customSubjects: loadCustomSubjects(),
+        selectedSlots: Array.from(selectedSlots) // Guardar horarios seleccionados
     };
     const content = JSON.stringify(payload, null, 2);
 
     try {
-        // asegurar token en gapi
         try { gapi.client.setToken({ access_token: gAccessToken }); } catch(e){}
 
         const existing = await findAppDataFile(fileName);
         if (existing) {
-            // actualizar usando uploadType=media (PATCH)
-            const updateResp = await gapi.client.request({
+            await gapi.client.request({
                 path: `/upload/drive/v3/files/${existing.id}`,
                 method: 'PATCH',
                 params: { uploadType: 'media' },
                 headers: { 'Content-Type': 'application/json' },
                 body: content
             });
-            console.log('Archivo actualizado', updateResp);
         } else {
-            // crear nuevo archivo (multipart)
             const metadata = { name: fileName, parents: ['appDataFolder'] };
             const boundary = '-------314159265358979323846';
             const delimiter = `\r\n--${boundary}\r\n`;
@@ -1297,16 +1310,15 @@ async function saveToDrive() {
                 content +
                 closeDelimiter;
 
-            const createResp = await gapi.client.request({
+            await gapi.client.request({
                 path: '/upload/drive/v3/files',
                 method: 'POST',
                 params: { uploadType: 'multipart' },
                 headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
                 body: multipartRequestBody
             });
-            console.log('Archivo creado', createResp);
         }
-        showMessage('Horario guardado en Google Drive (privado de la app).', 'success');
+        showMessage('Horario guardado en Google Drive.', 'success');
     } catch (err) {
         handleAuthError(err);
     }
@@ -1339,13 +1351,11 @@ async function ensureSaveToDrive() {
 
 // Cargar estado desde Drive (restaura selectedSubjects y customs)
 async function loadFromDrive() {
-    // Si no hay token, solicitar inicio y esperar token
     if (!gAccessToken) {
         showMessage('Solicitando acceso a Google para cargar datos...', 'warning');
-        // disparar flujo de login (sin prompt forzado si ya hay consentimiento)
         try {
             requestGoogleSignIn();
-            await waitForToken(10000); // esperar hasta 10s por token
+            await waitForToken(10000);
         } catch (e) {
             showMessage('No se obtuvo autorización. Haz login e intenta de nuevo.', 'error');
             return;
@@ -1354,7 +1364,6 @@ async function loadFromDrive() {
 
     const fileName = 'horario_data.json';
     try {
-        // asegurar token en gapi
         try { gapi.client.setToken({ access_token: gAccessToken }); } catch(e){}
 
         const existing = await findAppDataFile(fileName);
@@ -1368,15 +1377,7 @@ async function loadFromDrive() {
             alt: 'media'
         });
 
-        let data = null;
-        if (getResp.body) {
-            data = JSON.parse(getResp.body);
-        } else if (getResp.result) {
-            data = (typeof getResp.result === 'object') ? getResp.result : JSON.parse(getResp.result);
-        } else {
-            data = JSON.parse(JSON.stringify(getResp));
-        }
-
+        let data = JSON.parse(getResp.body || '{}');
         if (data) {
             if (Array.isArray(data.selectedSubjects)) {
                 selectedSubjects = data.selectedSubjects;
@@ -1385,10 +1386,13 @@ async function loadFromDrive() {
                 updateSelectedSubjectsList();
             }
             if (Array.isArray(data.customSubjects)) {
-                // Sobrescribir customs locales con lo que haya en Drive y reconstruir catálogo
                 saveCustomSubjects(data.customSubjects);
                 rebuildCatalogFromPredefinedAndCustoms();
                 updateCatalogSubjects();
+            }
+            if (Array.isArray(data.selectedSlots)) {
+                selectedSlots = new Set(data.selectedSlots); // Recuperar horarios seleccionados
+                buildSlotsTable(); // Actualizar tabla de slots
             }
             showMessage('Datos cargados desde Google Drive', 'success');
         } else {
@@ -1407,12 +1411,18 @@ async function onSignedIn() {
         try { gapi.client.setToken({ access_token: gAccessToken }); } catch(e){}
         const existing = await findAppDataFile('horario_data.json');
         if (existing) {
-            const accept = confirm('Se encontró una copia de tu horario en Google Drive. ¿Deseas cargarla ahora?');
-            if (accept) {
-                await loadFromDrive();
-            } else {
-                showMessage('Puedes recuperar tus datos desde "Cargar desde Google" en cualquier momento.', 'info');
-            }
+            // Mostrar modal personalizado de confirmación
+            showCustomConfirm(
+                'Se encontró una copia de tu horario en Google Drive. ¿Deseas cargarla ahora?',
+                async () => {
+                    // Usuario confirmó, cargar datos
+                    await loadFromDrive();
+                },
+                () => {
+                    // Usuario canceló, nada que hacer
+                    console.log('Carga de horario cancelada por el usuario.');
+                }
+            );
         }
     } catch (e) {
         // no obstructivo: si falla la búsqueda, se muestra aviso en consola y se permite reintentar manualmente
@@ -1734,3 +1744,58 @@ function rebuildCatalogFromPredefinedAndCustoms() {
         console.warn('rebuildCatalogFromPredefinedAndCustoms error', e);
     }
 }
+
+// Crear modal de confirmación personalizado
+function showCustomConfirm(message, onConfirm, onCancel) {
+    // Crear el fondo del modal
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+
+    // Crear el contenedor del modal
+    const modalContainer = document.createElement('div');
+    modalContainer.className = 'modal-container';
+
+    // Crear el mensaje
+    const modalMessage = document.createElement('p');
+    modalMessage.className = 'modal-message';
+    modalMessage.textContent = message;
+
+    // Botón de confirmar
+    const confirmButton = document.createElement('button');
+    confirmButton.className = 'modal-button confirm';
+    confirmButton.textContent = 'Cargar';
+    confirmButton.addEventListener('click', () => {
+        document.body.removeChild(modalOverlay);
+        if (onConfirm) onConfirm();
+    });
+
+    // Botón de cancelar
+    const cancelButton = document.createElement('button');
+    cancelButton.className = 'modal-button cancel';
+    cancelButton.textContent = 'Cancelar';
+    cancelButton.addEventListener('click', () => {
+        document.body.removeChild(modalOverlay);
+        if (onCancel) onCancel();
+    });
+
+    // Ensamblar el modal
+    modalContainer.appendChild(modalMessage);
+    modalContainer.appendChild(confirmButton);
+    modalContainer.appendChild(cancelButton);
+    modalOverlay.appendChild(modalContainer);
+    document.body.appendChild(modalOverlay);
+}
+
+// Usar el modal personalizado
+showCustomConfirm(
+    'Se encontró una copia de tu horario en Google Drive. ¿Deseas cargarla ahora?',
+    () => {
+        console.log('Cargando horario...');
+        // Aquí puedes llamar a la función para cargar el horario
+        loadFromDrive();
+    },
+    () => {
+        console.log('Cancelado.');
+        // Aquí puedes manejar la cancelación si es necesario
+    }
+);
