@@ -29,7 +29,107 @@
             <div class="pm-avatar" id="pmAvatar" aria-hidden="true"></div>
             <h3 id="pmName">Sin sesión</h3>
             <div class="pm-details">
-                <div><strong>Carrera:</strong> <span id="pmCareer">-</span></div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <strong>Carrera:</strong>
+                    <span id="pmCareer">Biomédica</span>
+                    <button id="pmCareerEdit" type="button" title="Editar carrera" aria-label="Editar carrera" style="background:transparent; color:#1976d2; border:0;cursor:pointer;font-size:14px;">✎</button>
+                </div>
+
+                <div id="pmCareerEditor" style="display:none;margin-top:8px;gap:6px;align-items:center;">
+                    <input id="pmCareerInput" type="text" value="Biomédica" style="width:65%;" aria-label="Editar carrera" />
+
+
+                    <style>
+                    
+
+                    /* Botón Guardar con fondo azul */
+                    #pmCareerSave{
+                        background:#1976d2; /* azul */
+                        color:#fff;
+                        border: 0;
+                        padding:6px 10px;
+                        border-radius:8px;
+                        margin-left:8px;
+                        cursor:pointer;
+                        box-shadow: 0 2px 6px rgba(25,118,210,0.18);
+                    }
+                    #pmCareerSave:hover{ filter:brightness(0.95); }
+
+                    /* Botón Cancelar más neutro */
+                    #pmCareerCancel{
+                        background:transparent;
+                        color:#333;
+                        border:1px solid rgba(0,0,0,0.08);
+                        padding:6px 10px;
+                        border-radius:8px;
+                        margin-left:6px;
+                        cursor:pointer;
+                    }
+                    </style>
+                    <button id="pmCareerSave" type="button">Guardar</button>
+                    <button id="pmCareerCancel" type="button">Cancelar</button>
+                </div>
+
+                <script>
+                (function(){
+                    const STORAGE_KEY = 'profile_career';
+                    const pmCareer = document.getElementById('pmCareer');
+                    const editBtn = document.getElementById('pmCareerEdit');
+                    const editor = document.getElementById('pmCareerEditor');
+                    const input = document.getElementById('pmCareerInput');
+                    const saveBtn = document.getElementById('pmCareerSave');
+                    const cancelBtn = document.getElementById('pmCareerCancel');
+                    const profileCircle = document.getElementById('googleProfileCircle');
+
+                    function applyCareer(value){
+                        const v = (value && value.trim()) ? value.trim() : 'Biomédica';
+                        pmCareer.textContent = v;
+                        input.value = v;
+                        if (profileCircle) profileCircle.dataset.career = v;
+                    }
+
+                    // Inicializar desde localStorage o usar "Biomédica"
+                    try {
+                        const stored = localStorage.getItem(STORAGE_KEY);
+                        applyCareer(stored || 'Biomédica');
+                    } catch(e){ applyCareer('Biomédica'); }
+
+                    editBtn.addEventListener('click', function(e){
+                        e.stopPropagation();
+                        editor.style.display = 'flex';
+                        input.focus();
+                    });
+
+                    saveBtn.addEventListener('click', function(){
+                        const val = input.value.trim() || 'Biomédica';
+                        try { localStorage.setItem(STORAGE_KEY, val); } catch(e){ console.warn('No se pudo guardar carrera', e); }
+                        applyCareer(val);
+                        editor.style.display = 'none';
+                    });
+
+                    cancelBtn.addEventListener('click', function(){
+                        editor.style.display = 'none';
+                        input.value = pmCareer.textContent;
+                    });
+
+                    // Cerrar el editor si se cierra el modal (por accesibilidad)
+                    const pmClose = document.getElementById('pmClose');
+                    if (pmClose) pmClose.addEventListener('click', ()=> editor.style.display = 'none');
+
+                    // Si otra parte del código actualiza profileCircle.dataset.career,
+                    // observar cambios y reflejarlos aquí.
+                    if (profileCircle && typeof MutationObserver !== 'undefined') {
+                        const obs = new MutationObserver(()=> {
+                            const dc = profileCircle.dataset.career;
+                            if (dc && dc !== pmCareer.textContent) {
+                                applyCareer(dc);
+                                try { localStorage.setItem(STORAGE_KEY, dc); } catch(e){}
+                            }
+                        });
+                        obs.observe(profileCircle, { attributes: true, attributeFilter: ['data-career'] });
+                    }
+                })();
+                </script>
                 <div><strong>Fecha:</strong> <span id="pmDate">-</span></div>
             </div>
             <button id="pmSignOut" class="pm-signout">Cerrar sesión</button>
@@ -227,8 +327,8 @@
                 </label>
             </div>
             <div style="display:flex;gap:8px;margin-top:8px">
-                <label>Grado (obligatorio)<br><input id="m_inputGrado" type="text"></label>
-                <label>Grupo (obligatorio)<br><input id="m_inputGrupo" type="text"></label>
+               
+                <label>Cuatrimestre y Grupo<br><input id="m_inputGrupo" type="text"></label>
             </div>
             <div style="margin-top:8px">
                 <label for="m_inputAula">Aula</label>
@@ -654,7 +754,7 @@ console.log(catalogSubjects);
                         // Rellenar los campos del modal con los datos de la materia
                         m_inputMateria.value = selectedSubject.name || '';
                         m_inputProfesor.value = selectedSubject.professor || '';
-                        try { m_inputGrado.value = selectedSubject.grado || ''; } catch (e) {}
+                       
                         try { m_inputGrupo.value = selectedSubject.group || ''; } catch (e) {}
                         try { if (typeof m_inputAula !== 'undefined') m_inputAula.value = selectedSubject.aula || ''; } catch (e) {}
 
@@ -1091,7 +1191,6 @@ console.log(catalogSubjects);
     const modalSlots = document.getElementById('modalSlots');
     const m_inputMateria = document.getElementById('m_inputMateria');
     const m_inputProfesor = document.getElementById('m_inputProfesor');
-    const m_inputGrado = document.getElementById('m_inputGrado');
     const m_inputGrupo = document.getElementById('m_inputGrupo');
     const m_cancel = document.getElementById('m_cancel');
     const m_next = document.getElementById('m_next');
@@ -1126,7 +1225,6 @@ console.log(catalogSubjects);
     function openAddModal() {
         m_inputMateria.value = '';
         m_inputProfesor.value = '';
-        m_inputGrado.value = '';
         m_inputGrupo.value = '';
         modalAdd.style.display = 'flex';
     }
@@ -1192,7 +1290,7 @@ console.log(catalogSubjects);
 
     // Siguiente: validación y abrir selector de horas
     m_next.addEventListener('click', () => {
-        if (!m_inputMateria.value.trim() || !m_inputProfesor.value.trim() || !m_inputGrado.value.trim() || !m_inputGrupo.value.trim()) {
+        if (!m_inputMateria.value.trim() || !m_inputProfesor.value.trim() || !m_inputGrupo.value.trim()) {
             alert('Todos los campos (materia, profesor, grado y grupo) son obligatorios.');
             return;
         }
@@ -1215,11 +1313,10 @@ console.log(catalogSubjects);
     s_save.addEventListener('click', () => {
         const materia = m_inputMateria.value.trim();
         const profesor = m_inputProfesor.value.trim();
-        const grado = m_inputGrado.value.trim();
         const grupo = m_inputGrupo.value.trim();
         const aula = (typeof m_inputAula !== 'undefined' && m_inputAula) ? m_inputAula.value.trim() : '';
 
-        if (!materia || !profesor || !grado || !grupo) {
+        if (!materia || !profesor || !grupo) {
             alert('Campos obligatorios faltantes.');
             return;
         }
@@ -1243,7 +1340,7 @@ console.log(catalogSubjects);
                 if (customs[i].id === id) {
                     customs[i].name = materia;
                     customs[i].professor = profesor;
-                    customs[i].grado = grado;
+                   
                     customs[i].group = grupo;
                     customs[i].aula = aula;
                     customs[i].sessions = sesiones;
@@ -1257,7 +1354,6 @@ console.log(catalogSubjects);
                     id: id,
                     name: materia,
                     professor: profesor,
-                    grado: grado,
                     group: grupo,
                     aula: aula,
                     sessions: sesiones
@@ -1266,7 +1362,7 @@ console.log(catalogSubjects);
             saveCustomSubjects(customs);
 
             // actualizar en catalogSubjects en memoria
-            catalogSubjects = catalogSubjects.map(s => s.id === id ? { ...s, name: materia, professor: profesor, grado: grado, group: grupo, aula: aula, sessions: sesiones } : s);
+            catalogSubjects = catalogSubjects.map(s => s.id === id ? { ...s, name: materia, professor: profesor,  group: grupo, aula: aula, sessions: sesiones } : s);
 
             // actualizar selectedSubjects si la materia estaba en el horario
             selectedSubjects = selectedSubjects.map(s => s.id === id ? { ...s, name: materia, professor: profesor, group: grupo, aula: aula, sessions: sesiones } : s);
@@ -1285,7 +1381,6 @@ console.log(catalogSubjects);
                 id: newId,
                 name: materia,
                 professor: profesor,
-                grado: grado,
                 group: grupo,
                 aula: aula,
                 sessions: sesiones
