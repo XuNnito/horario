@@ -132,7 +132,7 @@
                 </script>
                 <div><strong>Fecha:</strong> <span id="pmDate">-</span></div>
             </div>
-            <button id="googleSignOut" class="pm-signout">Cerrar sesión</button>
+            <button id="pmSignOut" class="pm-signout" type="button" onclick="signOutGoogle()" aria-label="Cerrar sesión">Cerrar sesión</button>
         </div>
     </div>
 
@@ -232,7 +232,7 @@
 
         pmClose.addEventListener('click', closeProfileModal);
         modal.addEventListener('click', (e)=>{
-            if(e.target && e.target.datast && e.target.dataset.close === 'true') closeProfileModal();
+            if(e.target && e.target.dataset && e.target.dataset.close === 'true') closeProfileModal();
         });
         document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && !modal.classList.contains('hidden')) closeProfileModal(); });
 
@@ -1340,7 +1340,6 @@ console.log(catalogSubjects);
                 if (customs[i].id === id) {
                     customs[i].name = materia;
                     customs[i].professor = profesor;
-                   
                     customs[i].group = grupo;
                     customs[i].aula = aula;
                     customs[i].sessions = sesiones;
@@ -1460,14 +1459,16 @@ function initGoogleAuth() {
             }
             gAccessToken = resp.access_token;
 
-            // Guardar token y expiry en localStorage para persistir sesión entre recargas
+            // Guardar token con expiración extendida (4 meses = 120 días)
             try {
                 localStorage.setItem('google_token', gAccessToken);
-                if (resp.expires_in) {
-                    const expiryTs = Date.now() + (resp.expires_in * 1000);
-                    localStorage.setItem('google_token_expiry', String(expiryTs));
-                }
+                // Establecer expiración a 4 meses (120 días) en lugar de usar expires_in del response
+                const fourMonthsInMs = 120 * 24 * 60 * 60 * 1000; // 4 meses en milisegundos
+                const expiryTs = Date.now() + fourMonthsInMs;
+                localStorage.setItem('google_token_expiry', String(expiryTs));
                 localStorage.setItem('google_signed_in', '1');
+                // Nuevo: marcar timestamp de cuando se inició sesión
+                localStorage.setItem('google_session_start', String(Date.now()));
             } catch(e){ console.warn('No se pudo persistir token', e); }
 
             // Inicializar gapi client usando discoveryDocs (más robusto)
@@ -1503,23 +1504,37 @@ function restoreTokenFromStorage() {
     try {
         const token = localStorage.getItem('google_token');
         const expiry = Number(localStorage.getItem('google_token_expiry') || '0');
+        const sessionStart = Number(localStorage.getItem('google_session_start') || '0');
+        
+        // Verificar si el token existe y no ha expirado (4 meses)
         if (token && expiry && expiry > Date.now()) {
             gAccessToken = token;
+            
             // Si gapi está listo, aseguramos el token en el cliente
             if (typeof gapi !== 'undefined' && gapi.client) {
                 try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { /* no crítico */ }
             }
+            
             // Cargar perfil (silencioso) y actualizar UI
             fetchGoogleProfile().then(() => {
                 updateGoogleButtons(true);
                 try { onSignedIn(); } catch(e){/*opcional*/ }
+                
+                // Mostrar mensaje de sesión restaurada con fecha de inicio
+                if (sessionStart) {
+                    const sessionDate = new Date(sessionStart).toLocaleDateString();
+                    console.log(`Sesión iniciada el ${sessionDate} - Token válido por 4 meses`);
+                    showMessage(`Sesión restaurada (iniciada el ${sessionDate})`, 'success');
+                }
             }).catch(()=>{/*silencioso*/});
             return true;
         }
-        // token ausente o expirado -> limpiar
+        
+        // Token ausente o expirado -> limpiar todo
         localStorage.removeItem('google_token');
         localStorage.removeItem('google_token_expiry');
-        // mantener google_signed_in para intentar silent renew si se desea
+        localStorage.removeItem('google_session_start');
+        localStorage.removeItem('google_signed_in');
     } catch (e) {
         console.warn('restoreTokenFromStorage error', e);
     }
@@ -1784,30 +1799,21 @@ async function loadFromDrive() {
     }
 }
 
-// Al iniciar sesión correctamente, preguntar si desea restaurar datos guardados
+// Al iniciar sesión correctamente, cargar automáticamente si hay datos guardados
 async function onSignedIn() {
     updateGoogleButtons(true);
-    // intentamos buscar archivo sin obligar a cargarlo
+    // intentamos buscar archivo y cargarlo automáticamente si existe
     try {
         try { gapi.client.setToken({ access_token: gAccessToken }); } catch(e){}
         const existing = await findAppDataFile('horario_data.json');
         if (existing) {
-            // Mostrar modal personalizado de confirmación
-            showCustomConfirm(
-                'Se encontró una copia de tu horario en Google Drive. ¿Deseas cargarla ahora?',
-                async () => {
-                    // Usuario confirmó, cargar datos
-                    await loadFromDrive();
-                },
-                () => {
-                    // Usuario canceló, nada que hacer
-                    console.log('Carga de horario cancelada por el usuario.');
-                }
-            );
+            // Cargar automáticamente sin pregunta
+            console.log('Cargando horario automáticamente desde Google Drive...');
+            await loadFromDrive();
         }
     } catch (e) {
-        // no obstructivo: si falla la búsqueda, se muestra aviso en consola y se permite reintentar manualmente
-        console.warn('No se pudo buscar archivo en appDataFolder al iniciar sesión', e);
+        // no obstructivo: si falla la búsqueda, se muestra aviso en consola
+        console.warn('No se pudo buscar/cargar archivo desde Drive al iniciar sesión', e);
     }
 }
 
@@ -1828,6 +1834,7 @@ function requestGoogleSignIn(silent = false) {
     }
     // pedir token (si silent true se intenta sin forzar diálogo)
     try {
+
         if (silent) tokenClient.requestAccessToken(); else tokenClient.requestAccessToken({ prompt: 'consent' });
     } catch(e){
         console.warn('requestAccessToken error', e);
@@ -1949,6 +1956,16 @@ function signOutGoogle() {
         gUserProfile = null;
         try { if (window.gapi && gapi.client) gapi.client.setToken(null); } catch(e){}
         onProfileLoaded();
+        // cerrar modal de perfil si está abierto
+        try {
+            const profileModal = document.getElementById('profileModal');
+            if (profileModal) {
+                profileModal.classList.add('hidden');
+                profileModal.setAttribute('aria-hidden', 'true');
+            }
+            const profileCircle = document.getElementById('googleProfileCircle');
+            if (profileCircle) profileCircle.focus();
+        } catch(e){}
         // limpiar persistencia local
         try { localStorage.removeItem('google_signed_in'); localStorage.removeItem('google_profile'); } catch(e){}
         showMessage('Sesión cerrada', 'success');
@@ -1968,12 +1985,48 @@ function signOutGoogle() {
         gUserProfile = null;
         try { if (window.gapi && gapi.client) gapi.client.setToken(null); } catch(e){}
         onProfileLoaded();
+        // cerrar modal de perfil si está abierto
+        try {
+            const profileModal = document.getElementById('profileModal');
+            if (profileModal) {
+                profileModal.classList.add('hidden');
+                profileModal.setAttribute('aria-hidden', 'true');
+            }
+            const profileCircle = document.getElementById('googleProfileCircle');
+            if (profileCircle) profileCircle.focus();
+        } catch(e){}
         // limpiar persistencia local al cerrar sesión explícita
         try { localStorage.removeItem('google_signed_in'); localStorage.removeItem('google_profile'); } catch(e){}
         showMessage('Sesión cerrada', 'success');
     });
 }
 
+// Función para mostrar información de la sesión actual
+function getSessionInfo() {
+    try {
+        const sessionStart = Number(localStorage.getItem('google_session_start') || '0');
+        const expiry = Number(localStorage.getItem('google_token_expiry') || '0');
+        
+        if (sessionStart && expiry) {
+            const startDate = new Date(sessionStart);
+            const expiryDate = new Date(expiry);
+            const daysLeft = Math.ceil((expiry - Date.now()) / (24 * 60 * 60 * 1000));
+            
+            console.log(`Sesión iniciada: ${startDate.toLocaleString()}`);
+            console.log(`Expira: ${expiryDate.toLocaleString()}`);
+            console.log(`Días restantes: ${daysLeft}`);
+            
+            return { sessionStart: startDate, expiry: expiryDate, daysLeft };
+        }
+    } catch(e) {
+        console.warn('Error obteniendo info de sesión', e);
+    }
+    return null;
+}
+
+// Exponer función para debug/información
+window.getSessionInfo = getSessionInfo;
+        
 // Función para configurar tooltips en las celdas del horario
 function setupScheduleCellTooltips() {
     const preview = document.getElementById('floatingPreview');
