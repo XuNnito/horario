@@ -570,11 +570,33 @@
     max-width:240px;
 }
 
+.google-btns{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
 .google-btns button{
     padding:6px 10px;
     font-size:14px;
-    margin-left:6px;
 }
+.drive-btn{
+    background-color:#0f62fe;
+    color:#fff;
+    border-radius:6px;
+    border:none;
+    font-weight:600;
+    transition:box-shadow 0.2s ease;
+}
+.drive-btn:hover{box-shadow:0 4px 12px rgba(15,98,254,0.35);}
+.drive-load-btn{
+    background-color:#04a777;
+    color:#fff;
+    border-radius:6px;
+    border:none;
+    font-weight:600;
+    transition:box-shadow 0.2s ease;
+}
+.drive-load-btn:hover{box-shadow:0 4px 12px rgba(4,167,119,0.35);}
 
 .hidden { display: none !important; }
 
@@ -647,3 +669,5 @@
         transform: scale(1);
     }
 }
+
+
