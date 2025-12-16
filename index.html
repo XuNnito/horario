@@ -4,11 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> Horarios Bio</title>
-    <link rel="icon" href="https://lh3.googleusercontent.com/a/ACg8ocIrJhuhpXdWqJRwwfmS2rcYMa9mKJmm4TJUJsqcac9E2tOXGmM=s96-c-rg-br100" type="image/png">
+    <title> Horarios Bio</title>
+    <link rel="icon"
+        href="icono.png"
+        type="image/png">
     <link rel="stylesheet" href="estilo.css">
 
    
 </head>
+<style>
+    @media (max-width: 768px) {
+        #catalogSubjects, .panel {
+            display: none; /* Ocultar el catálogo en dispositivos móviles */
+        }
+        #mobileMessage {
+            display: block; /* Mostrar mensaje en dispositivos móviles */
+            text-align: center;
+            font-size: 1.2em;
+            color: #e74c3c; /* Color de advertencia */
+            margin: 20px 0;
+        }
+    }
+</style>
+
+<div id="mobileMessage" class="hidden">
+    Esta vista de catálogo no está disponible en dispositivos móviles. Por favor, utiliza un ordenador para acceder a las materias y poder simularlo.
+</div>
+
+
 
 <body>
     <!-- TOP BAR: perfil y botones Google -->
@@ -257,7 +280,56 @@
     </script>
 
     <div class="container">
-        <h1>Horario Xunito</h1>
+        <h1 id="headerTitle">Horario</h1>
+
+        <script>
+        (function(){
+            // Función para actualizar el título con el nombre del usuario
+            function updateHeaderTitle() {
+            const headerTitle = document.getElementById('headerTitle');
+            if (!headerTitle) return;
+            
+            // Intentar obtener el nombre del usuario de gUserProfile
+            const userName = (gUserProfile && gUserProfile.name) ? gUserProfile.name : null;
+            
+            if (userName) {
+                headerTitle.textContent = `Horario de ${userName}`;
+            } else {
+                headerTitle.textContent = 'Horario';
+            }
+            }
+            
+            // Actualizar inmediatamente cuando se carga el perfil
+            const originalOnProfileLoaded = window.onProfileLoaded;
+            window.onProfileLoaded = function() {
+            if (originalOnProfileLoaded) originalOnProfileLoaded();
+            updateHeaderTitle();
+            };
+            
+            // Actualizar inmediatamente cuando se cierra sesión
+            const originalSignOutGoogle = window.signOutGoogle;
+            window.signOutGoogle = function() {
+            if (originalSignOutGoogle) originalSignOutGoogle();
+            updateHeaderTitle();
+            };
+            
+            // Observar cambios en gUserProfile para actualización instantánea
+            let lastUserName = null;
+            setInterval(function() {
+            const currentUserName = (gUserProfile && gUserProfile.name) ? gUserProfile.name : null;
+            if (currentUserName !== lastUserName) {
+                lastUserName = currentUserName;
+                updateHeaderTitle();
+            }
+            }, 100); // Verificar cada 100ms para actualización rápida
+            
+            // Actualizar inmediatamente al cargar
+            updateHeaderTitle();
+            
+            // También actualizar cuando el DOM esté listo
+            document.addEventListener('DOMContentLoaded', updateHeaderTitle);
+        })();
+        </script>
         
         <div id="messageContainer" class="message hidden"></div>
         
@@ -270,7 +342,7 @@
                      
                     </div>
                 </h2>
-                <p>Haga clic en una materia para agregarla a su horario y ten en cuenta que los nuevos catálogos no se guardan</p>
+                <p>Haga clic en una materia para agregarla a su horario y con el boton +mas crea mas horarios de otra grupos o carrera</p>
                 <div class="search-container">
                   <input type="text" id="searchInput" placeholder="Buscar materias, grupos o profesores..." />
                   <div id="suggestions" class="suggestions hidden"></div>
@@ -281,8 +353,20 @@
             <div class="panel" style="flex: 2; min-width: 600px;">
                 <h2>Horario Semanal</h2>
                 <button onclick="printSchedule()" style="margin-bottom: 10px;">Imprimir Horario</button>
-                <button id="btnSaveDrive" style="margin-left:8px;">Guardar en Google</button>
-                <button id="btnLoadDrive" style="margin-left:8px;">Cargar desde Google</button>
+                <div class="legend" style="display:flex;gap:10px;align-items:center;margin:10px 0;">
+                    <span style="display:inline-flex;align-items:center;gap:6px;">
+                        <span style="width:14px;height:14px;border-radius:50%;background:#28a745;display:inline-block;"></span>
+                        <span style="font-size:13px;">Verde: carga de otra materia</span>
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:6px;">
+                        <span style="width:14px;height:14px;border-radius:50%;background:#d9534f;display:inline-block;"></span>
+                        <span style="font-size:13px;">Rojo: choque de horas</span>
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:6px;">
+                        <span style="width:14px;height:14px;border-radius:50%;background:#2196f3;display:inline-block;"></span>
+                        <span style="font-size:13px;">Azul: ordinario</span>
+                    </span>
+                </div>
                 <div id="printMessage" class="modal">
                   Opcion: Antes de imprimir, activa "Imprimir fondos de gráficos" <br>1. Mas configuraciones y busca opciones "Graficos de fondo" <br>
                     <button onclick="closeMessageAndPrint()" class="print-button">¡Listo, Imprimir!</button>
@@ -2197,7 +2281,7 @@ function showCustomConfirm(message, onConfirm, onCancel) {
     // Botón de confirmar
     const confirmButton = document.createElement('button');
     confirmButton.className = 'modal-button confirm';
-    confirmButton.textContent = 'Cargar';
+    confirmButton.textContent = 'Iniciar sesión';
     confirmButton.addEventListener('click', () => {
         document.body.removeChild(modalOverlay);
         if (onConfirm) onConfirm();
@@ -2222,7 +2306,7 @@ function showCustomConfirm(message, onConfirm, onCancel) {
 
 // Usar el modal personalizado
 showCustomConfirm(
-    'Se encontró una copia de tu horario en Google Drive. ¿Deseas cargarla ahora?',
+    'Inicia sesión con tu cuenta de Google para guardar tus horarios. ¿Iniciar sesión?',
     () => {
         console.log('Cargando horario...');
         // Aquí puedes llamar a la función para cargar el horario
@@ -2236,4 +2320,13 @@ showCustomConfirm(
 
 </script>
 </body>
+<footer>
+    <p>&copy; 2025 XuNnito</p>
+    <a href="https://www.facebook.com/XuNnitohz" target="_blank" rel="noopener noreferrer" aria-label="Visitar página de Facebook" style="display:inline-flex;align-items:center;gap:6px;color:#1877f2;text-decoration:none;margin-left:10px; font-size: 10px; top: -10px; position: relative;">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+        </svg>
+        Facebook
+    </a>
+</footer>
 </html>
