@@ -14,7 +14,7 @@
 </head>
 <style>
     @media (max-width: 768px) {
-        #catalogSubjects, .panel {
+        #catalogSubjects, .catalog-panel {
             display: none; /* Ocultar el catálogo en dispositivos móviles */
         }
         #mobileMessage {
@@ -25,10 +25,120 @@
             margin: 20px 0;
         }
     }
+
+    #globalLoader {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 15, 30, 0.65);
+        z-index: 2100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #globalLoader.hidden {
+        display: none;
+    }
+
+    .loader-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 22px 30px;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 12px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .loader-spinner {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        border: 5px solid rgba(255, 255, 255, 0.25);
+        border-top-color: #fff;
+        animation: spin 0.85s linear infinite;
+    }
+
+    .loader-text {
+        color: #fff;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    body.no-scroll {
+        overflow: hidden;
+    }
+
+    body.auth-gate-open {
+        overflow: hidden;
+    }
+
+    #authGate {
+        position: fixed;
+        inset: 0;
+        z-index: 2200;
+        background: rgba(9, 15, 26, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    #authGate.hidden {
+        display: none;
+    }
+
+    .auth-gate__box {
+        background: #0b0d14;
+        border-radius: 16px;
+        padding: 28px 30px;
+        max-width: 420px;
+        width: 100%;
+        color: #fff;
+        text-align: center;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+    }
+
+    .auth-gate__box p {
+        margin: 0 0 18px;
+        line-height: 1.4;
+        font-size: 1.05rem;
+    }
+
+    .auth-gate__actions {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .auth-gate__actions button {
+        flex: 1;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: none;
+        font-size: 0.95rem;
+        cursor: pointer;
+    }
+
+    #authGateSignIn {
+        background: #1a73e8;
+        color: #fff;
+    }
+
+    #authGateCancel {
+        background: #2c2f38;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
 </style>
 
-<div id="mobileMessage" class="hidden">
-    Esta vista de catálogo no está disponible en dispositivos móviles. Por favor, utiliza un ordenador para acceder a las materias y poder simularlo.
+<div id="mobileMessage" class="hidden" role="status" aria-live="polite">
+    Solo puedes cargar nuevas materias o simular horarios desde un ordenador. En el móvil solo puedes revisar tu horario después de iniciar sesión.
 </div>
 
 
@@ -332,9 +442,26 @@
         </script>
         
         <div id="messageContainer" class="message hidden"></div>
+
+        <div id="globalLoader" class="loader-overlay hidden" aria-live="polite" aria-hidden="true">
+            <div class="loader-content">
+                <div class="loader-spinner" role="presentation" aria-hidden="true"></div>
+                <p id="globalLoaderText" class="loader-text">Cargando...</p>
+            </div>
+        </div>
+
+        <div id="authGate" class="auth-gate" aria-hidden="false" role="dialog" aria-label="Inicio de sesión requerido">
+            <div style="background: #ddd; color: #000;" class="auth-gate__box">
+                <p id="authGateMessage">Para continuar con el catálogo y guardar tus horarios en Drive debes iniciar sesión con Google.</p>
+                <div class="auth-gate__actions">
+                    <button id="authGateSignIn" type="button">Iniciar sesión</button>
+                    <button style="background: #c21111; color: #f5f5f5;" id="authGateCancel" type="button">Cancelar</button>
+                </div>
+            </div>
+        </div>
         
         <div class="row">
-            <div class="panel" style="flex: 1; min-width: 200px;">
+            <div class="panel catalog-panel" style="flex: 1; min-width: 200px;">
                 <h2 style="display:flex;align-items:center;justify-content:space-between;">
                     <span>Materias</span>
                     <div>
@@ -468,12 +595,26 @@
     (function(e){ return (0,eval)(e); })(decoded);
 })();
 
+let printAutoTimer = null;
+
 function printSchedule() {
-        document.getElementById('printMessage').style.display = 'block';
+        const dialog = document.getElementById('printMessage');
+        if (!dialog) return;
+        dialog.style.display = 'flex';
+        dialog.setAttribute('aria-hidden', 'false');
+        clearTimeout(printAutoTimer);
+        printAutoTimer = setTimeout(() => {
+            closeMessageAndPrint();
+        }, 850);
     }
 
     function closeMessageAndPrint() {
-        document.getElementById('printMessage').style.display = 'none';
+        const dialog = document.getElementById('printMessage');
+        if (dialog) {
+            dialog.style.display = 'none';
+            dialog.setAttribute('aria-hidden', 'true');
+        }
+        clearTimeout(printAutoTimer);
 
         const style = document.createElement('style');
         style.type = 'text/css';
@@ -520,6 +661,92 @@ function printSchedule() {
             const endMinute = i.toString().padStart(2, '0') + ':45';
             hours.push(`${startHour}-${endMinute}`);
         }
+
+        function showLoader(message = 'Cargando...') {
+            const overlay = document.getElementById('globalLoader');
+            const text = document.getElementById('globalLoaderText');
+            if (!overlay) return;
+            if (text) text.textContent = message;
+            overlay.classList.remove('hidden');
+            overlay.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('no-scroll');
+        }
+
+        function hideLoader() {
+            const overlay = document.getElementById('globalLoader');
+            if (!overlay) return;
+            overlay.classList.add('hidden');
+            overlay.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('no-scroll');
+        }
+
+        function lockInterface(customMessage) {
+            const gate = document.getElementById('authGate');
+            const msg = document.getElementById('authGateMessage');
+            if (!gate) return;
+            if (msg && customMessage) msg.textContent = customMessage;
+            gate.classList.remove('hidden');
+            gate.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('auth-gate-open');
+        }
+
+        function unlockInterface() {
+            const gate = document.getElementById('authGate');
+            if (!gate) return;
+            gate.classList.add('hidden');
+            gate.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('auth-gate-open');
+        }
+
+        function isSessionActive() {
+            return !!gUserProfile || localStorage.getItem('google_signed_in') === '1';
+        }
+
+        function updateAuthGateState() {
+            if (isSessionActive()) {
+                unlockInterface();
+                return;
+            }
+            lockInterface('Para cargar el catálogo y guardar tus horarios necesitas iniciar sesión con Google.');
+        }
+
+        function initAuthGate() {
+            const signInBtn = document.getElementById('authGateSignIn');
+            const cancelBtn = document.getElementById('authGateCancel');
+            if (signInBtn) {
+                signInBtn.addEventListener('click', () => {
+                    requestGoogleSignIn();
+                });
+            }
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    lockInterface('Sin sesión no puedes acceder a las materias ni guardar horarios.');
+                });
+            }
+            updateAuthGateState();
+        }
+
+        function hasValidAccessToken() {
+            if (gAccessToken) return true;
+            return restoreTokenFromStorage();
+        }
+
+        async function ensureDriveReady(options = {}) {
+            const { timeoutMs = 10000 } = options;
+            await ensureDriveApiInitialized();
+            if (!gAccessToken) {
+                try {
+                    await waitForToken(timeoutMs);
+                } catch (err) {
+                    console.warn('waitForToken falló al preparar Drive', err);
+                }
+            }
+            if (!hasValidAccessToken()) {
+                showMessage('Inicia sesión con Google antes de sincronizar en Drive.', 'warning');
+                throw new Error('Sin token de acceso válido');
+            }
+        }
+
         
         // Inicializar la aplicación cuando el DOM esté cargado
         document.addEventListener('DOMContentLoaded', function() {
@@ -539,6 +766,24 @@ function printSchedule() {
             
             // Configurar previsualización flotante
             setupFloatingPreview();
+
+            initAuthGate();
+            updateMobileMessage();
+        });
+
+        function updateMobileMessage() {
+            const mobileMessage = document.getElementById('mobileMessage');
+            if (!mobileMessage) return;
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                mobileMessage.classList.remove('hidden');
+            } else {
+                mobileMessage.classList.add('hidden');
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            updateMobileMessage();
         });
 
 
@@ -727,15 +972,25 @@ console.log(catalogSubjects);
         
         // Función para cargar materias seleccionadas desde localStorage
         function loadSelectedSubjects() {
-            const savedSubjects = localStorage.getItem('selectedSubjects');
-            if (savedSubjects) {
-                selectedSubjects = JSON.parse(savedSubjects);
+            try {
+                const savedSubjects = localStorage.getItem('selectedSubjects');
+                if (savedSubjects) {
+                    selectedSubjects = JSON.parse(savedSubjects);
+                }
+            } catch (err) {
+                console.warn('loadSelectedSubjects error', err);
+                showMessage('No se pudieron cargar los horarios guardados en este dispositivo.', 'warning');
             }
         }
         
         // Función para guardar materias seleccionadas en localStorage
         function saveSelectedSubjects() {
-            localStorage.setItem('selectedSubjects', JSON.stringify(selectedSubjects));
+            try {
+                localStorage.setItem('selectedSubjects', JSON.stringify(selectedSubjects));
+            } catch (err) {
+                console.warn('saveSelectedSubjects error', err);
+                showMessage('Tu navegador no permitió guardar el horario localmente.', 'warning');
+            }
         }
         
         // Función para generar la estructura de la tabla de horarios
@@ -1525,6 +1780,16 @@ const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata openid prof
 let tokenClient = null;
 let gAccessToken = null;
 let gUserProfile = null; // aquí guardaremos perfil (nombre, email, picture)
+let driveApiInitPromise = null;
+let driveApiReady = false;
+let authRequestInProgress = false;
+let sessionExpiredWarningShown = false;
+
+function notifySessionExpired() {
+    if (sessionExpiredWarningShown) return;
+    sessionExpiredWarningShown = true;
+    showMessage('Tu sesión venció. Haz clic en "Iniciar con Google" para volver a conectarte.', 'warning');
+}
 
 function initGoogleAuth() {
     if (typeof google === 'undefined' || typeof gapi === 'undefined') {
@@ -1532,10 +1797,11 @@ function initGoogleAuth() {
         return;
     }
 
-    tokenClient = google.accounts.oauth2.initTokenClient({
+        tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
         scope: GOOGLE_SCOPES,
         callback: (resp) => {
+                authRequestInProgress = false;
             if (resp.error) {
                 console.error('Token error', resp);
                 showMessage('Error al autenticar con Google', 'error');
@@ -1557,23 +1823,16 @@ function initGoogleAuth() {
 
             // Inicializar gapi client usando discoveryDocs (más robusto)
             try {
-                gapi.load('client', () => {
-                    gapi.client.setApiKey(GOOGLE_API_KEY);
-                    gapi.client.init({
-                        apiKey: GOOGLE_API_KEY,
-                        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
-                    }).then(() => {
-                        // asegurar token y pruebas básicas
-                        try { gapi.client.setToken({ access_token: gAccessToken }); } catch(e){ console.warn('setToken fallo', e); }
-                        onSignedIn();
-                        return fetchGoogleProfile();
-                    }).then(() => {
-                        showMessage('Conectado a Google', 'success');
-                    }).catch(err => {
-                        console.error('Drive init error:', err);
-                        const msg = (err && err.result && err.result.error && err.result.error.message) || err.message || JSON.stringify(err);
-                        showMessage('Error inicializando Drive API: ' + msg, 'error');
-                    });
+                ensureDriveApiInitialized().then(() => {
+                    try { gapi.client.setToken({ access_token: gAccessToken }); } catch(e){ console.warn('setToken fallo', e); }
+                    onSignedIn();
+                    return fetchGoogleProfile();
+                }).then(() => {
+                    showMessage('Conectado a Google', 'success');
+                }).catch(err => {
+                    console.error('Drive init error:', err);
+                    const msg = (err && err.result && err.result.error && err.result.error.message) || err.message || JSON.stringify(err);
+                    showMessage('Error inicializando Drive API: ' + msg, 'error');
                 });
             } catch (e) {
                 console.warn('gapi init fallo', e);
@@ -1600,10 +1859,13 @@ function restoreTokenFromStorage() {
             }
             
             // Cargar perfil (silencioso) y actualizar UI
-            fetchGoogleProfile().then(() => {
+            ensureDriveApiInitialized().then(() => {
+                try { gapi.client.setToken({ access_token: gAccessToken }); } catch(e){ console.warn('setToken fallo (restauración)', e); }
+                return fetchGoogleProfile();
+            }).then(() => {
                 updateGoogleButtons(true);
                 try { onSignedIn(); } catch(e){/*opcional*/ }
-                
+
                 // Mostrar mensaje de sesión restaurada con fecha de inicio
                 if (sessionStart) {
                     const sessionDate = new Date(sessionStart).toLocaleDateString();
@@ -1731,6 +1993,40 @@ function onProfileLoaded() {
     } catch(e){}
 
     updateGoogleButtons(true);
+    updateAuthGateState();
+}
+
+function ensureDriveApiInitialized() {
+    if (driveApiReady && typeof gapi !== 'undefined' && gapi.client) {
+        return Promise.resolve();
+    }
+    if (driveApiInitPromise) {
+        return driveApiInitPromise;
+    }
+    driveApiInitPromise = new Promise((resolve, reject) => {
+        if (typeof gapi === 'undefined') {
+            driveApiInitPromise = null;
+            return reject(new Error('Google APIs no disponibles'));
+        }
+        try {
+            gapi.load('client', () => {
+                gapi.client.init({
+                    apiKey: GOOGLE_API_KEY,
+                    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+                }).then(() => {
+                    driveApiReady = true;
+                    resolve();
+                }).catch(err => {
+                    driveApiInitPromise = null;
+                    reject(err);
+                });
+            });
+        } catch (err) {
+            driveApiInitPromise = null;
+            reject(err);
+        }
+    });
+    return driveApiInitPromise;
 }
 
 // Buscar archivo por nombre en appDataFolder
@@ -1750,7 +2046,8 @@ async function findAppDataFile(fileName) {
 }
 
 // Guardar estado en Drive (actualiza o crea). Incluye metadatos.
-async function saveToDrive() {
+async function saveToDrive(options = {}) {
+    const { suppressAuthError = false } = options;
     const fileName = 'horario_data.json';
     const payload = {
         _meta: {
@@ -1765,6 +2062,7 @@ async function saveToDrive() {
     const content = JSON.stringify(payload, null, 2);
 
     try {
+        await ensureDriveReady();
         try { gapi.client.setToken({ access_token: gAccessToken }); } catch(e){}
 
         const existing = await findAppDataFile(fileName);
@@ -1800,50 +2098,32 @@ async function saveToDrive() {
         }
         showMessage('Horario guardado en Google Drive.', 'success');
     } catch (err) {
-        handleAuthError(err);
+        if (suppressAuthError) {
+            console.warn('saveToDrive suppressed auth error', err);
+        } else {
+            handleAuthError(err);
+        }
     }
 }
 
 // NUEVA FUNCION: intentar sincronizar en Drive pidiendo login si hace falta
 async function ensureSaveToDrive() {
     try {
-        // si ya hay token válido, intentar guardar
-        if (gAccessToken) {
-            await saveToDrive();
-            return;
-        }
-
-        // intentar restaurar token desde storage (silencioso)
-        if (restoreTokenFromStorage()) {
-            await saveToDrive();
-            return;
-        }
-
-        // pedir sign-in interactivo (se mostrará el diálogo si es necesario)
-        requestGoogleSignIn(false); // prompt normal
-        await waitForToken(15000); // esperar hasta 15s por token
-        await saveToDrive();
-    } catch (e) {
-        // propagar para que el llamador muestre mensaje o lo maneje
-        throw e;
+        await ensureDriveReady();
+    } catch (err) {
+        console.warn('ensureSaveToDrive: no se pudo preparar Drive', err);
+        return;
     }
+    await saveToDrive();
 }
 
 // Cargar estado desde Drive (restaura selectedSubjects y customs)
 async function loadFromDrive() {
-    if (!gAccessToken) {
-        showMessage('Solicitando acceso a Google para cargar datos...', 'warning');
-        try {
-            requestGoogleSignIn();
-            await waitForToken(10000);
-        } catch (e) {
-            showMessage('No se obtuvo autorización. Haz login e intenta de nuevo.', 'error');
-            return;
-        }
-    }
-
-    const fileName = 'horario_data.json';
+    showLoader('Cargando datos desde Google Drive...');
     try {
+        await ensureDriveReady();
+
+        const fileName = 'horario_data.json';
         try { gapi.client.setToken({ access_token: gAccessToken }); } catch(e){}
 
         const existing = await findAppDataFile(fileName);
@@ -1880,14 +2160,19 @@ async function loadFromDrive() {
         }
     } catch (err) {
         handleAuthError(err);
+    } finally {
+        hideLoader();
     }
 }
 
 // Al iniciar sesión correctamente, cargar automáticamente si hay datos guardados
 async function onSignedIn() {
     updateGoogleButtons(true);
+    updateAuthGateState();
+    sessionExpiredWarningShown = false;
     // intentamos buscar archivo y cargarlo automáticamente si existe
     try {
+        await ensureDriveApiInitialized();
         try { gapi.client.setToken({ access_token: gAccessToken }); } catch(e){}
         const existing = await findAppDataFile('horario_data.json');
         if (existing) {
@@ -1903,27 +2188,42 @@ async function onSignedIn() {
 
 // Mejorar requestGoogleSignIn: reintenta inicializar tokenClient si hace falta
 function requestGoogleSignIn(silent = false) {
+    if (authRequestInProgress) {
+        console.log('requestGoogleSignIn: petición pendiente, no se reintenta');
+        return;
+    }
     if (!tokenClient) {
         initGoogleAuth();
         // esperar un poco y luego pedir token
         setTimeout(() => {
             if (tokenClient) {
-                // Si silent=true, no pasamos prompt para intentar flujo silencioso
+                authRequestInProgress = true;
                 try {
                     if (silent) tokenClient.requestAccessToken(); else tokenClient.requestAccessToken({ prompt: 'consent' });
-                } catch(e){ console.warn('requestAccessToken fallo', e); tokenClient.requestAccessToken({ prompt: 'consent' }); }
+                } catch(e){
+                    console.warn('requestAccessToken fallo', e);
+                    try {
+                        tokenClient.requestAccessToken({ prompt: 'consent' });
+                    } catch(fallbackErr) {
+                        console.error('fallback requestAccessToken fallo', fallbackErr);
+                        authRequestInProgress = false;
+                    }
+                }
             }
         }, 400);
         return;
     }
-    // pedir token (si silent true se intenta sin forzar diálogo)
+    authRequestInProgress = true;
     try {
-
         if (silent) tokenClient.requestAccessToken(); else tokenClient.requestAccessToken({ prompt: 'consent' });
     } catch(e){
         console.warn('requestAccessToken error', e);
-        // fallback a pedir con prompt si el intento silencioso falla
-        try { tokenClient.requestAccessToken({ prompt: 'consent' }); } catch(e2){ console.error(e2); }
+        try {
+            tokenClient.requestAccessToken({ prompt: 'consent' });
+        } catch(e2){
+            console.error(e2);
+            authRequestInProgress = false;
+        }
     }
 }
 
@@ -1955,9 +2255,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             console.log('Sesión restaurada desde token en localStorage');
                         }).catch(()=>{ /*silencioso*/ });
                     } else if (localStorage.getItem('google_signed_in') === '1') {
-                        // token expiro o no está, intentar request silencioso para renovar sin UI
-                        requestGoogleSignIn(true);
-                        console.log('Intentando restaurar sesión silenciosamente desde localStorage');
+                        notifySessionExpired();
+                        console.log('La sesión previa expiró; el usuario debe volver a iniciar sesión.');
                     } else {
                         // si existe perfil guardado solo para UI, sincronizar
                         const raw = localStorage.getItem('google_profile');
@@ -1996,7 +2295,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try { requestGoogleSignIn(); } catch (e) { console.error('requestGoogleSignIn error', e); showMessage('Error iniciando Google', 'error'); }
     });
     if (signOutBtn) signOutBtn.addEventListener('click', () => {
-        try { signOutGoogle(); } catch (e) { console.error('signOutGoogle error', e); showMessage('Error cerrando sesión', 'error'); }
+        signOutGoogle().catch(e => {
+            console.error('signOutGoogle error', e);
+            showMessage('Error cerrando sesión', 'error');
+        });
     });
     if (circle) circle.addEventListener('click', () => {
         // Si no hay sesión, pedir inicio; si ya hay sesión, no cerrar sesión aquí.
@@ -2031,58 +2333,69 @@ function testDriveAPI() {
 }
 window.testDriveAPI = testDriveAPI;
 
-function signOutGoogle() {
-    // limpiar persistencia local al cerrar sesión explícita
-    try { localStorage.removeItem('google_signed_in'); localStorage.removeItem('google_profile'); localStorage.removeItem('google_token'); localStorage.removeItem('google_token_expiry'); } catch(e){}
-    // Si no hay token, limpiar UI y estado
-    if (!gAccessToken) {
-        gAccessToken = null;
-        gUserProfile = null;
-        try { if (window.gapi && gapi.client) gapi.client.setToken(null); } catch(e){}
-        onProfileLoaded();
-        // cerrar modal de perfil si está abierto
-        try {
-            const profileModal = document.getElementById('profileModal');
-            if (profileModal) {
-                profileModal.classList.add('hidden');
-                profileModal.setAttribute('aria-hidden', 'true');
-            }
-            const profileCircle = document.getElementById('googleProfileCircle');
-            if (profileCircle) profileCircle.focus();
-        } catch(e){}
-        // limpiar persistencia local
-        try { localStorage.removeItem('google_signed_in'); localStorage.removeItem('google_profile'); } catch(e){}
-        showMessage('Sesión cerrada', 'success');
-        return;
-    }
+async function signOutGoogle() {
+    unlockInterface();
+    showLoader('Cerrando sesión...');
+    try {
+        await persistScheduleBeforeSignOut();
+        clearLocalScheduleAndCatalogOnSignOut();
 
-    // Intentar revocar token en Google; siempre limpiar estado local
-    fetch(`https://oauth2.googleapis.com/revoke?token=${gAccessToken}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    }).then(resp => {
-        if (!resp.ok) console.warn('Revoca token responded:', resp.status);
-    }).catch(err => {
-        console.error('Error revocando token:', err);
-    }).finally(() => {
-        gAccessToken = null;
-        gUserProfile = null;
-        try { if (window.gapi && gapi.client) gapi.client.setToken(null); } catch(e){}
-        onProfileLoaded();
-        // cerrar modal de perfil si está abierto
         try {
-            const profileModal = document.getElementById('profileModal');
-            if (profileModal) {
-                profileModal.classList.add('hidden');
-                profileModal.setAttribute('aria-hidden', 'true');
-            }
-            const profileCircle = document.getElementById('googleProfileCircle');
-            if (profileCircle) profileCircle.focus();
-        } catch(e){}
-        // limpiar persistencia local al cerrar sesión explícita
-        try { localStorage.removeItem('google_signed_in'); localStorage.removeItem('google_profile'); } catch(e){}
-        showMessage('Sesión cerrada', 'success');
-    });
+            localStorage.removeItem('google_signed_in');
+            localStorage.removeItem('google_profile');
+            localStorage.removeItem('google_token');
+            localStorage.removeItem('google_token_expiry');
+        } catch (e) {
+            console.warn('No se pudo limpiar persistencia local completa', e);
+        }
+
+        if (!gAccessToken) {
+            gAccessToken = null;
+            gUserProfile = null;
+            try { if (window.gapi && gapi.client) gapi.client.setToken(null); } catch(e){}
+            onProfileLoaded();
+            try {
+                const profileModal = document.getElementById('profileModal');
+                if (profileModal) {
+                    profileModal.classList.add('hidden');
+                    profileModal.setAttribute('aria-hidden', 'true');
+                }
+                const profileCircle = document.getElementById('googleProfileCircle');
+                if (profileCircle) profileCircle.focus();
+            } catch(e){}
+            lockInterface('Para volver a usar la aplicación debes iniciar sesión con Google.');
+            showMessage('Sesión cerrada', 'success');
+            return;
+        }
+
+        try {
+            const resp = await fetch(`https://oauth2.googleapis.com/revoke?token=${gAccessToken}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
+            if (!resp.ok) console.warn('Revoca token responded:', resp.status);
+        } catch (err) {
+            console.error('Error revocando token:', err);
+        } finally {
+            gAccessToken = null;
+            gUserProfile = null;
+            try { if (window.gapi && gapi.client) gapi.client.setToken(null); } catch(e){}
+            onProfileLoaded();
+            try {
+                const profileModal = document.getElementById('profileModal');
+                if (profileModal) {
+                    profileModal.classList.add('hidden');
+                    profileModal.setAttribute('aria-hidden', 'true');
+                }
+                const profileCircle = document.getElementById('googleProfileCircle');
+                if (profileCircle) profileCircle.focus();
+            } catch(e){}
+            lockInterface('Para volver a usar la aplicación debes iniciar sesión con Google.');
+            showMessage('Sesión cerrada', 'success');
+        }
+    } finally {
+        hideLoader();
+    }
 }
 
 // Función para mostrar información de la sesión actual
@@ -2240,8 +2553,8 @@ function handleAuthError(err) {
             showMessage('Se requiere inicio de sesión para sincronizar. Por favor, inicia sesión con Google.', 'warning');
         } catch(e){}
 
-        // Intentar iniciar flujo interactivo para que el usuario autorice de nuevo
-        try { requestGoogleSignIn(false); } catch(e){ console.warn('requestGoogleSignIn fallo desde handleAuthError', e); }
+        // No volvemos a abrir el selector automáticamente; el usuario puede volver a iniciar sesión cuando lo desee
+        console.log('handleAuthError: el token se limpió, espera a que el usuario haga clic en iniciar sesión.');
     } else {
         // Mensaje genérico para otros errores
         try { showMessage('Error al acceder a Google Drive. Revisa la consola.', 'error'); } catch(e){}
@@ -2263,61 +2576,36 @@ function rebuildCatalogFromPredefinedAndCustoms() {
     }
 }
 
-// Crear modal de confirmación personalizado
-function showCustomConfirm(message, onConfirm, onCancel) {
-    // Crear el fondo del modal
-    const modalOverlay = document.createElement('div');
-    modalOverlay.className = 'modal-overlay';
-
-    // Crear el contenedor del modal
-    const modalContainer = document.createElement('div');
-    modalContainer.className = 'modal-container';
-
-    // Crear el mensaje
-    const modalMessage = document.createElement('p');
-    modalMessage.className = 'modal-message';
-    modalMessage.textContent = message;
-
-    // Botón de confirmar
-    const confirmButton = document.createElement('button');
-    confirmButton.className = 'modal-button confirm';
-    confirmButton.textContent = 'Iniciar sesión';
-    confirmButton.addEventListener('click', () => {
-        document.body.removeChild(modalOverlay);
-        if (onConfirm) onConfirm();
-    });
-
-    // Botón de cancelar
-    const cancelButton = document.createElement('button');
-    cancelButton.className = 'modal-button cancel';
-    cancelButton.textContent = 'Cancelar';
-    cancelButton.addEventListener('click', () => {
-        document.body.removeChild(modalOverlay);
-        if (onCancel) onCancel();
-    });
-
-    // Ensamblar el modal
-    modalContainer.appendChild(modalMessage);
-    modalContainer.appendChild(confirmButton);
-    modalContainer.appendChild(cancelButton);
-    modalOverlay.appendChild(modalContainer);
-    document.body.appendChild(modalOverlay);
+async function persistScheduleBeforeSignOut() {
+    if (!gAccessToken || typeof gapi === 'undefined' || !gapi.client) {
+        return;
+    }
+    try {
+        await saveToDrive({ suppressAuthError: true });
+    } catch (err) {
+        console.warn('No se pudo guardar el horario antes de cerrar sesión', err);
+    }
 }
 
-// Usar el modal personalizado
-showCustomConfirm(
-    'Inicia sesión con tu cuenta de Google para guardar tus horarios. ¿Iniciar sesión?',
-    () => {
-        console.log('Cargando horario...');
-        // Aquí puedes llamar a la función para cargar el horario
-        loadFromDrive();
-    },
-    () => {
-        console.log('Cancelado.');
-        // Aquí puedes manejar la cancelación si es necesario
-    }
-);
+function clearLocalScheduleAndCatalogOnSignOut() {
+    selectedSubjects = [];
+    saveSelectedSubjects();
 
+    try {
+        localStorage.removeItem(CUSTOM_KEY);
+    } catch (e) {
+        console.warn('No se pudo limpiar materias personalizadas', e);
+    }
+
+    selectedSlots = new Set();
+    rebuildCatalogFromPredefinedAndCustoms();
+    updateCatalogSubjects();
+    buildSlotsTable();
+    updateScheduleView();
+    updateSelectedSubjectsList();
+}
+
+// Crear modal de confirmación personalizado
 </script>
 </body>
 <footer>
