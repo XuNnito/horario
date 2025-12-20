@@ -314,7 +314,7 @@ button:hover {
     color: white;
 }
 
-.group-6a {
+.group-7A {
     background-color: #00ac42da;
     color: white;
 }
@@ -495,13 +495,13 @@ button:hover {
         color: #fff !important;
     }
 
-    .group-6a {
+    .group-7A {
         background-color: #28a745 !important;
         color: #fff !important;
     }
 
     .subject-card.conflict,
-    .group-6a.conflict {
+    .group-7A.conflict {
         background-color: var(--error-color) !important;
         color: #fff !important;
     }
@@ -683,6 +683,35 @@ button:hover {
     margin-bottom:12px;
     box-shadow: 0 1px 6px rgba(0,0,0,0.06);
 }
+
+
+        .profile-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-hat {
+            position: absolute;
+            top: -20px;
+            right: 20px;
+            width: 40px;
+            display: none;
+            pointer-events: none;
+            user-select: none;
+        }
+    .profile-modal-hat {
+        position: absolute;
+        top: -15%;
+        right: 87%;
+        width: 30%;
+        transform: rotate(-8deg);
+        pointer-events: none;
+        user-select: none;
+        opacity: 0.85;
+        z-index: 0;
+    }
 
 
 

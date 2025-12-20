@@ -325,8 +325,11 @@
 <body>
     <!-- TOP BAR: perfil y botones Google -->
     <div id="topBar">
-        <div id="googleProfileCircle" class="profile-circle" title="Iniciar sesión" role="button" tabindex="0"
-            aria-label="Perfil"></div>
+        <div class="profile-wrapper">
+            <img src="gorrito-navidad.png" alt="Gorro navideño" id="profileHat" class="profile-hat" aria-hidden="true">
+            <div id="googleProfileCircle" class="profile-circle" title="Iniciar sesión" role="button" tabindex="0"
+                aria-label="Perfil"></div>
+        </div>
         <span id="googleUserName" class="user-name"></span>
         <div class="google-btns">
             <button id="googleSignIn" type="button" aria-label="Iniciar sesión con Google">Iniciar con Google</button>
@@ -338,6 +341,7 @@
     <div id="profileModal" class="profile-modal hidden" aria-hidden="true">
         <div class="profile-backdrop" data-close="true"></div>
         <div class="profile-panel" role="dialog" aria-modal="true" aria-labelledby="pmName">
+            <img src="gorrito-navidad.png" alt="Decoración navideña" class="profile-modal-hat" aria-hidden="true">
             <button type="button" class="pm-close" id="pmClose" aria-label="Cerrar">&times;</button>
             <div class="pm-avatar" id="pmAvatar" aria-hidden="true"></div>
             <h3 id="pmName">Sin sesión</h3>
@@ -828,7 +832,7 @@
             </div>
             <div style="margin-top:8px">
                 <label for="m_inputAula">Aula</label>
-                <input id="m_inputAula" type="text" placeholder="Ej. 104" />
+                <input id="m_inputAula" type="text" placeholder="Ej. A210" />
             </div>
             <div class="modal-actions">
                 <button id="m_cancel">Cancelar</button>
@@ -1313,102 +1317,92 @@
             catalogSubjects = [
                 // Datos completos de los horarios extraídos del PDF
 
-                // =========== GRUPO 6A ===========
+                // =========== GRUPO 7A ===========
                 {
                     id: 57,
-                    name: "Liderazgo de Equipos de Alto Desempeño",
-                    professor: "Anza Gonzalez Jorge",
-                    group: "6A",
-                    aula: "104",
+                    name: "Microcontroladores",
+                    professor: " ",
+                    group: "7A",
+                    aula: "A210",
                     sessions: [
-                        { day: "lunes", startTime: "12:00", endTime: "12:45" },
-                        { day: "martes", startTime: "8:00", endTime: "8:45" },
-                        { day: "miercoles", startTime: "8:00", endTime: "8:45" }
+                        { day: "lunes", startTime: "9:00", endTime: "10:45" },
+                        { day: "martes", startTime: "11:00", endTime: "12:45" },
+                        { day: "miercoles", startTime: "12:00", endTime: "13:45" }
                     ]
                 },
                 {
                     id: 58,
-                    name: "Electrónica de Potencia",
-                    professor: " Rodriguez Ramirez Jorge Alberto",
-                    group: "6A",
-                    aula: "104",
+                    name: "Gestion de Proyectos",
+                    professor: " ",
+                    group: "7A",
+                    aula: "A210",
                     sessions: [
-                        { day: "martes", startTime: "14:00", endTime: "15:45" },
+                        { day: "lunes", startTime: "11:00", endTime: "12:45" },
                         { day: "miercoles", startTime: "14:00", endTime: "15:45" },
-                        { day: "jueves", startTime: "9:00", endTime: "9:45" }
                     ]
                 },
                 {
                     id: 59,
-                    name: "Matemáticas para Ingeniería II",
-                    professor: "Cabrera Madrid Jorge Alberto",
-                    group: "6A",
-                    aula: "104",
+                    name: "Biomecanica",
+                    professor: " ",
+                    group: "7A",
+                    aula: "A210",
                     sessions: [
                         { day: "lunes", startTime: "13:00", endTime: "15:45" },
-                        { day: "miercoles", startTime: "13:00", endTime: "13:45" },
-                        { day: "jueves", startTime: "13:00", endTime: "15:45" },
+                        { day: "viernes", startTime: "11:00", endTime: "12:45" },
                     ]
                 },
                 {
                     id: 60,
-                    name: "Inglés VI",
-                    professor: "Matus Arrambide Arandza",
-                    group: "6A",
-                    aula: "104",
+                    name: "Bioinstrumentacion",
+                    professor: " ",
+                    group: "7A",
+                    aula: "A210",
                     sessions: [
-                        { day: "lunes", startTime: "8:00", endTime: "9:45" },
-                        { day: "jueves", startTime: "10:00", endTime: "10:45" },
-                        { day: "viernes", startTime: "9:00", endTime: "10:45" }
+                        { day: "martes", startTime: "9:00", endTime: "10:45" },
+                        { day: "jueves", startTime: "8:00", endTime: "10:45" },
                     ]
                 },
                 {
                     id: 61,
-                    name: "Suministro de Energía Eléctrica",
-                    professor: "Martínez Cancino Diana Paulina",
-                    group: "6A",
-                    aula: "104",
+                    name: "Inglés VII- ",
+                    professor: " ",
+                    group: "7A",
+                    aula: "A210",
                     sessions: [
-                        { day: "martes", startTime: "13:00", endTime: "13:45" },
-                        { day: "miercoles", startTime: "12:00", endTime: "12:45" },
-                        { day: "viernes", startTime: "11:00", endTime: "11:45" }
+                        { day: "martes", startTime: "13:00", endTime: "14:45" },
+                        { day: "viernes", startTime: "8:00", endTime: "10:45" }
                     ]
                 },
 
                 {
                     id: 67,
-                    name: "Mantenimiento de Equipos Médicos",
-                    professor: "Pérez Toala Luis Agustín",
-                    group: "6A",
-                    aula: "104",
+                    name: "Estancia II",
+                    professor: " ",
+                    group: "7A",
+                    aula: "A210",
                     sessions: [
-                        { day: "martes", startTime: "10:00", endTime: "11:45" },
-                        { day: "miercoles", startTime: "10:00", endTime: "11:45" },
-                        { day: "jueves", startTime: "11:00", endTime: "12:45" }
+                        { day: "miercoles", startTime: "8:00", endTime: "10:45" },
                     ]
                 },
                 {
                     id: 68,
-                    name: "Base de Datos",
-                    professor: "Ibáñez Nangüelú Christian Roberto",
-                    group: "6A",
-                    aula: "104",
+                    name: "Fisica Medica",
+                    professor: " ",
+                    group: "7A",
+                    aula: "A210",
                     sessions: [
-                        { day: "lunes", startTime: "10:00", endTime: "11:45" },
-                        { day: "martes", startTime: "12:00", endTime: "12:45" },
-                        { day: "miercoles", startTime: "9:00", endTime: "9:45" },
-                        { day: "jueves", startTime: "8:00", endTime: "8:45" },
-                        { day: "viernes", startTime: "13:00", endTime: "13:45" },
+                        { day: "jueves", startTime: "12:00", endTime: "13:45" },
+                        { day: "viernes", startTime: "13:00", endTime: "14:45" },
                     ]
                 },
                 {
                     id: 69,
                     name: "Tutorías",
                     professor: "jose octavio",
-                    group: "6A",
-                    aula: "104",
+                    group: "7A",
+                    aula: "A210",
                     sessions: [
-                        { day: "viernes", startTime: "8:00", endTime: "8:45" }
                     ]
                 },
 
@@ -1861,9 +1855,9 @@
                             const subjectCard = document.createElement('div');
                             subjectCard.className = `subject-card ${hasConflict ? 'conflict' : ''}`;
 
-                            // Aplicar color único para el grupo "6A"
-                            if (item.subject.group === "6A") {
-                                subjectCard.classList.add('group-6a');
+                            // Aplicar color único para el grupo "7A"
+                            if (item.subject.group === "7A") {
+                                subjectCard.classList.add('group-7A');
                             }
 
                             // Mostrar nombre en la tarjeta
@@ -2426,6 +2420,7 @@
             const nameSpan = document.getElementById('googleUserName');
             const signInBtn = document.getElementById('googleSignIn');
             const signOutBtn = document.getElementById('googleSignOut');
+            const profileHat = document.getElementById('profileHat');
 
             if (!circle || !nameSpan) return;
 
@@ -2450,6 +2445,9 @@
                 updateGoogleButtons(false);
                 // borrar flag si no hay perfil válido
                 try { localStorage.removeItem('google_signed_in'); } catch (e) { }
+                if (profileHat) {
+                    profileHat.style.display = 'none';
+                }
                 return;
             }
 
@@ -2464,6 +2462,9 @@
             }
             nameSpan.textContent = gUserProfile.name || '';
             circle.title = gUserProfile.email || '';
+            if (profileHat) {
+                profileHat.style.display = 'block';
+            }
 
             // marcar como conectado en almacenamiento (persistencia entre pestañas)
             try {
