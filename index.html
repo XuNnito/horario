@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> Horarios Bio</title>
     <title> Horarios Bio</title>
-    <link rel="icon" href="icono.png" type="image/png">
+    <link rel="icon" href="biomedica.png" type="image/png">
     <link rel="stylesheet" href="estilo.css">
 
 
@@ -117,6 +117,26 @@
         font-size: 1.05rem;
     }
 
+    .auth-gate__note {
+        margin: -6px 0 20px;
+        color: #d93025;
+        font-size: 0.92rem;
+        font-weight: 600;
+    }
+
+    .auth-gate__logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 18px;
+    }
+
+    .auth-gate__logo img {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+    }
+
     .auth-gate__actions {
         display: flex;
         justify-content: center;
@@ -141,6 +161,157 @@
         background: #2c2f38;
         color: #fff;
         border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    #driveQuotaModal {
+        position: fixed;
+        inset: 0;
+        z-index: 2300;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(9, 15, 26, 0.75);
+    }
+
+    #driveQuotaModal.hidden {
+        display: none;
+    }
+
+    #defaultSchedulePrompt {
+        position: fixed;
+        inset: 0;
+        z-index: 2250;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(9, 15, 26, 0.65);
+    }
+
+    #defaultSchedulePrompt.hidden {
+        display: none;
+    }
+
+    .default-schedule__panel {
+        background: #fff;
+        border-radius: 14px;
+        max-width: 360px;
+        width: 100%;
+        padding: 24px 26px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+        color: #1b1d24;
+        text-align: left;
+    }
+
+    .default-schedule__panel h3 {
+        margin: 0 0 12px;
+        font-size: 1.2rem;
+    }
+
+    .default-schedule__panel p {
+        margin: 0 0 18px;
+        line-height: 1.45;
+        font-size: 0.96rem;
+    }
+
+    .default-schedule__actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .default-schedule__actions button {
+        flex: 1;
+        min-width: 130px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: none;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: transform 0.12s ease, filter 0.12s ease;
+    }
+
+    .default-schedule__actions button:hover {
+        transform: translateY(-1px);
+        filter: brightness(0.97);
+    }
+
+    #defaultScheduleAccept {
+        background: #1a73e8;
+        color: #fff;
+    }
+
+    #defaultScheduleCancel {
+        background: #f1f3f4;
+        color: #1f1f1f;
+    }
+
+    .quota-modal__box {
+        background: #fff;
+        border-radius: 16px;
+        max-width: 420px;
+        width: 100%;
+        padding: 26px 28px;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+        color: #1b1d24;
+        text-align: left;
+    }
+
+    .quota-modal__box h3 {
+        margin: 0 0 12px;
+        font-size: 1.3rem;
+    }
+
+    .quota-modal__box p {
+        margin: 0 0 22px;
+        line-height: 1.5;
+        font-size: 0.98rem;
+    }
+
+    .quota-modal__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .quota-modal__actions button {
+        flex: 1;
+        min-width: 150px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: none;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: transform 0.12s ease, filter 0.12s ease;
+    }
+
+    .quota-modal__actions button:hover {
+        transform: translateY(-1px);
+        filter: brightness(0.97);
+    }
+
+    #driveQuotaOpenDrive {
+        background: #1a73e8;
+        color: #fff;
+    }
+
+    #driveQuotaSwitchAccount {
+        background: #34a853;
+        color: #fff;
+    }
+
+    #driveQuotaClose {
+        background: #f1f3f4;
+        color: #1b1d24;
+    }
+
+    #driveQuotaClose:focus,
+    #driveQuotaSwitchAccount:focus,
+    #driveQuotaOpenDrive:focus {
+        outline: 2px solid rgba(26, 115, 232, 0.4);
+        outline-offset: 2px;
     }
 </style>
 
@@ -476,18 +647,24 @@
         <h1 id="headerTitle">Horario</h1>
 
         <script>
+            window.__googleProfile = window.__googleProfile || null;
+        </script>
+
+        <script>
             (function () {
                 // Función para actualizar el título con el nombre del usuario
                 function updateHeaderTitle() {
                     const headerTitle = document.getElementById('headerTitle');
-                    if (!headerTitle) return;
+                    const printFooter = document.getElementById('printFooterName');
+                    if (!headerTitle && !printFooter) return;
 
-                    const userName = (gUserProfile && gUserProfile.name) ? gUserProfile.name : null;
+                    const profile = window.__googleProfile || null;
+                    const userName = (profile && profile.name) ? profile.name : null;
 
-                    if (userName) {
-                        headerTitle.textContent = `Horario de ${userName}`;
-                    } else {
-                        headerTitle.textContent = 'Horario';
+                    const headerText = userName ? `Horario de ${userName}` : 'Horario';
+                    if (headerTitle) headerTitle.textContent = headerText;
+                    if (printFooter) {
+                        printFooter.textContent = userName ? `${userName}` : 'Nombre: ________________________';
                     }
                 }
 
@@ -495,7 +672,8 @@
 
                 let lastUserName = null;
                 setInterval(function () {
-                    const currentUserName = (gUserProfile && gUserProfile.name) ? gUserProfile.name : null;
+                    const profile = window.__googleProfile || null;
+                    const currentUserName = (profile && profile.name) ? profile.name : null;
                     if (currentUserName !== lastUserName) {
                         lastUserName = currentUserName;
                         updateHeaderTitle();
@@ -517,12 +695,41 @@
             </div>
         </div>
 
+        <div id="driveQuotaModal" class="hidden" aria-hidden="true" role="dialog"
+            aria-labelledby="driveQuotaTitle" aria-modal="true">
+            <div class="quota-modal__box">
+                <h3 id="driveQuotaTitle">Tu Google Drive está lleno</h3>
+                <p id="driveQuotaDescription">Tu almacenamiento de Google Drive está lleno. Libera espacio e
+                    inténtalo nuevamente o usa otra cuenta.</p>
+                <div class="quota-modal__actions">
+                    <button id="driveQuotaOpenDrive" type="button">Abrir Google Drive</button>
+                    <button id="driveQuotaSwitchAccount" type="button">Iniciar sesión con otra cuenta</button>
+                    <button id="driveQuotaClose" type="button">Ahora no</button>
+                </div>
+            </div>
+        </div>
+
+                <div id="defaultSchedulePrompt" class="hidden" aria-hidden="true" role="dialog"
+                    aria-modal="true" aria-labelledby="defaultScheduleTitle">
+                    <div class="default-schedule__panel" role="document">
+                        <h3 id="defaultScheduleTitle">Cargar horario de Biomédica</h3>
+                        <p>Se cargara automaticamente el  horario de 7to A y podras quitar despues</p>
+                        <div class="default-schedule__actions">
+                            <button id="defaultScheduleCancel" type="button">Cancelar</button>
+                            <button id="defaultScheduleAccept" type="button">Aceptar</button>
+                        </div>
+                    </div>
+                </div>
+
         <div id="authGate" class="auth-gate" aria-hidden="false" role="dialog" aria-label="Inicio de sesión requerido">
             <div class="auth-gate__box">
+                <div class="auth-gate__logo" aria-hidden="true">
+                    <img src="biomedica.png" alt="Google" loading="lazy">
+                </div>
                 <p id="authGateMessage">
-                    Para seguir con el catálogo y guardar tus horarios en Drive,
-                    inicia sesión con Google.
+                    Para cargar, simular tu horario y guardar tus horarios necesitas iniciar sesión con Google.
                 </p>
+                <p class="auth-gate__note">Recomendamos utilizar tu correo institucional.</p>
                 <div class="auth-gate__actions">
                     <button id="authGateSignIn">Iniciar sesión</button>
                     <button id="authGateCancel">Cancelar</button>
@@ -590,6 +797,8 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div id="printFooterName" class="print-footer" aria-hidden="true"></div>
 
                 <div id="selectedSubjects">
                     <h3>Materias Seleccionadas</h3>
@@ -731,6 +940,22 @@
         // NUEVO: copia de las materias predefinidas para reconstruir el catálogo
         let predefinedSubjects = [];
 
+        // Estado global para Google OAuth/Drive (declarado temprano para evitar errores del TDZ)
+        let tokenClient = null;
+        let gAccessToken = null;
+        let gUserProfile = null; // perfil activo (nombre, email, foto)
+        let driveApiInitPromise = null;
+        let driveApiReady = false;
+        let authRequestInProgress = false;
+        let sessionExpiredWarningShown = false;
+        let driveAuthRetryPending = false;
+        const AUTH_GATE_DEFAULT_MESSAGE = 'Para cargar, simular tu horario y guardar tus horarios necesitas iniciar sesión con Google.';
+        const DRIVE_SCOPE_FLAG = 'google_drive_scope_v2';
+        const DEFAULT_BIOMEDICA_SUBJECT_IDS = [57, 58, 59, 60, 61, 67, 68, 69];
+
+        let defaultSchedulePromptShown = false;
+        let defaultSchedulePromptDismissed = false;
+
         // Días y horas para el horario
         const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
         const hours = [];
@@ -754,10 +979,132 @@
 
         function hideLoader() {
             const overlay = document.getElementById('globalLoader');
-            if (!overlay) return;
-            overlay.classList.add('hidden');
-            overlay.setAttribute('aria-hidden', 'true');
-            document.body.classList.remove('no-scroll');
+            if (overlay) {
+                overlay.classList.add('hidden');
+                overlay.setAttribute('aria-hidden', 'true');
+            }
+            const quotaModal = document.getElementById('driveQuotaModal');
+            const quotaVisible = quotaModal && !quotaModal.classList.contains('hidden');
+            if (!quotaVisible) {
+                document.body.classList.remove('no-scroll');
+            }
+        }
+
+        function showDriveQuotaModal(context = 'save') {
+            const modal = document.getElementById('driveQuotaModal');
+            if (!modal) return;
+            const description = document.getElementById('driveQuotaDescription');
+            if (description) {
+                description.textContent = context === 'load'
+                    ? 'Tu almacenamiento de Google Drive está lleno. Libera espacio para cargar tus horarios o usa otra cuenta.'
+                    : 'Tu almacenamiento de Google Drive está lleno. Libera espacio e inténtalo nuevamente o usa otra cuenta.';
+            }
+            modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('no-scroll');
+            const focusTarget = document.getElementById('driveQuotaOpenDrive') || document.getElementById('driveQuotaClose');
+            if (focusTarget) {
+                focusTarget.focus();
+            }
+        }
+
+        function hideDriveQuotaModal() {
+            const modal = document.getElementById('driveQuotaModal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+            const loader = document.getElementById('globalLoader');
+            const loaderVisible = loader && !loader.classList.contains('hidden');
+            if (!loaderVisible) {
+                document.body.classList.remove('no-scroll');
+            }
+        }
+
+        function showDefaultSchedulePrompt() {
+            if (defaultSchedulePromptShown) return;
+            if (defaultSchedulePromptDismissed) return;
+            if (!isSessionActive()) return;
+            const modal = document.getElementById('defaultSchedulePrompt');
+            if (!modal) return;
+            defaultSchedulePromptShown = true;
+            modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('no-scroll');
+            const acceptBtn = document.getElementById('defaultScheduleAccept');
+            if (acceptBtn) {
+                acceptBtn.focus();
+            }
+        }
+
+        function closeDefaultSchedulePrompt() {
+            const modal = document.getElementById('defaultSchedulePrompt');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+            const loader = document.getElementById('globalLoader');
+            const quotaModal = document.getElementById('driveQuotaModal');
+            const shouldKeepNoScroll = (loader && !loader.classList.contains('hidden')) ||
+                (quotaModal && !quotaModal.classList.contains('hidden'));
+            if (!shouldKeepNoScroll) {
+                document.body.classList.remove('no-scroll');
+            }
+            defaultSchedulePromptShown = false;
+        }
+
+        function maybePromptDefaultSchedule() {
+            if (defaultSchedulePromptShown) return;
+            if (defaultSchedulePromptDismissed) return;
+            if (!isSessionActive()) return;
+            if (selectedSubjects && selectedSubjects.length > 0) return;
+            showDefaultSchedulePrompt();
+        }
+
+        async function loadDefaultBiomedicaSchedule() {
+            const addedIds = [];
+            const missingIds = [];
+
+            DEFAULT_BIOMEDICA_SUBJECT_IDS.forEach((subjectId) => {
+                const alreadySelected = selectedSubjects.some(s => s.id === subjectId);
+                if (alreadySelected) {
+                    return;
+                }
+                const catalogSubject = catalogSubjects.find(s => s.id === subjectId);
+                if (!catalogSubject) {
+                    missingIds.push(subjectId);
+                    return;
+                }
+                const clone = JSON.parse(JSON.stringify(catalogSubject));
+                selectedSubjects.push(clone);
+                addedIds.push(subjectId);
+            });
+
+            if (addedIds.length === 0) {
+                if (missingIds.length > 0) {
+                    console.warn('Materias de Biomédica faltantes en el catálogo:', missingIds);
+                }
+                showMessage('El horario ordinario de Biomédica ya estaba cargado.', 'warning');
+                return false;
+            }
+
+            saveSelectedSubjects();
+            updateScheduleView();
+            updateSelectedSubjectsList();
+            defaultSchedulePromptDismissed = false;
+
+            if (missingIds.length > 0) {
+                console.warn('No se encontraron algunas materias al cargar el horario:', missingIds);
+            }
+
+            try {
+                await ensureSaveToDrive({ interactive: false, showSuccess: true, successMessage: 'Horario de Biomédica guardado en Google Drive' });
+            } catch (err) {
+                console.warn('No se pudo sincronizar el horario de Biomédica con Drive', err);
+                showMessage('Horario cargado, pero no se pudo guardar en Drive. Intenta nuevamente.', 'warning');
+                return true;
+            }
+
+            showMessage('Horario ordinario de Biomédica cargado correctamente.', 'success');
+            return true;
         }
 
         let authGateDismissed = false;
@@ -767,7 +1114,7 @@
             const gate = document.getElementById('authGate');
             const msg = document.getElementById('authGateMessage');
             if (!gate) return;
-            if (msg && customMessage) msg.textContent = customMessage;
+            if (msg) msg.textContent = customMessage || AUTH_GATE_DEFAULT_MESSAGE;
             gate.classList.remove('hidden');
             gate.setAttribute('aria-hidden', 'false');
             document.body.classList.add('auth-gate-open');
@@ -795,7 +1142,7 @@
                 unlockInterface();
                 return;
             }
-            lockInterface('Para cargar el catálogo y guardar tus horarios necesitas iniciar sesión con Google.');
+            lockInterface();
         }
 
         function initAuthGate() {
@@ -827,18 +1174,46 @@
         }
 
         async function ensureDriveReady(options = {}) {
-            const { timeoutMs = 10000 } = options;
+            const { timeoutMs = 10000, interactive = true } = options;
             await ensureDriveApiInitialized();
-            if (!gAccessToken) {
+
+            let tokenAvailable = !!gAccessToken;
+            if (!tokenAvailable) {
+                try {
+                    tokenAvailable = restoreTokenFromStorage();
+                } catch (e) {
+                    console.warn('restoreTokenFromStorage fallo al preparar Drive', e);
+                }
+            }
+
+            if (!tokenAvailable) {
+                if (!interactive) {
+                    throw new Error('Sin token de acceso válido');
+                }
+                if (typeof requestGoogleSignIn === 'function' && !authRequestInProgress) {
+                    try {
+                        requestGoogleSignIn();
+                    } catch (err) {
+                        console.warn('requestGoogleSignIn fallo al preparar Drive', err);
+                    }
+                }
                 try {
                     await waitForToken(timeoutMs);
                 } catch (err) {
                     console.warn('waitForToken falló al preparar Drive', err);
                 }
+                tokenAvailable = hasValidAccessToken();
             }
-            if (!hasValidAccessToken()) {
-                showMessage('Inicia sesión con Google antes de sincronizar en Drive.', 'warning');
+
+            if (!tokenAvailable) {
+                if (interactive) {
+                    showMessage('Inicia sesión con Google antes de sincronizar en Drive.', 'warning');
+                }
                 throw new Error('Sin token de acceso válido');
+            }
+
+            if (typeof gapi !== 'undefined' && gapi.client && gAccessToken) {
+                try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { /* silencioso */ }
             }
         }
 
@@ -1229,13 +1604,13 @@
                             removeFromSchedule(subject.id);
                         }
 
-                        // Intentar sincronizar cambios en Drive (intentará pedir login si es necesario)
-                        ensureSaveToDrive().then(() => {
-                            showMessage('Cambio sincronizado en Google Drive', 'success');
-                        }).catch(err => {
-                            console.warn('No se pudo sincronizar eliminación en Drive', err);
-                            showMessage('No se pudo sincronizar en Drive', 'warning');
-                        });
+                        // Intentar sincronizar cambios en Drive sin solicitar nuevamente el acceso si no es necesario
+                        syncDriveAfterChange({ interactive: false, successMessage: 'Cambio sincronizado en Google Drive' })
+                            .then(ok => {
+                                if (!ok) {
+                                    console.warn('No se pudo sincronizar eliminación en Drive');
+                                }
+                            });
 
                         // refrescar vista del catálogo
                         updateCatalogSubjects();
@@ -1310,24 +1685,16 @@
 
             // Añadir al horario incluso si hay conflictos
             selectedSubjects.push({ ...subject });
+            defaultSchedulePromptDismissed = false;
 
             // Guardar en localStorage
             saveSelectedSubjects();
 
-            // Sincronizar en Drive: si ya hay token y gapi inicializado, guardar directamente.
-            // Si no, usar ensureSaveToDrive() que pedirá login o restaurará token.
+            // Sincronizar en Drive sin volver a pedir autenticación si la sesión continúa válida.
             (async () => {
-                try {
-                    if (gAccessToken && typeof gapi !== 'undefined' && gapi.client && gapi.client.request) {
-                        await saveToDrive();
-                        showMessage('Horario sincronizado en Google Drive', 'success');
-                    } else {
-                        await ensureSaveToDrive();
-                        showMessage('Horario sincronizado en Google Drive', 'success');
-                    }
-                } catch (err) {
-                    console.warn('Error sincronizando tras añadir materia:', err);
-                    showMessage('No se pudo sincronizar en Drive (añadir materia)', 'warning');
+                const ok = await syncDriveAfterChange({ interactive: false, successMessage: 'Horario sincronizado en Google Drive' });
+                if (!ok) {
+                    console.warn('Error sincronizando tras añadir materia');
                 }
             })();
 
@@ -1357,22 +1724,23 @@
                 saveSelectedSubjects();
 
                 // Intentar sincronizar en Drive (no bloqueante)
-                try {
-                    ensureSaveToDrive().then(() => {
-                        showMessage('Cambio guardado en Google Drive', 'success');
-                    }).catch(err => {
-                        console.warn('Error sincronizando tras quitar materia:', err);
-                        showMessage('No se pudo sincronizar en Drive (quitar materia)', 'warning');
-                    });
-                } catch (e) {
-                    console.warn('ensureSaveToDrive fallo (quitar):', e);
-                }
+             //   syncDriveAfterChange({ interactive: false, successMessage: 'Cambio guardado en Google Drive' })
+                 //   .then(ok => {
+                     //   if (!ok) {
+                      //      console.warn('Error sincronizando tras quitar materia');
+                  //      }
+                   // });
 
                 // Actualizar vistas
                 updateScheduleView();
                 updateSelectedSubjectsList();
 
                 showMessage(`Materia "${subject.name}" quitada del horario`, 'success');
+
+                if (selectedSubjects.length === 0) {
+                    defaultSchedulePromptDismissed = false;
+                    maybePromptDefaultSchedule();
+                }
             }
         }
 
@@ -1436,6 +1804,18 @@
 
         // Función para actualizar la vista del horario
         function updateScheduleView() {
+            // Quitar resaltados activos antes de reconstruir el horario
+            const scheduleRows = document.querySelectorAll('.schedule-table tr');
+            scheduleRows.forEach(row => {
+                row.classList.remove('highlight-row');
+                row.querySelectorAll('td').forEach(td => {
+                    td.style.backgroundColor = '';
+                    if (td.dataset && ('_prevBg' in td.dataset)) {
+                        delete td.dataset._prevBg;
+                    }
+                });
+            });
+
             // Limpiar todas las celdas
             days.forEach(day => {
                 hours.forEach(hour => {
@@ -1578,7 +1958,7 @@
 
                 // Verificar conflictos: mostrar nombres (y número) de las materias con conflicto
                 const conflicts = checkTimeConflicts(subject);
-                if (conflicts.length > 0) {
+                if (conflicts.length > 1) {
                     const warningDiv = document.createElement('div');
                     warningDiv.style.color = 'var(--error-color)';
                     warningDiv.style.fontSize = '12px';
@@ -1587,7 +1967,7 @@
                         const idx = selectedSubjects.findIndex(s => s.id === conf.id);
                         return `${idx + 1}. ${conf.name}`;
                     }).join(', ');
-                    warningDiv.textContent = `Conflicto con: ${conflictNames}`;
+                    warningDiv.textContent = `Choque de horas con: ${conflictNames}`;
                     subjectDiv.appendChild(warningDiv);
                 }
 
@@ -1828,13 +2208,13 @@
                 updateCatalogSubjects();
             }
 
-            // Intentar sincronizar cambios en Drive (intentará pedir login si es necesario)
-            ensureSaveToDrive().then(() => {
-                showMessage('Materia sincronizada en Google Drive', 'success');
-            }).catch(err => {
-                console.warn('No se pudo sincronizar nueva materia en Drive', err);
-                showMessage('No se pudo sincronizar en Drive', 'warning');
-            });
+            // Intentar sincronizar cambios en Drive sin volver a pedir autenticación innecesariamente
+            syncDriveAfterChange({ interactive: false, successMessage: 'Materia sincronizada en Google Drive' })
+                .then(ok => {
+                    if (!ok) {
+                        console.warn('No se pudo sincronizar nueva materia en Drive');
+                    }
+                });
 
             closeSlotsModal();
             showMessage(`Materia "${materia}" guardada correctamente.`, 'success');
@@ -1872,13 +2252,9 @@
         // añadir scopes de perfil/email además de drive.appdata
         const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata openid profile email';
 
-        let tokenClient = null;
-        let gAccessToken = null;
-        let gUserProfile = null; // aquí guardaremos perfil (nombre, email, picture)
-        let driveApiInitPromise = null;
-        let driveApiReady = false;
-        let authRequestInProgress = false;
-        let sessionExpiredWarningShown = false;
+        // Las variables globales tokenClient / gAccessToken / gUserProfile / driveApiInitPromise /
+        // driveApiReady / authRequestInProgress / sessionExpiredWarningShown se declaran al inicio
+        // del script para evitar errores de referencia antes de su inicialización.
 
         function notifySessionExpired() {
             if (sessionExpiredWarningShown) return;
@@ -1898,11 +2274,13 @@
                 callback: (resp) => {
                     authRequestInProgress = false;
                     if (resp.error) {
+                        driveAuthRetryPending = false;
                         console.error('Token error', resp);
                         showMessage('Error al autenticar con Google', 'error');
                         return;
                     }
                     gAccessToken = resp.access_token;
+                    driveAuthRetryPending = false;
 
                     // Guardar token con expiración extendida (4 meses = 120 días)
                     try {
@@ -1943,10 +2321,12 @@
                 const token = localStorage.getItem('google_token');
                 const expiry = Number(localStorage.getItem('google_token_expiry') || '0');
                 const sessionStart = Number(localStorage.getItem('google_session_start') || '0');
+                const scopeGranted = localStorage.getItem(DRIVE_SCOPE_FLAG) === '1';
 
                 // Verificar si el token existe y no ha expirado (4 meses)
-                if (token && expiry && expiry > Date.now()) {
+                if (token && expiry && expiry > Date.now() && scopeGranted) {
                     gAccessToken = token;
+                    driveAuthRetryPending = false;
 
                     // Si gapi está listo, aseguramos el token en el cliente
                     if (typeof gapi !== 'undefined' && gapi.client) {
@@ -1976,6 +2356,7 @@
                 localStorage.removeItem('google_token_expiry');
                 localStorage.removeItem('google_session_start');
                 localStorage.removeItem('google_signed_in');
+                localStorage.removeItem(DRIVE_SCOPE_FLAG);
             } catch (e) {
                 console.warn('restoreTokenFromStorage error', e);
             }
@@ -2013,6 +2394,7 @@
                     return null;
                 }
                 gUserProfile = await resp.json();
+                window.__googleProfile = gUserProfile;
                 // Persistir perfil y flag de sesión para mantener estado entre recargas
                 try {
                     localStorage.setItem('google_profile', JSON.stringify(gUserProfile));
@@ -2053,6 +2435,7 @@
                     const raw = localStorage.getItem('google_profile');
                     if (raw) {
                         gUserProfile = JSON.parse(raw);
+                        window.__googleProfile = gUserProfile;
                     }
                 } catch (e) { }
             }
@@ -2063,6 +2446,7 @@
                 circle.textContent = '';
                 nameSpan.textContent = '';
                 circle.title = 'Iniciar sesión';
+                window.__googleProfile = null;
                 updateGoogleButtons(false);
                 // borrar flag si no hay perfil válido
                 try { localStorage.removeItem('google_signed_in'); } catch (e) { }
@@ -2086,6 +2470,8 @@
                 localStorage.setItem('google_profile', JSON.stringify(gUserProfile));
                 localStorage.setItem('google_signed_in', '1');
             } catch (e) { }
+
+            window.__googleProfile = gUserProfile;
 
             updateGoogleButtons(true);
             updateAuthGateState();
@@ -2136,16 +2522,46 @@
                     fields: 'files(id, name, modifiedTime)',
                     pageSize: 10
                 });
+                try { localStorage.setItem(DRIVE_SCOPE_FLAG, '1'); } catch (e) { /* ignore quota */ }
                 return (resp.result.files && resp.result.files[0]) || null;
             } catch (err) {
-                handleAuthError(err);
-                return null;
+                if (isQuotaExceededError(err)) {
+                    err.isQuotaExceeded = true;
+                    console.warn('findAppDataFile quota exceeded', err);
+                }
+                throw err;
             }
+        }
+
+        function isMissingTokenError(err) {
+            if (!err) return false;
+            const message = String(err.message || err.details || '').toLowerCase();
+            return message.includes('sin token de acceso válido') || message.includes('token no disponible') || message.includes('no se pudo preparar drive');
+        }
+
+        function isDriveAuthError(err) {
+            if (!err) return false;
+            const status = err.status || (err.result && err.result.error && err.result.error.code);
+            if (status === 401) return true;
+            if (status === 403 && isQuotaExceededError(err)) return false;
+            const message = String(err.message || err.details || (err.result && err.result.error && err.result.error.message) || '').toLowerCase();
+            return /invalid_token|unauthorized|access_denied|login required|insufficientfilepermissions/.test(message);
+        }
+
+        function isQuotaExceededError(err) {
+            if (!err) return false;
+            const message = String(err.message || err.details || (err.result && err.result.error && err.result.error.message) || '').toLowerCase();
+            if (message.includes('quota')) return true;
+            const nested = err.result && err.result.error && err.result.error.errors;
+            if (Array.isArray(nested)) {
+                return nested.some(e => String((e && e.reason) || '').toLowerCase().includes('quota'));
+            }
+            return false;
         }
 
         // Guardar estado en Drive (actualiza o crea). Incluye metadatos.
         async function saveToDrive(options = {}) {
-            const { suppressAuthError = false } = options;
+            const { suppressAuthError = false, interactive = true } = options;
             const fileName = 'horario_data.json';
             const payload = {
                 _meta: {
@@ -2160,7 +2576,7 @@
             const content = JSON.stringify(payload, null, 2);
 
             try {
-                await ensureDriveReady();
+                await ensureDriveReady({ interactive });
                 try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { }
 
                 const existing = await findAppDataFile(fileName);
@@ -2196,18 +2612,66 @@
                 }
             } catch (err) {
                 if (suppressAuthError) {
-                    console.warn('saveToDrive suppressed auth error', err);
+                    console.warn('saveToDrive suppressed error', err);
                 } else {
-                    handleAuthError(err);
+                    if (isQuotaExceededError(err)) {
+                        console.warn('saveToDrive cuota excedida', err);
+                    } else {
+                        handleAuthError(err);
+                    }
                 }
                 throw err;
             }
         }
 
-        // NUEVA FUNCION: intentar sincronizar en Drive pidiendo login si hace falta
-        async function ensureSaveToDrive() {
-            await ensureDriveReady();
-            await saveToDrive();
+        async function syncDriveAfterChange(options = {}) {
+            const {
+                interactive = false,
+                showSuccess = true,
+                successMessage = 'Horario sincronizado en Google Drive',
+                silent = false
+            } = options;
+            try {
+                await saveToDrive({ interactive, suppressAuthError: !interactive });
+                if (showSuccess && !silent) {
+                    showMessage(successMessage, 'success');
+                }
+                return true;
+            } catch (err) {
+                if (isMissingTokenError(err)) {
+                    if (!silent) {
+                        showMessage('Debes iniciar sesión con Google para sincronizar en Drive.', 'warning');
+                    }
+                    return false;
+                }
+                if (isQuotaExceededError(err)) {
+                    console.warn('Google Drive sin espacio disponible', err);
+                    if (!silent) {
+                        showDriveQuotaModal('save');
+                    }
+                    return false;
+                }
+                if (isDriveAuthError(err)) {
+                    handleAuthError(err);
+                    return false;
+                }
+                console.warn('syncDriveAfterChange error:', err);
+                if (!silent) {
+                    showMessage('No se pudo sincronizar en Drive', 'warning');
+                }
+                return false;
+            }
+        }
+
+        // NUEVA FUNCIÓN: intentar sincronizar en Drive pidiendo login si hace falta
+        async function ensureSaveToDrive(options = {}) {
+            const {
+                interactive = true,
+                showSuccess = false,
+                successMessage = 'Horario sincronizado en Google Drive',
+                silent = false
+            } = options;
+            return syncDriveAfterChange({ interactive, showSuccess, successMessage, silent });
         }
 
         // Cargar estado desde Drive (restaura selectedSubjects y customs)
@@ -2222,6 +2686,7 @@
                 const existing = await findAppDataFile(fileName);
                 if (!existing) {
                     showMessage('No se encontró información guardada en tu cuenta', 'warning');
+                    maybePromptDefaultSchedule();
                     return;
                 }
 
@@ -2237,6 +2702,9 @@
                         saveSelectedSubjects();
                         updateScheduleView();
                         updateSelectedSubjectsList();
+                        if (selectedSubjects.length > 0) {
+                            defaultSchedulePromptDismissed = false;
+                        }
                     }
                     if (Array.isArray(data.customSubjects)) {
                         saveCustomSubjects(data.customSubjects);
@@ -2250,11 +2718,23 @@
                     showMessage('Datos cargados desde Google Drive', 'success');
                 } else {
                     showMessage('Archivo en Drive no contiene datos válidos', 'error');
+                    maybePromptDefaultSchedule();
                 }
             } catch (err) {
-                handleAuthError(err);
+                if (isQuotaExceededError(err)) {
+                    console.warn('loadFromDrive quota exceeded', err);
+                    showDriveQuotaModal('load');
+                } else if (isMissingTokenError(err)) {
+                    showMessage('Debes iniciar sesión con Google para cargar tus horarios.', 'warning');
+                } else {
+                    handleAuthError(err);
+                }
+                maybePromptDefaultSchedule();
             } finally {
                 hideLoader();
+                if (selectedSubjects.length === 0) {
+                    maybePromptDefaultSchedule();
+                }
             }
         }
 
@@ -2272,10 +2752,25 @@
                     // Cargar automáticamente sin pregunta
                     console.log('Cargando horario automáticamente desde Google Drive...');
                     await loadFromDrive();
+                } else {
+                    maybePromptDefaultSchedule();
                 }
             } catch (e) {
-                // no obstructivo: si falla la búsqueda, se muestra aviso en consola
-                console.warn('No se pudo buscar/cargar archivo desde Drive al iniciar sesión', e);
+                if (isQuotaExceededError(e)) {
+                    console.warn('No se pudo cargar automáticamente desde Drive por cuota excedida', e);
+                    showDriveQuotaModal('load');
+                } else if (isMissingTokenError(e)) {
+                    console.warn('Sesión sin token válido al cargar automáticamente', e);
+                    showMessage('Inicia sesión nuevamente para sincronizar tus horarios.', 'warning');
+                } else {
+                    console.warn('No se pudo buscar/cargar archivo desde Drive al iniciar sesión', e);
+                    handleAuthError(e);
+                }
+                maybePromptDefaultSchedule();
+            } finally {
+                if (selectedSubjects.length === 0) {
+                    maybePromptDefaultSchedule();
+                }
             }
         }
 
@@ -2383,6 +2878,13 @@
             const circle = document.getElementById('googleProfileCircle');
             const saveBtn = document.getElementById('btnSaveDrive');
             const loadBtn = document.getElementById('btnLoadDrive');
+            const quotaModal = document.getElementById('driveQuotaModal');
+            const quotaCloseBtn = document.getElementById('driveQuotaClose');
+            const quotaOpenDriveBtn = document.getElementById('driveQuotaOpenDrive');
+            const quotaSwitchBtn = document.getElementById('driveQuotaSwitchAccount');
+            const defaultPrompt = document.getElementById('defaultSchedulePrompt');
+            const defaultAccept = document.getElementById('defaultScheduleAccept');
+            const defaultCancel = document.getElementById('defaultScheduleCancel');
 
             if (signInBtn) signInBtn.addEventListener('click', () => {
                 try { requestGoogleSignIn(); } catch (e) { console.error('requestGoogleSignIn error', e); showMessage('Error iniciando Google', 'error'); }
@@ -2403,8 +2905,10 @@
 
             if (saveBtn) saveBtn.addEventListener('click', async () => {
                 try {
-                    await ensureSaveToDrive();
-                    showMessage('Horario guardado en Google Drive.', 'success');
+                    const ok = await ensureSaveToDrive();
+                    if (ok) {
+                        showMessage('Horario guardado en Google Drive.', 'success');
+                    }
                 } catch (e) {
                     console.error('saveToDrive error', e);
                     showMessage('Error guardando en Drive', 'error');
@@ -2413,6 +2917,78 @@
             if (loadBtn) loadBtn.addEventListener('click', () => {
                 try { loadFromDrive(); } catch (e) { console.error('loadFromDrive error', e); showMessage('Error cargando desde Drive', 'error'); }
             });
+
+            if (quotaCloseBtn) quotaCloseBtn.addEventListener('click', () => {
+                hideDriveQuotaModal();
+            });
+            if (quotaModal) quotaModal.addEventListener('click', (event) => {
+                if (event.target === quotaModal) {
+                    hideDriveQuotaModal();
+                }
+            });
+            if (quotaOpenDriveBtn) quotaOpenDriveBtn.addEventListener('click', () => {
+                try { window.open('https://drive.google.com/drive/quota', '_blank', 'noopener'); } catch (e) { console.warn('No se pudo abrir Drive', e); }
+                hideDriveQuotaModal();
+            });
+            if (quotaSwitchBtn) quotaSwitchBtn.addEventListener('click', async () => {
+                hideDriveQuotaModal();
+                try {
+                    await signOutWithLoader();
+                } catch (e) {
+                    console.error('signOutWithLoader error', e);
+                    showMessage('No se pudo cambiar de cuenta en este momento.', 'error');
+                    return;
+                }
+                try {
+                    requestGoogleSignIn();
+                } catch (err) {
+                    console.error('requestGoogleSignIn error', err);
+                    showMessage('Haz clic en "Iniciar sesión" para continuar con otra cuenta.', 'warning');
+                }
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    const modalRef = document.getElementById('driveQuotaModal');
+                    if (modalRef && !modalRef.classList.contains('hidden')) {
+                        hideDriveQuotaModal();
+                    }
+                    if (defaultPrompt && !defaultPrompt.classList.contains('hidden')) {
+                        defaultSchedulePromptDismissed = true;
+                        closeDefaultSchedulePrompt();
+                    }
+                }
+            });
+
+            if (defaultAccept) {
+                defaultAccept.addEventListener('click', async () => {
+                    defaultSchedulePromptDismissed = false;
+                    closeDefaultSchedulePrompt();
+                    showLoader('Cargando horario de Biomédica...');
+                    const delay = new Promise(resolve => setTimeout(resolve, 5000));
+                    try {
+                        await Promise.all([
+                            loadDefaultBiomedicaSchedule(),
+                            delay
+                        ]);
+                    } finally {
+                        hideLoader();
+                    }
+                });
+            }
+            if (defaultCancel) {
+                defaultCancel.addEventListener('click', () => {
+                    defaultSchedulePromptDismissed = true;
+                    closeDefaultSchedulePrompt();
+                });
+            }
+            if (defaultPrompt) {
+                defaultPrompt.addEventListener('click', (event) => {
+                    if (event.target === defaultPrompt) {
+                        defaultSchedulePromptDismissed = true;
+                        closeDefaultSchedulePrompt();
+                    }
+                });
+            }
         });
 
         // Helper de diagnóstico: prueba la API Drive y muestra respuesta/errores
@@ -2435,6 +3011,8 @@
         async function signOutGoogle(options = {}) {
             const { skipLoader = false, loaderMessage = 'Cerrando sesión...' } = options;
             unlockInterface();
+            driveAuthRetryPending = false;
+                    localStorage.removeItem(DRIVE_SCOPE_FLAG);
             if (!skipLoader) {
                 showLoader(loaderMessage);
             }
@@ -2447,6 +3025,7 @@
                     localStorage.removeItem('google_profile');
                     localStorage.removeItem('google_token');
                     localStorage.removeItem('google_token_expiry');
+                    localStorage.removeItem(DRIVE_SCOPE_FLAG);
                 } catch (e) {
                     console.warn('No se pudo limpiar persistencia local completa', e);
                 }
@@ -2454,6 +3033,7 @@
                 if (!gAccessToken) {
                     gAccessToken = null;
                     gUserProfile = null;
+                    window.__googleProfile = null;
                     try { if (window.gapi && gapi.client) gapi.client.setToken(null); } catch (e) { }
                     onProfileLoaded();
                     try {
@@ -2481,6 +3061,7 @@
                 } finally {
                     gAccessToken = null;
                     gUserProfile = null;
+                    window.__googleProfile = null;
                     try { if (window.gapi && gapi.client) gapi.client.setToken(null); } catch (e) { }
                     onProfileLoaded();
                     try {
@@ -2653,7 +3234,9 @@
             const status = err && (err.status || (err.result && err.result.error && err.result.error.code));
 
             // Si parece un problema de autorización/expirado => limpiar y solicitar login
-            if (status === 401 || status === 403 || (err && /invalid_token|unauthorized|access_denied/i.test(String(err)))) {
+            const unauthorizedMsg = err && /invalid_token|unauthorized|access_denied/i.test(String(err));
+            if ((status === 401) || (status === 403 && !isQuotaExceededError(err)) || unauthorizedMsg) {
+                const willAutoRetry = !driveAuthRetryPending;
                 try {
                     localStorage.removeItem('google_token');
                     localStorage.removeItem('google_token_expiry');
@@ -2663,6 +3246,7 @@
 
                 gAccessToken = null;
                 gUserProfile = null;
+                window.__googleProfile = null;
                 try { if (window.gapi && gapi.client) gapi.client.setToken(null); } catch (e) { }
 
                 // Actualizar botones/estado UI
@@ -2670,11 +3254,28 @@
 
                 // Mostrar mensaje que se requiere re-autenticación y solicitar login interactivo
                 try {
-                    showMessage('Se requiere inicio de sesión para sincronizar. Por favor, inicia sesión con Google.', 'warning');
+                    const msgText = willAutoRetry
+                        ? 'Se requiere renovar el acceso para sincronizar con Google. Abriendo la ventana de inicio de sesión...'
+                        : 'Se requiere renovar el acceso para sincronizar con Google. Haz clic en "Iniciar sesión" para continuar.';
+                    showMessage(msgText, 'warning');
                 } catch (e) { }
 
-                // No volvemos a abrir el selector automáticamente; el usuario puede volver a iniciar sesión cuando lo desee
-                console.log('handleAuthError: el token se limpió, espera a que el usuario haga clic en iniciar sesión.');
+                authRequestInProgress = false;
+                if (willAutoRetry) {
+                    driveAuthRetryPending = true;
+                    setTimeout(() => {
+                        if (typeof requestGoogleSignIn === 'function') {
+                            try {
+                                requestGoogleSignIn();
+                            } catch (autoErr) {
+                                console.warn('No se pudo iniciar reautenticación automática', autoErr);
+                                driveAuthRetryPending = false;
+                            }
+                        }
+                    }, 350);
+                } else {
+                    console.log('handleAuthError: reautenticación ya solicitada anteriormente.');
+                }
             } else {
                 // Mensaje genérico para otros errores
                 try { showMessage('Error al acceder a Google Drive. Revisa la consola.', 'error'); } catch (e) { }
@@ -2701,7 +3302,7 @@
                 return;
             }
             try {
-                await saveToDrive({ suppressAuthError: true });
+                await saveToDrive({ suppressAuthError: true, interactive: false });
             } catch (err) {
                 console.warn('No se pudo guardar el horario antes de cerrar sesión', err);
             }
@@ -2723,6 +3324,9 @@
             buildSlotsTable();
             updateScheduleView();
             updateSelectedSubjectsList();
+            defaultSchedulePromptShown = false;
+            defaultSchedulePromptDismissed = false;
+            closeDefaultSchedulePrompt();
         }
 
         // Crear modal de confirmación personalizado
