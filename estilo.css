@@ -6,6 +6,8 @@
     --warning-color: #f39c12;
     --bg-color: #f5f7fa;
     --border-color: #ddd;
+    --career-watermark-image: url("biomedica.png");
+    --career-background-image: url("biomedica.png");
 }
 
 body {
@@ -14,7 +16,7 @@ body {
     margin: 0;
     padding: 10px;
     background-color: var(--bg-color);
-    background-image: linear-gradient(rgba(245, 247, 250, 0.85), rgba(245, 247, 250, 0.85)), url("https://tse4.mm.bing.net/th/id/OIP.iS5BZ-QzaZISx8l_ixh4OQHaHZ?r=0&rs=1&pid=ImgDetMain&o=7&rm=3");
+    background-image: linear-gradient(rgba(245, 247, 250, 0.85), rgba(245, 247, 250, 0.85)), var(--career-background-image);
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
@@ -134,6 +136,12 @@ button:hover {
     gap: 15px;
     max-height: 100%;
     overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .catalog-subjects {
+        grid-template-columns: 1fr;
+    }
 }
 
 .schedule-container {
@@ -410,7 +418,7 @@ button:hover {
 @media print {
     @page {
         size: A4 portrait;
-        margin: 6mm;
+        margin: 2mm;
     }
 
     *,
@@ -428,7 +436,7 @@ button:hover {
         content: "";
         position: fixed;
         inset: 0;
-        background: url('biomedica.png') center -40% / 120% no-repeat;
+        background: var(--career-watermark-image) center -40% / 120% no-repeat;
         opacity: 0.099;
         pointer-events: none;
         visibility: visible !important;
@@ -444,17 +452,23 @@ button:hover {
     #scheduleContainer * {
         visibility: visible;
         overflow: hidden;
-       
+
+    }
+
+    #printFooterName,
+    #printFooterName * {
+        visibility: visible !important;
+        overflow: visible !important;
     }
 
     #scheduleContainer {
 
         position: fixed;
-        left: 6mm;
-        right: 6mm;
-        top: -30px;
-        width: calc(100% - 12mm);
-        height: calc(100% - 40mm);
+        left: 2mm;
+        right: 2mm;
+        top: 0px;
+        width: calc(100% - 4mm);
+        height: calc(100% - 4mm);
         transform: scale(0.92);
         transform-origin: top center;
     }
@@ -703,14 +717,105 @@ button:hover {
         }
     .profile-modal-hat {
         position: absolute;
-        top: -15%;
-        right: 87%;
-        width: 30%;
-        transform: rotate(-8deg);
+        top: -8%;
+        right: 91%;
+        width: 60px;
         pointer-events: none;
         user-select: none;
         opacity: 0.85;
         z-index: 0;
+    }
+
+    .career-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 15, 30, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 1300;
+    }
+
+    .career-modal.hidden {
+        display: none;
+    }
+
+    .career-modal__panel {
+        position: relative;
+        background: #ffffff;
+        width: min(620px, 92vw);
+        border-radius: 18px;
+        padding: 26px 28px 32px;
+        box-shadow: 0 22px 60px rgba(0, 0, 0, 0.32);
+        color: #0f1b2d;
+    }
+
+    .career-modal__close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 27, 45, 0.08);
+        color: #12213a;
+        font-size: 20px;
+        cursor: pointer;
+    }
+
+    .career-modal__subtitle {
+        margin: 6px 0 18px;
+        color: #4c5a72;
+        font-size: 0.95rem;
+    }
+
+    .career-modal__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 16px;
+    }
+
+    .career-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(15, 27, 45, 0.12);
+        background: #f7f8fb;
+        cursor: pointer;
+        transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    }
+
+    .career-option:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 26px rgba(0, 0, 0, 0.16);
+    }
+
+    .career-option__icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
+        object-fit: cover;
+        box-shadow: 0 10px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .career-option__name {
+        font-weight: 600;
+        color: #1c2b45;
+        text-align: center;
+    }
+
+    .career-option.is-selected {
+        border-color: #1a73e8;
+        background: #e9f2ff;
+        box-shadow: 0 14px 28px rgba(26, 115, 232, 0.24);
     }
 
 

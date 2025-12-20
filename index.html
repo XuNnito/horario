@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es_MX">
 
 <head>
     <meta charset="UTF-8">
@@ -12,22 +12,40 @@
 
 </head>
 <style>
-    @media (max-width: 768px) {
+    #mobileMessage {
+        display: none;
+        margin: 16px auto;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: rgba(26, 115, 232, 0.12);
+        color: #1b1f2e;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        max-width: 500px;
+        text-align: center;
+    }
 
-        #catalogSubjects,
+    @media (max-width: 768px) {
+        .row {
+            flex-direction: column;
+        }
+
+        .row .panel {
+            width: 100% !important;
+            min-width: 100% !important;
+        }
+
         .catalog-panel {
-            display: none;
-            /* Ocultar el catálogo en dispositivos móviles */
+            order: 2;
+        }
+
+        #catalogSubjects {
+            max-height: 60vh;
+            overflow-y: auto;
         }
 
         #mobileMessage {
             display: block;
-            /* Mostrar mensaje en dispositivos móviles */
-            text-align: center;
-            font-size: 1.2em;
-            color: #e74c3c;
-            /* Color de advertencia */
-            margin: 20px 0;
         }
     }
 
@@ -315,9 +333,8 @@
     }
 </style>
 
-<div id="mobileMessage" class="hidden" role="status" aria-live="polite">
-    Solo puedes cargar nuevas materias o simular horarios desde un ordenador. En el móvil solo puedes revisar tu horario
-    después de iniciar sesión.
+<div id="mobileMessage" role="status" aria-live="polite">
+    Desde tu móvil también puedes agregar o editar materias. Desliza la lista y el horario para ver toda la información.
 </div>
 
 
@@ -346,111 +363,13 @@
             <div class="pm-avatar" id="pmAvatar" aria-hidden="true"></div>
             <h3 id="pmName">Sin sesión</h3>
             <div class="pm-details">
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <strong>Carrera:</strong>
-                    <span id="pmCareer">Biomédica</span>
-                    <button id="pmCareerEdit" type="button" title="Editar carrera" aria-label="Editar carrera"
-                        style="background:transparent; color:#1976d2; border:0;cursor:pointer;font-size:14px;">✎</button>
-                </div>
-
-                <div id="pmCareerEditor" style="display:none;margin-top:8px;gap:6px;align-items:center;">
-                    <input id="pmCareerInput" type="text" value="Biomédica" style="width:65%;"
-                        aria-label="Editar carrera" />
-
-
-                    <style>
-                        /* Botón Guardar con fondo azul */
-                        #pmCareerSave {
-                            background: #1976d2;
-                            /* azul */
-                            color: #fff;
-                            border: 0;
-                            padding: 6px 10px;
-                            border-radius: 8px;
-                            margin-left: 8px;
-                            cursor: pointer;
-                            box-shadow: 0 2px 6px rgba(25, 118, 210, 0.18);
-                        }
-
-                        #pmCareerSave:hover {
-                            filter: brightness(0.95);
-                        }
-
-                        /* Botón Cancelar más neutro */
-                        #pmCareerCancel {
-                            background: transparent;
-                            color: #333;
-                            border: 1px solid rgba(0, 0, 0, 0.08);
-                            padding: 6px 10px;
-                            border-radius: 8px;
-                            margin-left: 6px;
-                            cursor: pointer;
-                        }
-                    </style>
-                    <button id="pmCareerSave" type="button">Guardar</button>
-                    <button id="pmCareerCancel" type="button">Cancelar</button>
-                </div>
-
-                <script>
-                    (function () {
-                        const STORAGE_KEY = 'profile_career';
-                        const pmCareer = document.getElementById('pmCareer');
-                        const editBtn = document.getElementById('pmCareerEdit');
-                        const editor = document.getElementById('pmCareerEditor');
-                        const input = document.getElementById('pmCareerInput');
-                        const saveBtn = document.getElementById('pmCareerSave');
-                        const cancelBtn = document.getElementById('pmCareerCancel');
-                        const profileCircle = document.getElementById('googleProfileCircle');
-
-                        function applyCareer(value) {
-                            const v = (value && value.trim()) ? value.trim() : 'Biomédica';
-                            pmCareer.textContent = v;
-                            input.value = v;
-                            if (profileCircle) profileCircle.dataset.career = v;
-                        }
-
-                        // Inicializar desde localStorage o usar "Biomédica"
-                        try {
-                            const stored = localStorage.getItem(STORAGE_KEY);
-                            applyCareer(stored || 'Biomédica');
-                        } catch (e) { applyCareer('Biomédica'); }
-
-                        editBtn.addEventListener('click', function (e) {
-                            e.stopPropagation();
-                            editor.style.display = 'flex';
-                            input.focus();
-                        });
-
-                        saveBtn.addEventListener('click', function () {
-                            const val = input.value.trim() || 'Biomédica';
-                            try { localStorage.setItem(STORAGE_KEY, val); } catch (e) { console.warn('No se pudo guardar carrera', e); }
-                            applyCareer(val);
-                            editor.style.display = 'none';
-                        });
-
-                        cancelBtn.addEventListener('click', function () {
-                            editor.style.display = 'none';
-                            input.value = pmCareer.textContent;
-                        });
-
-                        // Cerrar el editor si se cierra el modal (por accesibilidad)
-                        const pmClose = document.getElementById('pmClose');
-                        if (pmClose) pmClose.addEventListener('click', () => editor.style.display = 'none');
-
-                        // Si otra parte del código actualiza profileCircle.dataset.career,
-                        // observar cambios y reflejarlos aquí.
-                        if (profileCircle && typeof MutationObserver !== 'undefined') {
-                            const obs = new MutationObserver(() => {
-                                const dc = profileCircle.dataset.career;
-                                if (dc && dc !== pmCareer.textContent) {
-                                    applyCareer(dc);
-                                    try { localStorage.setItem(STORAGE_KEY, dc); } catch (e) { }
-                                }
-                            });
-                            obs.observe(profileCircle, { attributes: true, attributeFilter: ['data-career'] });
-                        }
-                    })();
-                </script>
+                <button id="pmCareerSelect" class="pm-career-select" type="button" aria-label="Seleccionar carrera">
+                    <img id="pmCareerIcon" class="pm-career-select__icon" src="biomedica.png" alt="Carrera actual">
+                    <div class="pm-career-select__text">
+                        <strong id="pmCareer">Biomédica</strong>
+                        <span class="pm-career-select__hint">Toca para elegir tu carrera</span>
+                    </div>
+                </button>
                 <div><strong>Fecha:</strong> <span id="pmDate">-</span></div>
             </div>
             <button id="pmSignOut" class="pm-signout" type="button" onclick="signOutWithLoader()"
@@ -556,6 +475,47 @@
             background: #bd2130;
             box-shadow: none;
         }
+
+        .pm-career-select {
+            margin: 8px 0 10px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 10px;
+            background: #f5f7fb;
+            cursor: pointer;
+            text-align: left;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .pm-career-select:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+        }
+
+        .pm-career-select__icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .pm-career-select__text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            color: #25304a;
+        }
+
+        .pm-career-select__hint {
+            font-size: 12px;
+            color: #54617d;
+        }
+
     </style>
 
     <script>
@@ -566,6 +526,8 @@
             const pmAvatar = document.getElementById('pmAvatar');
             const pmName = document.getElementById('pmName');
             const pmCareer = document.getElementById('pmCareer');
+            const pmCareerIcon = document.getElementById('pmCareerIcon');
+            const pmCareerSelect = document.getElementById('pmCareerSelect');
             const pmDate = document.getElementById('pmDate');
             const pmSignOut = document.getElementById('pmSignOut');
             const pmDeleteAccount = document.getElementById('pmDeleteAccount');
@@ -590,7 +552,16 @@
                 // fill name/career/date (career can be populated elsewhere in your app)
                 pmName.textContent = googleUserName.textContent.trim() || 'Sin sesión';
                 // try to get career from data attribute (optional)
-                pmCareer.textContent = profileCircle.dataset.career || 'No especificada';
+                const selectedCareer = (typeof window.getSelectedCareerOption === 'function') ? window.getSelectedCareerOption() : null;
+                const careerName = selectedCareer ? selectedCareer.name : (profileCircle.dataset.career || 'No especificada');
+                pmCareer.textContent = careerName;
+                if (pmCareerIcon) {
+                    if (selectedCareer && typeof resolveCareerIcon === 'function' && typeof setImageSource === 'function') {
+                        setImageSource(pmCareerIcon, resolveCareerIcon(selectedCareer), selectedCareer.fallbackIcon);
+                    } else if (!selectedCareer) {
+                        setImageSource(pmCareerIcon, DEFAULT_CAREER_ICON_SRC, DEFAULT_CAREER_ICON_SRC);
+                    }
+                }
                 pmDate.textContent = formatDate(new Date());
                 modal.classList.remove('hidden');
                 modal.setAttribute('aria-hidden', 'false');
@@ -606,6 +577,14 @@
             profileCircle.addEventListener('click', openProfileModal);
             profileCircle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProfileModal(); } });
 
+            if (pmCareerSelect) {
+                pmCareerSelect.addEventListener('click', () => {
+                    if (typeof openCareerModal === 'function') {
+                        openCareerModal();
+                    }
+                });
+            }
+
             pmClose.addEventListener('click', closeProfileModal);
             modal.addEventListener('click', (e) => {
                 if (e.target && e.target.dataset && e.target.dataset.close === 'true') closeProfileModal();
@@ -615,7 +594,7 @@
 
             // Expose a helper to update modal content from other scripts (e.g., after Google sign-in)
             window.profileModalUpdate = function (opts) {
-                // opts: { name, avatarUrl, career }
+                // opts: { name, avatarUrl, career, careerId }
                 if (opts) {
                     if (opts.name) { googleUserName.textContent = opts.name; pmName.textContent = opts.name; }
                     if (opts.avatarUrl) {
@@ -623,9 +602,43 @@
                         profileCircle.style.backgroundImage = url;
                         pmAvatar.style.backgroundImage = url;
                     }
-                    if (opts.career) {
-                        profileCircle.dataset.career = opts.career;
-                        pmCareer.textContent = opts.career;
+                    if (opts.careerId && typeof applyCareerSelection === 'function') {
+                        const option = getCareerById(opts.careerId) || getCareerByName(opts.career || '');
+                        if (option) {
+                            if (opts.careerIcon) {
+                                option.icon = opts.careerIcon;
+                            }
+                            if (opts.careerFallbackIcon) {
+                                option.fallbackIcon = opts.careerFallbackIcon;
+                            }
+                            if (opts.careerBackground) {
+                                option.background = opts.careerBackground;
+                            }
+                            if (opts.careerBackgroundFallback) {
+                                option.backgroundFallback = opts.careerBackgroundFallback;
+                            }
+                            applyCareerSelection(option, { persistLocal: true });
+                        }
+                    } else if (opts.career && typeof applyCareerSelection === 'function') {
+                        const option = getCareerByName(opts.career);
+                        if (option) {
+                            if (opts.careerIcon) {
+                                option.icon = opts.careerIcon;
+                            }
+                            if (opts.careerFallbackIcon) {
+                                option.fallbackIcon = opts.careerFallbackIcon;
+                            }
+                            if (opts.careerBackground) {
+                                option.background = opts.careerBackground;
+                            }
+                            if (opts.careerBackgroundFallback) {
+                                option.backgroundFallback = opts.careerBackgroundFallback;
+                            }
+                            applyCareerSelection(option, { persistLocal: true });
+                        } else {
+                            profileCircle.dataset.career = opts.career;
+                            pmCareer.textContent = opts.career;
+                        }
                     }
                 }
             };
@@ -713,6 +726,17 @@
             </div>
         </div>
 
+        <div id="careerModal" class="career-modal hidden" aria-hidden="true" role="dialog"
+            aria-labelledby="careerModalTitle" aria-modal="true">
+            <div class="career-modal__panel" role="document">
+                <button id="careerModalClose" class="career-modal__close" type="button" aria-label="Cerrar">&times;</button>
+                <h3 id="careerModalTitle">Selecciona tu carrera</h3>
+                <p class="career-modal__subtitle">Elige una carrera para personalizar los iconos y fondo.</p>
+                <div id="careerOptionsGrid" class="career-modal__grid" role="listbox" aria-label="Listado de carreras">
+                </div>
+            </div>
+        </div>
+
                 <div id="defaultSchedulePrompt" class="hidden" aria-hidden="true" role="dialog"
                     aria-modal="true" aria-labelledby="defaultScheduleTitle">
                     <div class="default-schedule__panel" role="document">
@@ -781,7 +805,7 @@
                     </span>
                 </div>
                 <div id="printMessage" class="modal">
-                    Opcion: Antes de imprimir, activa "Imprimir fondos de gráficos" <br>1. Mas configuraciones y busca
+                    Opcion: Antes de imprimir, desactiva "Imprimir gráficos de fondo y encabezados y pies de la pagina" <br>1. Mas configuraciones y busca
                     opciones "Graficos de fondo" <br>
                     <button onclick="closeMessageAndPrint()" class="print-button">¡Listo, Imprimir!</button>
                 </div>
@@ -956,6 +980,322 @@
         const AUTH_GATE_DEFAULT_MESSAGE = 'Para cargar, simular tu horario y guardar tus horarios necesitas iniciar sesión con Google.';
         const DRIVE_SCOPE_FLAG = 'google_drive_scope_v2';
         const DEFAULT_BIOMEDICA_SUBJECT_IDS = [57, 58, 59, 60, 61, 67, 68, 69];
+        const CAREER_STORAGE_KEY = 'profile_career_option_v2';
+        const CAREER_LEGACY_KEY = 'profile_career';
+        const CAREER_ICON_BASE_PATH = 'assets/careers';
+        const DEFAULT_CAREER_ICON_SRC = 'biomedica.png';
+
+        const CAREER_OPTIONS = [
+            { id: 'biomedica', name: 'Biomédica', icon: `${CAREER_ICON_BASE_PATH}/biomedica.png`, fallbackIcon: 'biomedica.png' },
+            { id: 'mecatronica', name: 'Mecatrónica', icon: `${CAREER_ICON_BASE_PATH}/mecatronica.png`, fallbackIcon: 'meca.png' },
+            { id: 'software', name: 'Software', icon: `${CAREER_ICON_BASE_PATH}/software.png`, fallbackIcon: 'sofware.png' },
+            { id: 'industrial', name: 'Industrial', icon: `${CAREER_ICON_BASE_PATH}/industrial.png`, fallbackIcon: 'industrial.png' },
+            { id: 'electrica', name: 'Eléctrica', icon: `${CAREER_ICON_BASE_PATH}/electrica.png`, fallbackIcon: 'electrica.png' },
+            { id: 'civil', name: 'Civil', icon: `${CAREER_ICON_BASE_PATH}/civil.png`, fallbackIcon: 'civil.png' },
+            { id: 'telecom', name: 'Telecomunicaciones', icon: `${CAREER_ICON_BASE_PATH}/telecom.png`, fallbackIcon: 'telecomunicacion.png' },
+            { id: 'ambiental', name: 'Ambiental', icon: `${CAREER_ICON_BASE_PATH}/ambiental.png`, fallbackIcon: 'ambiental.png' },
+            { id: 'robotica', name: 'Robótica', icon: `${CAREER_ICON_BASE_PATH}/robotica.png`, fallbackIcon: 'robotica.png' }
+        ];
+
+        let selectedCareerOption = CAREER_OPTIONS[0];
+
+        function getCareerById(id) {
+            if (!id) return null;
+            return CAREER_OPTIONS.find(opt => opt.id === id) || null;
+        }
+
+        function getCareerByName(name) {
+            if (!name) return null;
+            const normalized = name.toLowerCase();
+            return CAREER_OPTIONS.find(opt => opt.name.toLowerCase() === normalized) || null;
+        }
+
+        function getSelectedCareerOption() {
+            return selectedCareerOption;
+        }
+
+        window.getSelectedCareerOption = getSelectedCareerOption;
+
+        function resolveCareerIcon(career) {
+            if (!career) return DEFAULT_CAREER_ICON_SRC;
+            return career.icon || career.fallbackIcon || DEFAULT_CAREER_ICON_SRC;
+        }
+
+        function resolveCareerIconFallback(career) {
+            if (!career) return DEFAULT_CAREER_ICON_SRC;
+            return career.fallbackIcon || DEFAULT_CAREER_ICON_SRC;
+        }
+
+        function resolveCareerBackground(career) {
+            if (!career) return DEFAULT_CAREER_ICON_SRC;
+            return career.background || resolveCareerIcon(career);
+        }
+
+        function resolveCareerBackgroundFallback(career) {
+            if (!career) return DEFAULT_CAREER_ICON_SRC;
+            return career.backgroundFallback || resolveCareerIconFallback(career);
+        }
+
+        function setImageSource(img, src, fallbackSrc) {
+            if (!img) return;
+            const primary = src || DEFAULT_CAREER_ICON_SRC;
+            const fallback = fallbackSrc && fallbackSrc !== primary ? fallbackSrc : null;
+            const getStage = () => (img.dataset ? img.dataset.iconFallbackStage : img._iconFallbackStage);
+            const setStage = (value) => {
+                if (img.dataset) {
+                    img.dataset.iconFallbackStage = value;
+                } else {
+                    img._iconFallbackStage = value;
+                }
+            };
+
+            img.onerror = function handleCareerIconError() {
+                const stage = getStage();
+                if (stage === 'primary' && fallback) {
+                    setStage('fallback');
+                    img.src = fallback;
+                    return;
+                }
+                if (stage !== 'default') {
+                    setStage('default');
+                    img.src = DEFAULT_CAREER_ICON_SRC;
+                    return;
+                }
+                img.onerror = null;
+            };
+
+            setStage('primary');
+            img.src = primary;
+        }
+
+        function setElementBackground(element, src, fallbackSrc) {
+            if (!element) return;
+            const primary = src || DEFAULT_CAREER_ICON_SRC;
+            const fallback = fallbackSrc || DEFAULT_CAREER_ICON_SRC;
+            element.style.backgroundImage = 'url("' + fallback + '")';
+            element.style.backgroundSize = 'cover';
+            element.style.backgroundPosition = 'center';
+            element.style.backgroundColor = 'transparent';
+            if (primary === fallback) {
+                return;
+            }
+            const tester = new Image();
+            tester.onload = function () {
+                element.style.backgroundImage = 'url("' + primary + '")';
+            };
+            tester.src = primary;
+        }
+
+        function updateCareerWatermark(iconSrc, fallbackSrc) {
+            const primary = iconSrc || DEFAULT_CAREER_ICON_SRC;
+            const fallback = fallbackSrc || DEFAULT_CAREER_ICON_SRC;
+            document.documentElement.style.setProperty('--career-watermark-image', 'url("' + fallback + '")');
+            if (primary === fallback) {
+                return;
+            }
+            const tester = new Image();
+            tester.onload = function () {
+                document.documentElement.style.setProperty('--career-watermark-image', 'url("' + primary + '")');
+            };
+            tester.src = primary;
+        }
+
+        function updateFavicon(iconSrc, fallbackSrc) {
+            const link = document.querySelector("link[rel='icon']");
+            if (!link) return;
+            const primary = iconSrc || DEFAULT_CAREER_ICON_SRC;
+            const fallback = fallbackSrc || DEFAULT_CAREER_ICON_SRC;
+            link.href = fallback;
+            if (primary === fallback) {
+                return;
+            }
+            const tester = new Image();
+            tester.onload = function () {
+                link.href = primary;
+            };
+            tester.src = primary;
+        }
+
+        function updateCareerBackground(iconSrc, fallbackSrc) {
+            const primary = iconSrc || DEFAULT_CAREER_ICON_SRC;
+            const fallback = fallbackSrc || DEFAULT_CAREER_ICON_SRC;
+            document.documentElement.style.setProperty('--career-background-image', 'url("' + fallback + '")');
+            if (primary === fallback) {
+                return;
+            }
+            const tester = new Image();
+            tester.onload = function () {
+                document.documentElement.style.setProperty('--career-background-image', 'url("' + primary + '")');
+            };
+            tester.src = primary;
+        }
+
+        function applyCareerSelection(career, options = {}) {
+            if (!career) return;
+            const { persistLocal = true } = options;
+            selectedCareerOption = career;
+
+            const iconSrc = resolveCareerIcon(career);
+            const iconFallback = resolveCareerIconFallback(career);
+            const backgroundSrc = resolveCareerBackground(career);
+            const backgroundFallback = resolveCareerBackgroundFallback(career);
+
+            const pmCareer = document.getElementById('pmCareer');
+            const pmCareerIcon = document.getElementById('pmCareerIcon');
+            const profileCircle = document.getElementById('googleProfileCircle');
+            const pmAvatar = document.getElementById('pmAvatar');
+            const authGateLogo = document.querySelector('.auth-gate__logo img');
+
+            if (pmCareer) pmCareer.textContent = career.name;
+            setImageSource(pmCareerIcon, iconSrc, iconFallback);
+            setImageSource(authGateLogo, iconSrc, iconFallback);
+            updateFavicon(iconSrc, iconFallback);
+            updateCareerWatermark(iconSrc, iconFallback);
+            updateCareerBackground(backgroundSrc, backgroundFallback);
+
+            if (profileCircle) {
+                profileCircle.dataset.career = career.name;
+                profileCircle.dataset.careerIcon = iconSrc;
+                profileCircle.dataset.careerIconFallback = iconFallback || DEFAULT_CAREER_ICON_SRC;
+                profileCircle.dataset.careerId = career.id;
+                if (!gUserProfile || !gUserProfile.picture) {
+                    setElementBackground(profileCircle, iconSrc, iconFallback);
+                    profileCircle.textContent = '';
+                }
+            }
+
+            if (pmAvatar && (!gUserProfile || !gUserProfile.picture)) {
+                setElementBackground(pmAvatar, iconSrc, iconFallback);
+            }
+
+            if (persistLocal) {
+                try {
+                    localStorage.setItem(CAREER_STORAGE_KEY, career.id);
+                    localStorage.setItem(CAREER_LEGACY_KEY, career.name);
+                } catch (e) {
+                    console.warn('No se pudo guardar la carrera en localStorage', e);
+                }
+            }
+        }
+
+        function buildCareerOptionsGrid(selectedId = null) {
+            const grid = document.getElementById('careerOptionsGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            CAREER_OPTIONS.forEach(option => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'career-option' + (option.id === selectedId ? ' is-selected' : '');
+                button.setAttribute('data-career-id', option.id);
+                button.setAttribute('role', 'option');
+                button.setAttribute('aria-label', option.name);
+                const icon = document.createElement('img');
+                icon.className = 'career-option__icon';
+                icon.alt = option.name;
+                icon.loading = 'lazy';
+                icon.decoding = 'async';
+                setImageSource(icon, resolveCareerIcon(option), option.fallbackIcon);
+
+                const label = document.createElement('span');
+                label.className = 'career-option__name';
+                label.textContent = option.name;
+
+                button.appendChild(icon);
+                button.appendChild(label);
+                button.addEventListener('click', () => handleCareerOptionClick(option));
+                grid.appendChild(button);
+            });
+        }
+
+        function openCareerModal() {
+            const modal = document.getElementById('careerModal');
+            if (!modal) return;
+            buildCareerOptionsGrid(selectedCareerOption ? selectedCareerOption.id : null);
+            modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden', 'false');
+            const closeBtn = document.getElementById('careerModalClose');
+            if (closeBtn) closeBtn.focus();
+            document.body.classList.add('no-scroll');
+        }
+
+        function closeCareerModal() {
+            const modal = document.getElementById('careerModal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+            const keepNoScroll = document.querySelector('#profileModal:not(.hidden), #printMessage:not(.hidden), #driveQuotaModal:not(.hidden), #defaultSchedulePrompt:not(.hidden)');
+            if (!keepNoScroll) {
+                document.body.classList.remove('no-scroll');
+            }
+        }
+
+        async function handleCareerOptionClick(option) {
+            if (!option) return;
+            if (selectedCareerOption && selectedCareerOption.id === option.id) {
+                closeCareerModal();
+                return;
+            }
+
+            const confirmed = window.confirm(`¿Quieres establecer ${option.name} como tu carrera?`);
+            if (!confirmed) {
+                return;
+            }
+
+            closeCareerModal();
+            showLoader('Aplicando tu carrera...');
+            try {
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                applyCareerSelection(option, { persistLocal: true });
+                if (isSessionActive()) {
+                    await ensureSaveToDrive({ interactive: false, showSuccess: false, silent: true });
+                }
+                showMessage(`Carrera actualizada a ${option.name}.`, 'success');
+            } catch (error) {
+                console.error('Error actualizando carrera', error);
+                showMessage('No se pudo actualizar la carrera. Inténtalo de nuevo.', 'error');
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function initializeCareerSelection() {
+            let storedId = null;
+            try {
+                storedId = localStorage.getItem(CAREER_STORAGE_KEY);
+                if (!storedId) {
+                    const legacy = localStorage.getItem(CAREER_LEGACY_KEY);
+                    if (legacy) {
+                        const legacyCareer = getCareerByName(legacy);
+                        if (legacyCareer) storedId = legacyCareer.id;
+                    }
+                }
+            } catch (e) {
+                console.warn('No se pudo leer la carrera almacenada', e);
+            }
+
+            const career = getCareerById(storedId) || CAREER_OPTIONS[0];
+            applyCareerSelection(career, { persistLocal: false });
+        }
+
+        function setupCareerModalListeners() {
+            const closeBtn = document.getElementById('careerModalClose');
+            const overlay = document.getElementById('careerModalOverlay');
+            const modal = document.getElementById('careerModal');
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeCareerModal);
+            }
+            if (overlay) {
+                overlay.addEventListener('click', closeCareerModal);
+            }
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key !== 'Escape') return;
+                if (modal && !modal.classList.contains('hidden')) {
+                    closeCareerModal();
+                }
+            });
+        }
 
         let defaultSchedulePromptShown = false;
         let defaultSchedulePromptDismissed = false;
@@ -1100,7 +1440,9 @@
             }
 
             try {
-                await ensureSaveToDrive({ interactive: false, showSuccess: true, successMessage: 'Horario de Biomédica guardado en Google Drive' });
+                const currentCareer = typeof getSelectedCareerOption === 'function' ? getSelectedCareerOption() : null;
+                const careerSuccess = currentCareer ? `Horario de ${currentCareer.name} guardado en Google Drive` : 'Horario guardado en Google Drive';
+                await ensureSaveToDrive({ interactive: false, showSuccess: true, successMessage: careerSuccess });
             } catch (err) {
                 console.warn('No se pudo sincronizar el horario de Biomédica con Drive', err);
                 showMessage('Horario cargado, pero no se pudo guardar en Drive. Intenta nuevamente.', 'warning');
@@ -1115,6 +1457,8 @@
 
         function lockInterface(customMessage) {
             authGateDismissed = false;
+            authRequestInProgress = false;
+            driveAuthRetryPending = false;
             const gate = document.getElementById('authGate');
             const msg = document.getElementById('authGateMessage');
             if (!gate) return;
@@ -1134,6 +1478,8 @@
 
         function dismissAuthGateTemporarily() {
             authGateDismissed = true;
+            authRequestInProgress = false;
+            driveAuthRetryPending = false;
             unlockInterface();
         }
 
@@ -1154,6 +1500,7 @@
             const cancelBtn = document.getElementById('authGateCancel');
             if (signInBtn) {
                 signInBtn.addEventListener('click', () => {
+                    authGateDismissed = false;
                     requestGoogleSignIn();
                 });
             }
@@ -1166,6 +1513,11 @@
             updateAuthGateState();
 
             document.body.addEventListener('click', function (event) {
+                const isSignInTrigger = event.target.closest('#googleSignIn') || event.target.closest('#authGateSignIn');
+                if (isSignInTrigger) {
+                    authGateDismissed = false;
+                    return;
+                }
                 if (!isSessionActive() && authGateDismissed && !event.target.closest('#authGate')) {
                     lockInterface('Sin sesión no puedes acceder a las materias ni guardar horarios.');
                 }
@@ -1229,6 +1581,7 @@
 
             // Cargar selecciones guardadas en localStorage si existen
             loadSelectedSubjects();
+            initializeCareerSelection();
 
             // Generar tabla de horarios
             generateScheduleTable();
@@ -1242,22 +1595,7 @@
             setupFloatingPreview();
 
             initAuthGate();
-            updateMobileMessage();
-        });
-
-        function updateMobileMessage() {
-            const mobileMessage = document.getElementById('mobileMessage');
-            if (!mobileMessage) return;
-            const isMobile = window.innerWidth <= 768;
-            if (isMobile) {
-                mobileMessage.classList.remove('hidden');
-            } else {
-                mobileMessage.classList.add('hidden');
-            }
-        }
-
-        window.addEventListener('resize', () => {
-            updateMobileMessage();
+            setupCareerModalListeners();
         });
 
 
@@ -2474,6 +2812,13 @@
 
             window.__googleProfile = gUserProfile;
 
+            if (typeof getSelectedCareerOption === 'function' && typeof applyCareerSelection === 'function') {
+                const currentCareer = getSelectedCareerOption();
+                if (currentCareer) {
+                    applyCareerSelection(currentCareer, { persistLocal: false });
+                }
+            }
+
             updateGoogleButtons(true);
             updateAuthGateState();
             if (typeof updateHeaderTitle === 'function') {
@@ -2564,6 +2909,11 @@
         async function saveToDrive(options = {}) {
             const { suppressAuthError = false, interactive = true } = options;
             const fileName = 'horario_data.json';
+            const selectedCareer = getSelectedCareerOption();
+            const selectedCareerIcon = resolveCareerIcon(selectedCareer);
+            const selectedCareerIconFallback = resolveCareerIconFallback(selectedCareer);
+            const selectedCareerBackground = resolveCareerBackground(selectedCareer);
+            const selectedCareerBackgroundFallback = resolveCareerBackgroundFallback(selectedCareer);
             const payload = {
                 _meta: {
                     savedAt: new Date().toISOString(),
@@ -2572,7 +2922,21 @@
                 },
                 selectedSubjects,
                 customSubjects: loadCustomSubjects(),
-                selectedSlots: Array.from(selectedSlots) // Guardar horarios seleccionados
+                selectedSlots: Array.from(selectedSlots),
+                career: selectedCareer ? {
+                    id: selectedCareer.id,
+                    name: selectedCareer.name,
+                    icon: selectedCareerIcon,
+                    fallbackIcon: selectedCareerIconFallback,
+                    background: selectedCareerBackground,
+                    backgroundFallback: selectedCareerBackgroundFallback
+                } : null,
+                careerId: selectedCareer ? selectedCareer.id : null,
+                careerName: selectedCareer ? selectedCareer.name : null,
+                careerIcon: selectedCareerIcon,
+                careerFallbackIcon: selectedCareerIconFallback,
+                careerBackground: selectedCareerBackground,
+                careerBackgroundFallback: selectedCareerBackgroundFallback
             };
             const content = JSON.stringify(payload, null, 2);
 
@@ -2715,6 +3079,49 @@
                     if (Array.isArray(data.selectedSlots)) {
                         selectedSlots = new Set(data.selectedSlots); // Recuperar horarios seleccionados
                         buildSlotsTable(); // Actualizar tabla de slots
+                    }
+                    if (data.career) {
+                        const option = getCareerById(data.career.id) || getCareerByName(data.career.name);
+                        if (option) {
+                            const remoteIcon = data.career.icon || data.careerIcon;
+                            if (remoteIcon) {
+                                option.icon = remoteIcon;
+                            }
+                            const remoteFallbackIcon = data.career.fallbackIcon || data.careerFallbackIcon;
+                            if (remoteFallbackIcon) {
+                                option.fallbackIcon = remoteFallbackIcon;
+                            }
+                            const remoteBackground = data.career.background || data.careerBackground;
+                            if (remoteBackground) {
+                                option.background = remoteBackground;
+                            }
+                            const remoteBackgroundFallback = data.career.backgroundFallback || data.careerBackgroundFallback;
+                            if (remoteBackgroundFallback) {
+                                option.backgroundFallback = remoteBackgroundFallback;
+                            }
+                            applyCareerSelection(option, { persistLocal: true });
+                        }
+                    } else if (data.careerId || data.careerName) {
+                        const option = getCareerById(data.careerId) || getCareerByName(data.careerName);
+                        if (option) {
+                            const legacyIcon = data.careerIcon;
+                            if (legacyIcon) {
+                                option.icon = legacyIcon;
+                            }
+                            const legacyFallbackIcon = data.careerFallbackIcon;
+                            if (legacyFallbackIcon) {
+                                option.fallbackIcon = legacyFallbackIcon;
+                            }
+                            const legacyBackground = data.careerBackground;
+                            if (legacyBackground) {
+                                option.background = legacyBackground;
+                            }
+                            const legacyBackgroundFallback = data.careerBackgroundFallback;
+                            if (legacyBackgroundFallback) {
+                                option.backgroundFallback = legacyBackgroundFallback;
+                            }
+                            applyCareerSelection(option, { persistLocal: true });
+                        }
                     }
                     showMessage('Datos cargados desde Google Drive', 'success');
                 } else {
@@ -2888,6 +3295,7 @@
             const defaultCancel = document.getElementById('defaultScheduleCancel');
 
             if (signInBtn) signInBtn.addEventListener('click', () => {
+                authGateDismissed = false;
                 try { requestGoogleSignIn(); } catch (e) { console.error('requestGoogleSignIn error', e); showMessage('Error iniciando Google', 'error'); }
             });
             if (signOutBtn) signOutBtn.addEventListener('click', () => {
@@ -3315,6 +3723,8 @@
 
             try {
                 localStorage.removeItem(CUSTOM_KEY);
+                localStorage.removeItem(CAREER_STORAGE_KEY);
+                localStorage.removeItem(CAREER_LEGACY_KEY);
             } catch (e) {
                 console.warn('No se pudo limpiar materias personalizadas', e);
             }
@@ -3328,6 +3738,11 @@
             defaultSchedulePromptShown = false;
             defaultSchedulePromptDismissed = false;
             closeDefaultSchedulePrompt();
+
+            const fallbackCareer = getCareerById('biomedica') || CAREER_OPTIONS[0];
+            if (fallbackCareer) {
+                applyCareerSelection(fallbackCareer, { persistLocal: false });
+            }
         }
 
         // Crear modal de confirmación personalizado
