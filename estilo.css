@@ -749,6 +749,9 @@ button:hover {
         padding: 26px 28px 32px;
         box-shadow: 0 22px 60px rgba(0, 0, 0, 0.32);
         color: #0f1b2d;
+        max-height: min(90vh, 720px);
+        display: flex;
+        flex-direction: column;
     }
 
     .career-modal__close {
@@ -778,7 +781,31 @@ button:hover {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         gap: 16px;
+        overflow-y: auto;
+        padding-right: 6px;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
     }
+
+    @supports (-webkit-overflow-scrolling: touch) {
+        .career-modal__grid {
+            -webkit-overflow-scrolling: touch;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .career-modal__panel {
+            width: min(500px, 94vw);
+            padding: 20px 22px 26px;
+            max-height: 88vh;
+        }
+
+        .career-modal__grid {
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            max-height: 65vh;
+        }
+    }
+
 
     .career-option {
         display: flex;
