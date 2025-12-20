@@ -141,11 +141,11 @@ button:hover {
     position: relative;
 }
 
-.schedule-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 700px;
-}
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
 
 .schedule-container::before {
     content: '';
@@ -408,33 +408,118 @@ button:hover {
 
 /* Estilo para impresión */
 @media print {
+    @page {
+        size: A4 portrait;
+        margin: 6mm;
+    }
+
+    *,
+    *::before,
+    *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    body {
+        background: #ffffff6c !important;
+    }
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: url('biomedica.png') center -40% / 120% no-repeat;
+        opacity: 0.099;
+        pointer-events: none;
+        visibility: visible !important;
+    }
+
     body * {
         visibility: hidden;
         overflow: hidden;
-
+        
     }
 
     #scheduleContainer,
     #scheduleContainer * {
         visibility: visible;
         overflow: hidden;
-
+       
     }
 
     #scheduleContainer {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
+
+        position: fixed;
+        left: 6mm;
+        right: 6mm;
+        top: -30px;
+        width: calc(100% - 12mm);
+        height: calc(100% - 40mm);
+        transform: scale(0.92);
+        transform-origin: top center;
+    }
+
+    .schedule-table th {
+        background-color: var(--primary-color) !important;
+        color: #fff !important;
+    }
+
+    .schedule-table tr:nth-child(even) {
+        background-color: #f3f6fb !important;
+    }
+
+    .subject-card {
+        background-color: rgba(52, 152, 219, 0.88) !important;
+        color: #fff !important;
+        box-shadow: none !important;
     }
 
     .subject-card * {
-        background-color: rgba(52, 152, 219, 0.8);
-        color: white;
+        background: transparent !important;
+        color: inherit !important;
     }
 
+    .schedule-table th,
+    .schedule-table td {
+        padding: 4px 3px !important;
+        font-size: 0.72rem !important;
+    }
+
+    .conflict {
+        background-color: var(--error-color) !important;
+        color: #fff !important;
+    }
+
+    .subject-card.conflict {
+        background-color: var(--error-color) !important;
+        color: #fff !important;
+    }
+
+    .group-6a {
+        background-color: #28a745 !important;
+        color: #fff !important;
+    }
+
+    .subject-card.conflict,
+    .group-6a.conflict {
+        background-color: var(--error-color) !important;
+        color: #fff !important;
+    }
+
+    #printFooterName {
+        display: block !important;
+        position: fixed;
+        width: 100%;
+        height: auto;
+        left: 0;
+        right: 0;
+        bottom: 3px;
+        text-align: center;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0b0d14 !important;
+    }
+    
 }
 
 /* Modal bonito */
@@ -585,22 +670,18 @@ button:hover {
     border-radius: 6px;
 }
 
-/* Resumen de slots más legible */
-#slotsResumen {
-    font-size: 14px;
-    margin-top: 8px;
-}
-
-#topBar {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 12px;
-    padding: 10px 16px;
+        /* Resumen de slots más legible */
+        #slotsResumen { font-size: 14px; margin-top: 8px; }
+        #topBar{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:12px;
+    padding:10px 16px;
     background: white;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+    border-radius:8px;
+    margin-bottom:12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
 }
 
 
