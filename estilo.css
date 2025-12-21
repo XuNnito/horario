@@ -519,7 +519,8 @@ button:hover {
 
 .reinscription-field input[type="text"],
 .reinscription-field input[type="email"],
-.reinscription-field input[type="file"] {
+.reinscription-field input[type="file"],
+.reinscription-field textarea {
     border: 1px solid rgba(36, 48, 79, 0.25);
     border-radius: 8px;
     padding: 10px 12px;
@@ -528,9 +529,15 @@ button:hover {
     background: #fff;
 }
 
+.reinscription-field textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
 .reinscription-field input[type="text"]:focus,
 .reinscription-field input[type="email"]:focus,
-.reinscription-field input[type="file"]:focus {
+.reinscription-field input[type="file"]:focus,
+.reinscription-field textarea:focus {
     outline: 2px solid rgba(37, 91, 184, 0.35);
     border-color: rgba(37, 91, 184, 0.35);
 }
@@ -1713,3 +1720,333 @@ a img{
   from { transform: scale(.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* Responsividad para móviles - Solicitud de Reinscripción */
+@media (max-width: 768px) {
+  .reinscription-modal {
+    padding: 0;
+  }
+
+  .reinscription-modal.is-mobile,
+  .reinscription-modal.is-mobile .reinscription-modal__panel {
+    width: 100vw !important;
+    height: 100vh !important;
+  }
+
+  .reinscription-modal.is-mobile .reinscription-modal__panel {
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .reinscription-modal__panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto;
+  }
+
+  .reinscription-modal__close {
+    top: 10px !important;
+    right: 10px !important;
+    z-index: 10;
+  }
+
+  .reinscription-modal__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .reinscription-modal.is-mobile .reinscription-modal__preview {
+    display: none !important;
+  }
+
+  .reinscription-modal__preview {
+    display: none;
+  }
+
+  .reinscription-modal__actions {
+    margin-top: auto;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid #eee;
+    background: white;
+    position: sticky;
+    bottom: 0;
+  }
+
+  .reinscription-modal__actions button {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px 10px !important;
+    font-size: 14px;
+  }
+
+  .reinscription-field {
+    margin-bottom: 12px !important;
+  }
+
+  .reinscription-field label {
+    font-size: 14px !important;
+    font-weight: 600;
+  }
+
+  .reinscription-field input,
+  .reinscription-field textarea {
+    font-size: 16px !important;
+    padding: 10px !important;
+    width: 100% !important;
+  }
+
+  .reinscription-grid {
+    gap: 8px !important;
+  }
+
+  .reinscription-hint {
+    font-size: 12px !important;
+  }
+
+  .signature-canvas {
+    max-height: 250px !important;
+    aspect-ratio: auto !important;
+    height: auto !important;
+    width: 100% !important;
+  }
+
+  .draw-signature-modal.is-mobile,
+  .draw-signature-modal.is-mobile .draw-signature-modal__content {
+    width: 100vw !important;
+    height: 100vh !important;
+  }
+
+  .draw-signature-modal.is-mobile .draw-signature-modal__content {
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .draw-signature-modal__content {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto;
+  }
+
+  .draw-signature-modal__body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .draw-signature-modal__actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .draw-signature-modal__actions button {
+    flex: 1;
+    min-width: 100px;
+    padding: 12px 8px !important;
+  }
+
+  .reinscription-signature {
+    margin: 30px 0 15px 0 !important;
+  }
+
+  .reinscription-loaded-subjects {
+    max-height: 200px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Asegurar que el canvas use todo el espacio en móviles */
+  #signatureCanvas {
+    width: 100% !important;
+    height: auto !important;
+    display: block;
+    touch-action: none;
+  }
+}
+
+/* Desktop - mantener como estaba */
+@media (min-width: 769px) {
+  .reinscription-modal.is-mobile .reinscription-modal__preview {
+    display: block;
+  }
+
+  .reinscription-modal__preview {
+    display: flex;
+  }
+
+  .draw-signature-modal__content {
+    width: 90%;
+    max-width: 900px;
+  }
+}
+
+/* Estilos para el modal de dibujar firma */
+.draw-signature-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.draw-signature-modal.hidden {
+  display: none;
+}
+
+.draw-signature-modal__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}
+
+.draw-signature-modal__content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: pop 0.3s ease-out;
+}
+
+.draw-signature-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.draw-signature-modal__header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.draw-signature-modal__close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.draw-signature-modal__close:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.draw-signature-modal__body {
+  padding: 30px 20px;
+}
+
+.signature-canvas {
+  width: 100% !important;
+  max-width: 800px;
+  height: auto !important;
+  aspect-ratio: 8 / 3;
+  display: block;
+  margin: 0 auto;
+  border: 2px solid #ccc;
+  background: white;
+  cursor: crosshair;
+  border-radius: 4px;
+}
+
+.draw-signature-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #eee;
+}
+
+.draw-signature-modal__actions button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: #0066cc;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0052a3;
+}
+
+/* Canvas mejorado para touch en móviles */
+#signatureCanvas {
+  display: block;
+  margin: 0 auto;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Texto del modal más legible en móviles */
+.draw-signature-modal__header h2 {
+  font-size: 18px;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .draw-signature-modal__header h2 {
+    font-size: 16px;
+  }
+
+  .draw-signature-modal__body p {
+    margin: 5px 0;
+    font-size: 12px;
+  }
+
+  /* Mejorar botones en móviles */
+  .btn-primary,
+  .btn-secondary {
+    padding: 14px 12px !important;
+    font-size: 15px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+
+  /* Asegurar que el viewport se ajuste */
+  body.reinscription-modal-active {
+    overflow: hidden;
+    height: 100vh;
+  }
+}
+

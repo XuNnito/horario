@@ -980,8 +980,12 @@
                             <small class="reinscription-hint">Se rellena automáticamente con la materia ordinaria no cargada, puedes editarla.</small>
                         </div>
                         <div class="reinscription-field">
-                            <label for="reinscriptionSignature">Firma (PNG sin fondo)</label>
-                            <input id="reinscriptionSignature" name="signature" type="file" accept="image/png">
+                            <label for="reinscriptionSignature">Firma (PNG sin fondo) <span style="color: #d32f2f; font-weight: bold;">*</span></label>
+                            <div class="signature-required-warning" style="color: #d32f2f; margin-bottom: 12px; padding: 10px 12px; background-color: #ffebee; border-left: 4px solid #d32f2f; border-radius: 4px; font-size: 16px; font-weight: 500; display: block;">La firma es obligatoria para enviar la solicitud al tutor.</div>
+                            <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+                                <input id="reinscriptionSignature" name="signature" type="file" accept="image/png" style="flex: 1; min-width: 200px;">
+                                <button id="openDrawSignatureModal" type="button" style="padding: 8px 16px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Dibujar firma</button>
+                            </div>
                             <div id="reinscriptionSignaturePreviewWrapper" class="reinscription-signature hidden">
                                 <img id="reinscriptionSignaturePreview" alt="Vista previa de la firma">
                                 <button id="reinscriptionSignatureClear" type="button" class="btn-link">Quitar firma</button>
@@ -989,9 +993,13 @@
                             <div id="reinscriptionLoadedSubjectsList" class="reinscription-loaded-subjects hidden" aria-live="polite"></div>
                         </div>
                         <div class="reinscription-field reinscription-email-field">
-                            <label for="reinscriptionTutorEmail">Correo del tutor</label>
-                            <input id="reinscriptionTutorEmail" name="tutorEmail" type="email" maxlength="120" placeholder="tutor@instituto.edu.mx" autocomplete="email">
-                            <small class="reinscription-hint">Este correo recibirá el formato cuando uses "Enviar al tutor".</small>
+                            <label for="reinscriptionTutorEmail">Correo del tutor (opcional)</label>
+                            <input id="reinscriptionTutorEmail" name="tutorEmail" type="email" maxlength="120" placeholder="vazquez@ib.upchiapas.edu.mx" autocomplete="email">
+                            <small class="reinscription-hint">Podrás buscarlo después en el redactor de Gmail.</small>
+                        </div>
+                        <div class="reinscription-field">
+                            <label for="reinscriptionTutorMessage">Mensaje (opcional)</label>
+                            <textarea id="reinscriptionTutorMessage" name="tutorMessage" rows="3" maxlength="500" placeholder="Escribe un mensaje adicional para el tutor (opcional)"></textarea>
                         </div>
                     </form>
                     <div class="reinscription-modal__preview">
@@ -1015,7 +1023,25 @@
             </div>
         </div>
 
-
+        <!-- Modal para dibujar firma -->
+        <div id="drawSignatureModal" class="draw-signature-modal hidden" aria-hidden="true" role="dialog">
+            <div class="draw-signature-modal__overlay"></div>
+            <div class="draw-signature-modal__content">
+                <div class="draw-signature-modal__header">
+                    <h2>Dibujar Firma</h2>
+                    <button id="closeDrawSignatureModal" type="button" class="draw-signature-modal__close" aria-label="Cerrar">&times;</button>
+                </div>
+                <div class="draw-signature-modal__body">
+                    <canvas id="signatureCanvas" class="signature-canvas" width="800" height="300" style="border: 2px solid #ccc; background: white; cursor: crosshair; display: block; margin: 0 auto;"></canvas>
+                    <p style="text-align: center; color: #666; margin-top: 10px; font-size: 14px;">Dibuja tu firma con el ratón</p>
+                </div>
+                <div class="draw-signature-modal__actions">
+                    <button id="resetSignatureCanvas" type="button" class="btn-secondary">Reiniciar</button>
+                    <button id="cancelDrawSignature" type="button" class="btn-secondary">Cancelar</button>
+                    <button id="saveDrawnSignature" type="button" class="btn-primary">Firmar</button>
+                </div>
+            </div>
+        </div>
 
     <!-- Elemento para previsualización flotante -->
     <div id="floatingPreview" class="floating-preview hidden"></div>
@@ -1096,9 +1122,9 @@
         const REINSCRIPTION_PDF_LAYOUT_DEFAULTS = {
             fullName: { xPct: 0.19, yPct: 0.875 },
             matricula: { xPct: 0.75, yPct: 0.875 },
-            career: { xPct: 0.3, yPct: 0.855 },
+            career: { xPct: 0.31, yPct: 0.855 },
             quarter: { xPct: 0.3, yPct: 0.837 },
-            group: { xPct: 0.75, yPct: 0.837 },
+            group: { xPct: 0.63, yPct: 0.837 },
             debtSubject: { xPct: 0.1, yPct: 0.805, maxWidthPct: 0.78, lineHeightPct: 0.02, maxLines: 2 },
             loadedSubjects: { xPct: 0.23, yPct: 0.753, maxWidthPct: 0.78, lineHeightPct: 0.018, maxLines: 8, tabStopPct: 0.8 },
             signature: { xPct: 0.68, yPct: 0.53, widthPct: 0.28, heightPct: 0.12 }
@@ -1113,6 +1139,7 @@
         ];
         const REINSCRIPTION_SIGNATURE_STORAGE_KEY = 'reinscription_signature_rect_v1';
         const PDFJS_WORKER_SRC = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.worker.min.js';
+        const REINSCRIPTION_EMAIL_SUBJECT = 'Reinscripción enero-abril 2026';
 
         let reinscriptionSignatureDataUrl = null;
         let reinscriptionPdfTemplateBytes = null;
@@ -1123,6 +1150,8 @@
         let signatureAspectRatio = 1;
         let signatureDragState = null;
         let reinscriptionPreviewMetrics = { width: 0, height: 0, scale: 1, baseWidth: 0, baseHeight: 0 };
+        let isDrawingSignature = false;
+        let signatureCanvasContext = null;
         const signatureOverlayElements = {
             stage: null,
             canvas: null,
@@ -1146,13 +1175,15 @@
         let driveAuthRetryPending = false;
         let reinscriptionEmailSending = false;
         let lastReinscriptionDraftUrl = null;
+        let lastReinscriptionDraftSearchUrl = null;
         const AUTH_GATE_DEFAULT_MESSAGE = 'Para cargar, simular tu horario y guardar tus horarios necesitas iniciar sesión con Google.';
         const DRIVE_SCOPE_FLAG = 'google_drive_scope_v2';
+        const GMAIL_SCOPE_FLAG = 'gmail_scope_v1';
         const DEFAULT_BIOMEDICA_SUBJECT_IDS = [57, 58, 59, 60, 61, 67, 68, 69];
         const CAREER_STORAGE_KEY = 'profile_career_option_v2';
         const CAREER_LEGACY_KEY = 'profile_career';
         const CUSTOM_CAREERS_KEY = 'profile_custom_careers_v1';
-        const CAREER_ICON_BASE_PATH = 'assets/careers';
+        const CAREER_ICON_BASE_PATH = '.';
         const DEFAULT_CAREER_ICON_SRC = 'biomedica.png';
 
         const BASE_CAREER_OPTIONS = [
@@ -2182,8 +2213,7 @@
         }
 
         async function ensureDriveReady(options = {}) {
-            const { timeoutMs = 10000, interactive = true } = options;
-            await ensureDriveApiInitialized();
+            const { interactive = true, forceGmailScope = false } = options;
 
             let tokenAvailable = !!gAccessToken;
             if (!tokenAvailable) {
@@ -2194,32 +2224,32 @@
                 }
             }
 
+            const gmailScopeGranted = localStorage.getItem(GMAIL_SCOPE_FLAG) === '1';
+            if (forceGmailScope && tokenAvailable && !gmailScopeGranted) {
+                console.log('Gmail scope no fue otorgado; pidiendo reconsentimiento...');
+                tokenAvailable = false;
+            }
+
             if (!tokenAvailable) {
                 if (!interactive) {
                     throw new Error('Sin token de acceso válido');
                 }
                 if (typeof requestGoogleSignIn === 'function' && !authRequestInProgress) {
                     try {
-                        requestGoogleSignIn();
+                        requestGoogleSignIn(false, { forceGmailScope });
+                        showMessage('Se abrió una ventana de Google. Por favor, inicia sesión y autoriza los permisos solicitados.', 'info');
                     } catch (err) {
                         console.warn('requestGoogleSignIn fallo al preparar Drive', err);
                     }
                 }
-                try {
-                    await waitForToken(timeoutMs);
-                } catch (err) {
-                    console.warn('waitForToken falló al preparar Drive', err);
-                }
+                
                 tokenAvailable = hasValidAccessToken();
-            }
-
-            if (!tokenAvailable) {
-                if (interactive) {
-                    showMessage('Inicia sesión con Google antes de sincronizar en Drive.', 'warning');
+                if (!tokenAvailable) {
+                    throw new Error('Por favor, autoriza el acceso a Google y vuelve a intentar.');
                 }
-                throw new Error('Sin token de acceso válido');
             }
 
+            await ensureDriveApiInitialized();
             if (typeof gapi !== 'undefined' && gapi.client && gAccessToken) {
                 try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { /* silencioso */ }
             }
@@ -2249,6 +2279,7 @@
             initAuthGate();
             setupCareerModalListeners();
             setupReinscriptionModal();
+            setupDrawSignatureModal();
             updateReinscriptionLoadedSubjectsList();
         });
 
@@ -2474,7 +2505,8 @@
                     group: parsed.group || '',
                     debtSubject: parsed.debtSubject || '',
                     autoDebtSubject: parsed.autoDebtSubject || '',
-                    tutorEmail: parsed.tutorEmail || ''
+                    tutorEmail: parsed.tutorEmail || '',
+                    tutorMessage: parsed.tutorMessage || ''
                 };
             } catch (error) {
                 console.warn('No se pudo cargar el formulario de reinscripción guardado', error);
@@ -2494,7 +2526,8 @@
                 group: snapshot.group || '',
                 debtSubject: snapshot.debtSubject || '',
                 autoDebtSubject: snapshot.autoDebtSubject || '',
-                tutorEmail: snapshot.tutorEmail || ''
+                tutorEmail: snapshot.tutorEmail || '',
+                tutorMessage: snapshot.tutorMessage || ''
             };
             try {
                 localStorage.setItem(REINSCRIPTION_FORM_STORAGE_KEY, JSON.stringify(toPersist));
@@ -3164,7 +3197,8 @@
                 debtSubject: debtSubject || '',
                 autoDebtSubject: debtSubject || '',
                 signatureDataUrl: reinscriptionSignatureDataUrl || null,
-                tutorEmail: reinscriptionLastFormValues && reinscriptionLastFormValues.tutorEmail ? reinscriptionLastFormValues.tutorEmail : ''
+                tutorEmail: reinscriptionLastFormValues && reinscriptionLastFormValues.tutorEmail ? reinscriptionLastFormValues.tutorEmail : '',
+                tutorMessage: reinscriptionLastFormValues && reinscriptionLastFormValues.tutorMessage ? reinscriptionLastFormValues.tutorMessage : ''
             };
         }
 
@@ -3463,6 +3497,7 @@
             assign('reinscriptionGroup', values.group);
             assign('reinscriptionDebtSubject', values.debtSubject);
             assign('reinscriptionTutorEmail', values.tutorEmail);
+            assign('reinscriptionTutorMessage', values.tutorMessage);
             reinscriptionSignatureDataUrl = values.signatureDataUrl || null;
             updateReinscriptionSignaturePreview();
         }
@@ -3476,6 +3511,7 @@
             const groupInput = document.getElementById('reinscriptionGroup');
             const debtInput = document.getElementById('reinscriptionDebtSubject');
             const tutorEmailInput = document.getElementById('reinscriptionTutorEmail');
+            const tutorMessageInput = document.getElementById('reinscriptionTutorMessage');
             const data = {
                 fullName: nameInput.value.trim(),
                 matricula: matriculaInput ? matriculaInput.value.trim() : '',
@@ -3486,7 +3522,8 @@
                 signatureDataUrl: reinscriptionSignatureDataUrl || null,
                 loadedSubjectsSummary: buildLoadedSubjectsSummary(),
                 autoDebtSubject: '',
-                tutorEmail: tutorEmailInput ? tutorEmailInput.value.trim() : ''
+                tutorEmail: tutorEmailInput ? tutorEmailInput.value.trim() : '',
+                tutorMessage: tutorMessageInput ? tutorMessageInput.value.trim() : ''
             };
             if (debtInput && debtInput.dataset && debtInput.dataset.autoValue) {
                 data.autoDebtSubject = debtInput.dataset.autoValue;
@@ -3641,7 +3678,7 @@
                 const rawValue = typeof text === 'string' ? text : String(text);
                 const font = options.font || regularFont;
                 const fontSize = options.size || 12;
-                const color = options.color || rgb(0, 0, 0);
+                const color = options.color || rgb(0, 0, 1);
                 const baseX = layout.xPct != null ? width * layout.xPct : (layout.x != null ? layout.x : 40);
                 const baseY = layout.yPct != null ? height * layout.yPct : (layout.y != null ? layout.y : height - 80);
                 const maxWidth = layout.maxWidthPct ? width * layout.maxWidthPct : (layout.maxWidth || options.maxWidth || null);
@@ -3876,8 +3913,16 @@
                     throw new Error('Cliente de Google no disponible para Gmail.');
                 }
                 if (!gapi.client.gmail) {
-                    await gapi.client.load('https://gmail.googleapis.com/$discovery/rest?version=v1');
+                    try {
+                        await gapi.client.load('gmail', 'v1');
+                    } catch (loadErr) {
+                        await gapi.client.load('https://gmail.googleapis.com/$discovery/rest?version=v1');
+                    }
                 }
+                if (!gapi.client.gmail) {
+                    throw new Error('No se pudo inicializar la API de Gmail.');
+                }
+
                 gmailApiReady = true;
             })().catch(error => {
                 gmailApiInitPromise = null;
@@ -3933,7 +3978,7 @@
         }
 
         function buildReinscriptionEmailBody(data) {
-            const lines = ['Hola tutor(a),', '', 'Adjunto la solicitud de reinscripción en formato PDF para su revisión y firma.'];
+            const lines = ['', '', 'Adjunto la solicitud de reinscripción en formato PDF.'];
             if (data && typeof data === 'object') {
                 if (data.fullName) {
                     lines.push(`Nombre: ${data.fullName}`);
@@ -3944,32 +3989,35 @@
                 if (data.career) {
                     lines.push(`Carrera: ${data.career}`);
                 }
-                const extra = [data.quarter, data.group].filter(Boolean).join(' | ');
+                const extra = [data.quarter, data.group].filter(Boolean).join('  ');
                 if (extra) {
-                    lines.push(`Detalle: ${extra}`);
+                    lines.push(`Cuatrimestre y grupo: ${extra}`);
+                }
+                if (data.tutorMessage) {
+                    lines.push('', data.tutorMessage);
                 }
             }
-            lines.push('', 'Quedo atento(a) a cualquier comentario o ajuste necesario.', '', 'Saludos cordiales.');
+            lines.push('', '', '', '');
             return lines.join('\r\n');
         }
 
         async function createReinscriptionEmailDraft({ pdfBytes, tutorEmail, data }) {
             if (!tutorEmail || !isValidEmail(tutorEmail)) {
-                throw new Error('Correo de tutor no válido.');
+                throw new Error('Correo de tutor no válido. Por favor proporciona un correo válido.');
             }
             const bytes = pdfBytes instanceof Uint8Array ? pdfBytes : new Uint8Array(pdfBytes);
             if (!bytes || !bytes.length) {
                 throw new Error('El archivo PDF no se pudo generar.');
             }
 
-            await ensureDriveReady({ interactive: true });
+            await ensureDriveReady({ interactive: false });
             await ensureGmailApiInitialized();
             try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { /* silencioso */ }
 
             const pdfBase64 = uint8ArrayToBase64(bytes);
             const pdfBase64Chunked = chunkString(pdfBase64, 76);
             const boundary = 'reinscription_' + Date.now().toString(16);
-            const subjectText = `Solicitud de reinscripción - ${data.fullName || data.matricula || 'Estudiante'}`;
+            const subjectText = REINSCRIPTION_EMAIL_SUBJECT;
             const subject = encodeSubject(subjectText);
             const body = buildReinscriptionEmailBody(data);
 
@@ -4006,7 +4054,9 @@
             if (!draftId) {
                 throw new Error('No se pudo crear el borrador en Gmail.');
             }
-            return { draftId, subject: subjectText };
+            const messageId = draftResponse && draftResponse.result && draftResponse.result.message && draftResponse.result.message.id;
+            try { localStorage.setItem(GMAIL_SCOPE_FLAG, '1'); } catch (e) { /* ignore quota */ }
+            return { draftId, messageId, subject: subjectText };
         }
 
         function openReinscriptionModal() {
@@ -4026,6 +4076,12 @@
             saveReinscriptionFormSnapshot(reinscriptionLastFormValues);
             modal.classList.remove('hidden');
             modal.setAttribute('aria-hidden', 'false');
+            // Agregar clase para móviles
+            if (isMobileDevice()) {
+                modal.classList.add('is-mobile');
+            } else {
+                modal.classList.remove('is-mobile');
+            }
             document.body.classList.add('reinscription-modal-active');
             persistReinscriptionModalOpenState(true);
             const nameInput = document.getElementById('reinscriptionFullName');
@@ -4053,6 +4109,8 @@
             if (openDraftBtn) {
                 openDraftBtn.classList.add('hidden');
             }
+            lastReinscriptionDraftUrl = null;
+            lastReinscriptionDraftSearchUrl = null;
         }
 
         function setupReinscriptionModal() {
@@ -4125,68 +4183,89 @@
             const sendEmailBtn = document.getElementById('reinscriptionSendEmail');
             if (sendEmailBtn) {
                 sendEmailBtn.addEventListener('click', async () => {
-                    if (reinscriptionEmailSending) {
-                        return;
-                    }
+                    if (reinscriptionEmailSending) return;
                     const data = collectReinscriptionFormData();
                     if (!data || !data.fullName || !data.matricula || !data.career) {
-                        showMessage('Completa el nombre completo, la matrícula y la carrera antes de enviar.', 'warning');
+                        showMessage('Completa nombre, matrícula y carrera.', 'warning');
+                        return;
+                    }
+                    if (!data.signatureDataUrl) {
+                        showMessage('La firma es obligatoria para enviar la solicitud al tutor.', 'warning');
+                        const signatureWarning = document.querySelector('.signature-required-warning');
+                        if (signatureWarning) {
+                            signatureWarning.style.display = 'block';
+                            signatureWarning.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
                         return;
                     }
                     const tutorEmailInput = document.getElementById('reinscriptionTutorEmail');
                     const tutorEmail = tutorEmailInput ? tutorEmailInput.value.trim() : '';
-                    if (!tutorEmail) {
-                        showMessage('Ingresa el correo del tutor antes de enviar el formato.', 'warning');
-                        if (tutorEmailInput) {
-                            tutorEmailInput.focus();
-                        }
+                    // El email del tutor es opcional, pero si se proporciona debe ser válido
+                    if (tutorEmail && !isValidEmail(tutorEmail)) {
+                        showMessage('Ingresa un email de tutor válido.', 'warning');
+                        if (tutorEmailInput) tutorEmailInput.focus();
                         return;
                     }
-                    if (!isValidEmail(tutorEmail)) {
-                        showMessage('Verifica que el correo del tutor sea válido.', 'warning');
-                        if (tutorEmailInput) {
-                            tutorEmailInput.focus();
-                        }
-                        return;
-                    }
-
                     const originalText = sendEmailBtn.textContent;
                     reinscriptionEmailSending = true;
-                    lastReinscriptionDraftUrl = null;
-                    if (openDraftBtn) {
-                        openDraftBtn.classList.add('hidden');
-                    }
+                    if (openDraftBtn) openDraftBtn.classList.add('hidden');
                     sendEmailBtn.disabled = true;
-                    sendEmailBtn.textContent = 'Enviando...';
-                    showLoader('Preparando borrador en Gmail...');
+                    sendEmailBtn.textContent = 'Generando...';
+                    showLoader('Abriendo Gmail...');
                     try {
                         const pdfBytes = await generateReinscriptionPdf(data, { includeSignature: true });
-                        const draftInfo = await createReinscriptionEmailDraft({ pdfBytes, tutorEmail, data });
-                        const composeUrl = `https://mail.google.com/mail/u/0/#drafts?compose=${encodeURIComponent(draftInfo.draftId)}`;
-                        lastReinscriptionDraftUrl = composeUrl;
-                        const opened = window.open(composeUrl, '_blank', 'noopener');
-                        if (!opened) {
-                            showMessage(`Se creó un borrador en Gmail. Usa el botón “Abrir borrador en Gmail” o abre directamente: ${composeUrl}`, 'success');
-                            if (openDraftBtn) {
-                                openDraftBtn.classList.remove('hidden');
+                        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = 'Solicitud_reinscripcion.pdf';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        setTimeout(() => URL.revokeObjectURL(url), 4000);
+                        
+                        // Mostrar modal de confirmación
+                        hideLoader();
+                        const confirmModal = document.createElement('div');
+                        confirmModal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;display:flex;align-items:center;justify-content:center;';
+                        confirmModal.innerHTML = `
+                            <div style="background:white;border-radius:12px;padding:28px;max-width:420px;width:90%;box-shadow:0 8px 24px rgba(0,0,0,0.3);text-align:center;">
+                                <h3 style="margin:0 0 12px;color:#1b1f2e;font-size:1.2rem;">Confirmar envío</h3>
+                                <p style="margin:0 0 20px;color:#54617d;line-height:1.5;font-size:0.95rem;">
+                                    El PDF se descargó correctamente.<br><br>
+                                    <strong style="color:#d32f2f;">Debes adjuntar el PDF descargado</strong> al correo en Gmail para poder enviarlo.
+                                </p>
+                                <div style="display:flex;gap:12px;justify-content:center;">
+                                    <button onclick="this.parentElement.parentElement.parentElement.remove();" style="flex:1;padding:10px 16px;background:#e0e0e0;border:none;border-radius:6px;cursor:pointer;font-size:0.95rem;color:#1b1f2e;">
+                                        Cancelar
+                                    </button>
+                                    <button id="confirmOpenGmail" style="flex:1;padding:10px 16px;background:#1a73e8;border:none;border-radius:6px;cursor:pointer;font-size:0.95rem;color:white;font-weight:600;">
+                                        Abrir Gmail
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(confirmModal);
+                        
+                        document.getElementById('confirmOpenGmail').addEventListener('click', () => {
+                            confirmModal.remove();
+                            const subject = encodeURIComponent(REINSCRIPTION_EMAIL_SUBJECT);
+                            const body = buildReinscriptionEmailBody(data);
+                            const bodyEncoded = encodeURIComponent(body);
+                            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(tutorEmail)}&su=${subject}&body=${bodyEncoded}`;
+                            const opened = window.open(gmailUrl, '_blank');
+                            if (!opened) {
+                                showMessage('Gmail no se pudo abrir. Abrelo manualmente e ingresa el email del tutor.', 'warning');
+                            } else {
+                                showMessage('✓ Gmail abierto. Adjunta el PDF descargado y envía el correo.', 'success');
                             }
-                        } else {
-                            showMessage('Se creó el borrador en Gmail. Revisa la nueva pestaña para enviarlo (también puedes usar “Abrir borrador en Gmail”).', 'success');
-                            if (openDraftBtn) {
-                                openDraftBtn.classList.remove('hidden');
-                            }
-                        }
+                        });
+                        reinscriptionEmailSending = false;
+                        sendEmailBtn.disabled = false;
+                        sendEmailBtn.textContent = originalText;
                     } catch (error) {
-                        console.error('Error al enviar el correo de reinscripción', error);
-                        const status = error && (error.status || (error.result && error.result.error && error.result.error.code));
-                        if (status === 401 || status === 403) {
-                            handleAuthError(error);
-                            showMessage('Google rechazó el envío. Reautoriza el acceso e inténtalo de nuevo.', 'error');
-                        } else if (error && error.message && /gmail/i.test(error.message) && /not configured|not enabled/i.test(error.message)) {
-                            showMessage('Tu cuenta no permite enviar correos automáticamente. Descarga el PDF y compártelo manualmente.', 'error');
-                        } else {
-                            showMessage('No se pudo crear el borrador. Intenta nuevamente en unos minutos.', 'error');
-                        }
+                        console.error('Error:', error);
+                        showMessage('Error generando PDF.', 'error');
                     } finally {
                         hideLoader();
                         reinscriptionEmailSending = false;
@@ -4195,6 +4274,7 @@
                     }
                 });
             }
+
             const downloadBtn = document.getElementById('reinscriptionDownload');
             if (downloadBtn) {
                 downloadBtn.addEventListener('click', async () => {
@@ -4241,6 +4321,314 @@
                     }
                 }, 0);
             }
+        }
+
+        // Funciones para dibujar firma
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+        }
+
+        function openDrawSignatureModal() {
+            const modal = document.getElementById('drawSignatureModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden', 'false');
+            const isMobile = isMobileDevice();
+            if (isMobile) {
+                modal.classList.add('is-mobile');
+            } else {
+                modal.classList.remove('is-mobile');
+            }
+            const canvas = document.getElementById('signatureCanvas');
+            if (canvas) {
+                // Ajustar el tamaño del canvas según dispositivo
+                const wrapper = modal.querySelector('.draw-signature-modal__body');
+                if (wrapper) {
+                    const rect = wrapper.getBoundingClientRect();
+                    if (isMobile) {
+                        // En móviles: usar todo el ancho disponible
+                        canvas.width = Math.floor(rect.width);
+                        canvas.height = Math.floor(rect.height * 0.6);
+                    } else {
+                        // En desktop: mantener proporción 8:3
+                        canvas.width = Math.min(800, Math.floor(rect.width - 40));
+                        canvas.height = Math.floor(canvas.width * (300 / 800));
+                    }
+                }
+            }
+            setTimeout(() => {
+                const canvas = document.getElementById('signatureCanvas');
+                if (canvas) canvas.focus();
+            }, 100);
+        }
+
+        function closeDrawSignatureModal() {
+            const modal = document.getElementById('drawSignatureModal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+            clearSignatureCanvas();
+        }
+
+        function clearSignatureCanvas() {
+            const canvas = document.getElementById('signatureCanvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            isDrawingSignature = false;
+        }
+
+        function setupDrawSignatureModal() {
+            const openBtn = document.getElementById('openDrawSignatureModal');
+            const closeBtn = document.getElementById('closeDrawSignatureModal');
+            const cancelBtn = document.getElementById('cancelDrawSignature');
+            const resetBtn = document.getElementById('resetSignatureCanvas');
+            const saveBtn = document.getElementById('saveDrawnSignature');
+            const canvas = document.getElementById('signatureCanvas');
+            const modal = document.getElementById('drawSignatureModal');
+
+            if (!modal || !canvas) return;
+
+            // Abrir modal
+            if (openBtn) {
+                openBtn.addEventListener('click', () => {
+                    openDrawSignatureModal();
+                });
+            }
+
+            // Cerrar modal
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    closeDrawSignatureModal();
+                });
+            }
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    closeDrawSignatureModal();
+                });
+            }
+
+            // Cerrar al hacer clic en el overlay
+            const overlay = modal.querySelector('.draw-signature-modal__overlay');
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    closeDrawSignatureModal();
+                });
+            }
+
+            // Resetear canvas
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    clearSignatureCanvas();
+                });
+            }
+
+            // Guardar firma
+            if (saveBtn) {
+                saveBtn.addEventListener('click', () => {
+                    saveDrawnSignature();
+                });
+            }
+
+            // Eventos de dibujo en el canvas
+            setupCanvasDrawing(canvas);
+        }
+
+        function setupCanvasDrawing(canvas) {
+            if (!canvas) return;
+
+            let isDrawing = false;
+            let lastX = 0;
+            let lastY = 0;
+            let lastWidth = 3;
+            let velocityX = 0;
+            let velocityY = 0;
+
+            const getCoordinates = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                return {
+                    x: (e.clientX - rect.left) * scaleX,
+                    y: (e.clientY - rect.top) * scaleY
+                };
+            };
+
+            const getVelocity = (dx, dy) => {
+                return Math.sqrt(dx * dx + dy * dy);
+            };
+
+            const getLineWidth = (velocity) => {
+                // Simular presión: velocidad lenta = trazo más grueso, velocidad rápida = trazo más delgado
+                const minWidth = 2;
+                const maxWidth = 8;
+                // Invertir: velocidad baja = línea gruesa, velocidad alta = línea delgada
+                const width = maxWidth - (velocity * 1);
+                return Math.max(minWidth, Math.min(maxWidth, width));
+            };
+
+            const drawLineWithPressure = (fromX, fromY, toX, toY, startWidth, endWidth) => {
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+
+                ctx.fillStyle = '#0066cc'; // Azul
+                ctx.strokeStyle = '#0066cc';
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                // Calcular la distancia y número de puntos
+                const dx = toX - fromX;
+                const dy = toY - fromY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const steps = Math.ceil(distance);
+
+                // Dibujar múltiples círculos pequeños para simular presión variable
+                for (let i = 0; i <= steps; i++) {
+                    const t = steps > 0 ? i / steps : 0;
+                    const x = fromX + dx * t;
+                    const y = fromY + dy * t;
+                    const width = startWidth + (endWidth - startWidth) * t;
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, width / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Suavizar conectando con una línea
+                ctx.beginPath();
+                ctx.moveTo(fromX, fromY);
+                ctx.lineTo(toX, toY);
+                ctx.lineWidth = (startWidth + endWidth) / 2;
+                ctx.stroke();
+            };
+
+            canvas.addEventListener('mousedown', (e) => {
+                isDrawing = true;
+                const coords = getCoordinates(e);
+                lastX = coords.x;
+                lastY = coords.y;
+                velocityX = 0;
+                velocityY = 0;
+                lastWidth = 5;
+                canvas.style.cursor = 'none';
+                
+                // Dibujar punto inicial
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.fillStyle = '#0066cc';
+                    ctx.beginPath();
+                    ctx.arc(lastX, lastY, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isDrawing) return;
+                const coords = getCoordinates(e);
+                const dx = coords.x - lastX;
+                const dy = coords.y - lastY;
+                
+                if (dx === 0 && dy === 0) return;
+
+                const velocity = getVelocity(dx, dy);
+                const newWidth = getLineWidth(velocity);
+                
+                drawLineWithPressure(lastX, lastY, coords.x, coords.y, lastWidth, newWidth);
+                
+                lastX = coords.x;
+                lastY = coords.y;
+                lastWidth = newWidth;
+                velocityX = dx;
+                velocityY = dy;
+            });
+
+            canvas.addEventListener('mouseup', () => {
+                isDrawing = false;
+                canvas.style.cursor = 'crosshair';
+            });
+
+            canvas.addEventListener('mouseleave', () => {
+                isDrawing = false;
+                canvas.style.cursor = 'crosshair';
+            });
+
+            // Prevenir scroll en móvil
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                isDrawing = true;
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                lastX = (touch.clientX - rect.left) * scaleX;
+                lastY = (touch.clientY - rect.top) * scaleY;
+                velocityX = 0;
+                velocityY = 0;
+                lastWidth = 5;
+
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.fillStyle = '#0066cc';
+                    ctx.beginPath();
+                    ctx.arc(lastX, lastY, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!isDrawing) return;
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const x = (touch.clientX - rect.left) * scaleX;
+                const y = (touch.clientY - rect.top) * scaleY;
+                
+                const dx = x - lastX;
+                const dy = y - lastY;
+                
+                if (dx === 0 && dy === 0) return;
+
+                const velocity = getVelocity(dx, dy);
+                const newWidth = getLineWidth(velocity);
+                
+                drawLineWithPressure(lastX, lastY, x, y, lastWidth, newWidth);
+                
+                lastX = x;
+                lastY = y;
+                lastWidth = newWidth;
+                velocityX = dx;
+                velocityY = dy;
+            });
+
+            canvas.addEventListener('touchend', () => {
+                isDrawing = false;
+            });
+        }
+
+        function saveDrawnSignature() {
+            const canvas = document.getElementById('signatureCanvas');
+            if (!canvas) return;
+
+            const imageData = canvas.toDataURL('image/png');
+            reinscriptionSignatureDataUrl = imageData;
+
+            if (!reinscriptionLastFormValues) {
+                reinscriptionLastFormValues = buildReinscriptionDefaults();
+            }
+            reinscriptionLastFormValues.signatureDataUrl = imageData;
+            saveReinscriptionFormSnapshot(reinscriptionLastFormValues);
+
+            updateReinscriptionSignaturePreview();
+            scheduleReinscriptionPreviewRender();
+            closeDrawSignatureModal();
+
+            showMessage('Firma dibujada correctamente.', 'success');
         }
 
         function refreshReinscriptionDefaultsAfterScheduleChange() {
@@ -4903,6 +5291,8 @@
                         const expiryTs = Date.now() + fourMonthsInMs;
                         localStorage.setItem('google_token_expiry', String(expiryTs));
                         localStorage.setItem('google_signed_in', '1');
+                        localStorage.setItem(DRIVE_SCOPE_FLAG, '1');
+                        localStorage.setItem(GMAIL_SCOPE_FLAG, '1');
                         // Nuevo: marcar timestamp de cuando se inició sesión
                         localStorage.setItem('google_session_start', String(Date.now()));
                         localStorage.setItem(DRIVE_SCOPE_FLAG, '1');
@@ -5470,7 +5860,8 @@
         }
 
         // Mejorar requestGoogleSignIn: reintenta inicializar tokenClient si hace falta
-        function requestGoogleSignIn(silent = false) {
+        function requestGoogleSignIn(silent = false, opts = {}) {
+            const { forceGmailScope = false } = opts;
             if (authRequestInProgress) {
                 console.log('requestGoogleSignIn: petición pendiente, no se reintenta');
                 return;
@@ -5481,8 +5872,9 @@
                 setTimeout(() => {
                     if (tokenClient) {
                         authRequestInProgress = true;
+                        const prompt = (silent && !forceGmailScope) ? undefined : 'consent';
                         try {
-                            if (silent) tokenClient.requestAccessToken(); else tokenClient.requestAccessToken({ prompt: 'consent' });
+                            if (prompt) tokenClient.requestAccessToken({ prompt }); else tokenClient.requestAccessToken();
                         } catch (e) {
                             console.warn('requestAccessToken fallo', e);
                             try {
@@ -5497,8 +5889,9 @@
                 return;
             }
             authRequestInProgress = true;
+            const prompt = (silent && !forceGmailScope) ? undefined : 'consent';
             try {
-                if (silent) tokenClient.requestAccessToken(); else tokenClient.requestAccessToken({ prompt: 'consent' });
+                if (prompt) tokenClient.requestAccessToken({ prompt }); else tokenClient.requestAccessToken();
             } catch (e) {
                 console.warn('requestAccessToken error', e);
                 try {
@@ -5706,11 +6099,12 @@
 
         async function signOutGoogle(options = {}) {
             const { skipLoader = false, loaderMessage = 'Cerrando sesión...' } = options;
-            unlockInterface();
-            driveAuthRetryPending = false;
-            gmailApiReady = false;
-            gmailApiInitPromise = null;
-                    localStorage.removeItem(DRIVE_SCOPE_FLAG);
+                unlockInterface();
+                driveAuthRetryPending = false;
+                gmailApiReady = false;
+                gmailApiInitPromise = null;
+                localStorage.removeItem(DRIVE_SCOPE_FLAG);
+                localStorage.removeItem(GMAIL_SCOPE_FLAG);
             if (!skipLoader) {
                 showLoader(loaderMessage);
             }
@@ -5724,6 +6118,7 @@
                     localStorage.removeItem('google_token');
                     localStorage.removeItem('google_token_expiry');
                     localStorage.removeItem(DRIVE_SCOPE_FLAG);
+                    localStorage.removeItem(GMAIL_SCOPE_FLAG);
                 } catch (e) {
                     console.warn('No se pudo limpiar persistencia local completa', e);
                 }
@@ -5940,6 +6335,8 @@
                     localStorage.removeItem('google_token_expiry');
                     // marcar como no conectado
                     localStorage.removeItem('google_signed_in');
+                    localStorage.removeItem(DRIVE_SCOPE_FLAG);
+                    localStorage.removeItem(GMAIL_SCOPE_FLAG);
                 } catch (e) { /* ignore */ }
 
                 gAccessToken = null;
