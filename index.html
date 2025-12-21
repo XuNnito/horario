@@ -1001,16 +1001,40 @@
                             <label for="reinscriptionTutorMessage">Mensaje (opcional)</label>
                             <textarea id="reinscriptionTutorMessage" name="tutorMessage" rows="3" maxlength="500" placeholder="Escribe un mensaje adicional para el tutor (opcional)"></textarea>
                         </div>
+                        <!-- Vista previa integrada en móvil -->
+                        <!-- Vista previa integrada en móvil -->
+                        <div class="reinscription-modal__preview reinscription-modal__preview--mobile-integrated" id="mobilePreviewSection">
+                            <label style="font-weight: 600; color: var(--secondary-color); display: block; margin-bottom: 12px;">Vista previa</label>
+                            <div id="reinscriptionPreviewStageMobile" class="reinscription-preview">
+                                <canvas id="reinscriptionPreviewCanvasMobile" class="reinscription-preview__canvas" aria-hidden="true"></canvas>
+                                <div id="reinscriptionSignatureOverlayMobile" class="reinscription-signature-overlay hidden" aria-hidden="true">
+                                    <div id="reinscriptionSignatureBoxMobile" class="reinscription-signature-box">
+                                        <button id="removeSignatureButtonMobile" type="button" class="reinscription-signature-remove" title="Quitar firma" aria-label="Quitar firma">×</button>
+                                        <img id="reinscriptionSignatureOverlayImageMobile" alt="Firma posicionable" draggable="false">
+                                        <div id="reinscriptionSignatureResizeMobile" class="reinscription-signature-handle"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="reinscription-signature-zoom-controls">
+                                <button id="reinscriptionSignatureZoomOutMobile" type="button" title="Reducir tamaño" aria-label="Reducir tamaño">−</button>
+                                <button id="reinscriptionSignatureZoomInMobile" type="button" title="Aumentar tamaño" aria-label="Aumentar tamaño">+</button>
+                            </div>
+                        </div>
                     </form>
                     <div class="reinscription-modal__preview">
                         <div id="reinscriptionPreviewStage" class="reinscription-preview">
                             <canvas id="reinscriptionPreviewCanvas" class="reinscription-preview__canvas" aria-hidden="true"></canvas>
                             <div id="reinscriptionSignatureOverlay" class="reinscription-signature-overlay hidden" aria-hidden="true">
                                 <div id="reinscriptionSignatureBox" class="reinscription-signature-box">
+                                    <button id="removeSignatureButton" type="button" class="reinscription-signature-remove" title="Quitar firma" aria-label="Quitar firma">×</button>
                                     <img id="reinscriptionSignatureOverlayImage" alt="Firma posicionable" draggable="false">
                                     <div id="reinscriptionSignatureResize" class="reinscription-signature-handle" role="presentation"></div>
                                 </div>
                             </div>
+                        </div>
+                        <div class="reinscription-signature-zoom-controls">
+                            <button id="reinscriptionSignatureZoomOut" type="button" title="Reducir tamaño" aria-label="Reducir tamaño">−</button>
+                            <button id="reinscriptionSignatureZoomIn" type="button" title="Aumentar tamaño" aria-label="Aumentar tamaño">+</button>
                         </div>
                         <p id="reinscriptionPreviewFallback" class="reinscription-modal__preview-hint">Completa los datos para generar la vista previa.</p>
                     </div>
@@ -1033,7 +1057,7 @@
                 </div>
                 <div class="draw-signature-modal__body">
                     <canvas id="signatureCanvas" class="signature-canvas" width="800" height="300" style="border: 2px solid #ccc; background: white; cursor: crosshair; display: block; margin: 0 auto;"></canvas>
-                    <p style="text-align: center; color: #666; margin-top: 10px; font-size: 14px;">Dibuja tu firma con el ratón</p>
+                    <p style="text-align: center; color: #666; margin-top: 10px; font-size: 14px;">Dibuja tu firma</p>
                 </div>
                 <div class="draw-signature-modal__actions">
                     <button id="resetSignatureCanvas" type="button" class="btn-secondary">Reiniciar</button>
@@ -1127,7 +1151,7 @@
             group: { xPct: 0.63, yPct: 0.837 },
             debtSubject: { xPct: 0.1, yPct: 0.805, maxWidthPct: 0.78, lineHeightPct: 0.02, maxLines: 2 },
             loadedSubjects: { xPct: 0.23, yPct: 0.753, maxWidthPct: 0.78, lineHeightPct: 0.018, maxLines: 8, tabStopPct: 0.8 },
-            signature: { xPct: 0.68, yPct: 0.53, widthPct: 0.28, heightPct: 0.12 }
+            signature: { xPct: 0.68, yPct: 0.53, widthPct: 0.16, heightPct: 0.07 }
         };
 
         const REINSCRIPTION_PDF_LAYOUT = JSON.parse(JSON.stringify(REINSCRIPTION_PDF_LAYOUT_DEFAULTS));
@@ -2695,6 +2719,7 @@
 
         function clearReinscriptionPreviewCanvas() {
             const { canvas, overlay } = signatureOverlayElements;
+            const canvasMobile = document.getElementById('reinscriptionPreviewCanvasMobile');
             if (canvas) {
                 const ctx = canvas.getContext('2d');
                 if (ctx) {
@@ -2704,6 +2729,16 @@
                 canvas.setAttribute('aria-hidden', 'true');
                 canvas.style.width = '';
                 canvas.style.height = '';
+            }
+            if (canvasMobile) {
+                const ctxMobile = canvasMobile.getContext('2d');
+                if (ctxMobile) {
+                    ctxMobile.clearRect(0, 0, canvasMobile.width, canvasMobile.height);
+                }
+                canvasMobile.classList.remove('is-visible');
+                canvasMobile.setAttribute('aria-hidden', 'true');
+                canvasMobile.style.width = '';
+                canvasMobile.style.height = '';
             }
             if (overlay) {
                 overlay.classList.add('hidden');
@@ -2889,6 +2924,7 @@
             const pdfjsLib = await ensurePdfJs();
             setupReinscriptionSignatureOverlay();
             const { stage, canvas, overlay } = signatureOverlayElements;
+            const canvasMobile = document.getElementById('reinscriptionPreviewCanvasMobile');
             if (!stage || !canvas || !pdfjsLib) {
                 return;
             }
@@ -2901,6 +2937,8 @@
             const viewport = page.getViewport({ scale });
             const outputWidth = Math.max(1, Math.round(viewport.width));
             const outputHeight = Math.max(1, Math.round(viewport.height));
+            
+            // Renderizar en canvas desktop
             const ctx = canvas.getContext('2d', { alpha: false });
             const devicePixelRatio = window.devicePixelRatio || 1;
             canvas.width = Math.floor(outputWidth * devicePixelRatio);
@@ -2911,6 +2949,20 @@
             await page.render({ canvasContext: ctx, viewport }).promise;
             canvas.classList.add('is-visible');
             canvas.setAttribute('aria-hidden', 'false');
+            
+            // Renderizar en canvas móvil también
+            if (canvasMobile) {
+                const ctxMobile = canvasMobile.getContext('2d', { alpha: false });
+                canvasMobile.width = Math.floor(outputWidth * devicePixelRatio);
+                canvasMobile.height = Math.floor(outputHeight * devicePixelRatio);
+                canvasMobile.style.width = `${outputWidth}px`;
+                canvasMobile.style.height = `${outputHeight}px`;
+                ctxMobile.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+                await page.render({ canvasContext: ctxMobile, viewport }).promise;
+                canvasMobile.classList.add('is-visible');
+                canvasMobile.setAttribute('aria-hidden', 'false');
+            }
+            
             reinscriptionPreviewMetrics = {
                 width: outputWidth,
                 height: outputHeight,
@@ -2954,11 +3006,39 @@
                     }
                 });
             }
+            
+            // Configurar overlay móvil
+            const overlayMobile = document.getElementById('reinscriptionSignatureOverlayMobile');
+            const boxMobile = document.getElementById('reinscriptionSignatureBoxMobile');
+            const imageMobile = document.getElementById('reinscriptionSignatureOverlayImageMobile');
+            
+            if (overlayMobile && boxMobile) {
+                overlayMobile.addEventListener('pointerdown', handleSignaturePointerDownMobile);
+                overlayMobile.addEventListener('pointermove', handleSignaturePointerMoveMobile);
+                overlayMobile.addEventListener('pointerup', handleSignaturePointerUpMobile);
+                overlayMobile.addEventListener('pointercancel', handleSignaturePointerUpMobile);
+                overlayMobile.classList.add('hidden');
+                overlayMobile.setAttribute('aria-hidden', 'true');
+                if (imageMobile) {
+                    imageMobile.draggable = false;
+                    imageMobile.addEventListener('load', () => {
+                        if (imageMobile.naturalWidth && imageMobile.naturalHeight) {
+                            signatureAspectRatio = imageMobile.naturalWidth / imageMobile.naturalHeight;
+                            updateSignatureOverlayPosition();
+                        }
+                    });
+                }
+            }
+            
             signatureOverlayElements.initialized = true;
         }
 
         function handleSignaturePointerDown(event) {
             if (!reinscriptionSignatureDataUrl) {
+                return;
+            }
+            // No procesar si se hace click en el botón X
+            if (event.target && event.target.classList && event.target.classList.contains('reinscription-signature-remove')) {
                 return;
             }
             const { overlay, box, handle } = signatureOverlayElements;
@@ -3064,6 +3144,133 @@
             }
             if (box) {
                 box.classList.remove('dragging');
+            }
+            const finalRect = state.lastRect || {
+                left: state.startLeft,
+                top: state.startTop,
+                width: state.startWidth,
+                height: state.startHeight
+            };
+            const overlayWidth = state.overlayWidth || reinscriptionPreviewMetrics.width;
+            const overlayHeight = state.overlayHeight || reinscriptionPreviewMetrics.height;
+            signatureDragState = null;
+            if (!overlayWidth || !overlayHeight) {
+                return;
+            }
+            updateSignatureLayoutFromOverlay(finalRect, overlayWidth, overlayHeight);
+        }
+
+        function handleSignaturePointerDownMobile(event) {
+            if (!reinscriptionSignatureDataUrl) {
+                return;
+            }
+            // No procesar si se hace click en el botón X
+            if (event.target && event.target.classList && event.target.classList.contains('reinscription-signature-remove')) {
+                return;
+            }
+            const overlayMobile = document.getElementById('reinscriptionSignatureOverlayMobile');
+            const boxMobile = document.getElementById('reinscriptionSignatureBoxMobile');
+            const handleMobile = document.getElementById('reinscriptionSignatureResizeMobile');
+            
+            if (!overlayMobile || !boxMobile) {
+                return;
+            }
+            if (!boxMobile.contains(event.target)) {
+                return;
+            }
+            event.preventDefault();
+            const overlayRect = overlayMobile.getBoundingClientRect();
+            const boxRect = boxMobile.getBoundingClientRect();
+            const overlayWidth = overlayRect.width || reinscriptionPreviewMetrics.width;
+            const overlayHeight = overlayRect.height || reinscriptionPreviewMetrics.height;
+            if (!overlayWidth || !overlayHeight) {
+                return;
+            }
+            const isResize = handleMobile ? handleMobile.contains(event.target) : false;
+            signatureDragState = {
+                mode: isResize ? 'resize' : 'move',
+                pointerId: event.pointerId,
+                startX: event.clientX,
+                startY: event.clientY,
+                startLeft: boxRect.left - overlayRect.left,
+                startTop: boxRect.top - overlayRect.top,
+                startWidth: boxRect.width,
+                startHeight: boxRect.height,
+                overlayWidth,
+                overlayHeight,
+                minWidth: Math.max(30, overlayWidth * 0.05),
+                minHeight: Math.max(20, overlayHeight * 0.04),
+                aspectRatio: signatureAspectRatio || (boxRect.width / boxRect.height) || 1,
+                lastRect: {
+                    left: boxRect.left - overlayRect.left,
+                    top: boxRect.top - overlayRect.top,
+                    width: boxRect.width,
+                    height: boxRect.height
+                },
+                isMobile: true
+            };
+            overlayMobile.setPointerCapture(event.pointerId);
+            boxMobile.classList.add('dragging');
+        }
+
+        function handleSignaturePointerMoveMobile(event) {
+            if (!signatureDragState || event.pointerId !== signatureDragState.pointerId) {
+                return;
+            }
+            const boxMobile = document.getElementById('reinscriptionSignatureBoxMobile');
+            if (!boxMobile) {
+                return;
+            }
+            const state = signatureDragState;
+            const deltaX = event.clientX - state.startX;
+            const deltaY = event.clientY - state.startY;
+            let left = state.startLeft + deltaX;
+            let top = state.startTop + deltaY;
+            let width = state.startWidth;
+            let height = state.startHeight;
+            const { overlayWidth, overlayHeight } = state;
+            if (state.mode === 'move') {
+                left = Math.max(0, Math.min(left, overlayWidth - width));
+                top = Math.max(0, Math.min(top, overlayHeight - height));
+            } else if (state.mode === 'resize') {
+                const ratio = state.aspectRatio || 1;
+                width = Math.max(state.minWidth, state.startWidth + deltaX);
+                height = width / ratio;
+                if (state.startTop + height > overlayHeight) {
+                    height = overlayHeight - state.startTop;
+                    width = height * ratio;
+                }
+                if (state.startLeft + width > overlayWidth) {
+                    width = overlayWidth - state.startLeft;
+                    height = width / ratio;
+                }
+                width = Math.max(state.minWidth, Math.min(width, overlayWidth - state.startLeft));
+                height = Math.max(state.minHeight, Math.min(height, overlayHeight - state.startTop));
+            }
+            boxMobile.style.left = `${left}px`;
+            boxMobile.style.top = `${top}px`;
+            boxMobile.style.width = `${width}px`;
+            boxMobile.style.height = `${height}px`;
+            signatureDragState.lastRect = { left, top, width, height };
+        }
+
+        function handleSignaturePointerUpMobile(event) {
+            if (!signatureDragState || event.pointerId !== signatureDragState.pointerId) {
+                return;
+            }
+            event.preventDefault();
+            const overlayMobile = document.getElementById('reinscriptionSignatureOverlayMobile');
+            const boxMobile = document.getElementById('reinscriptionSignatureBoxMobile');
+            const state = signatureDragState;
+            if (overlayMobile) {
+                try {
+                    overlayMobile.releasePointerCapture(event.pointerId);
+                } catch (error) {
+                    /* sin acción */
+                }
+            }
+            if (boxMobile) {
+                boxMobile.classList.remove('dragging');
             }
             const finalRect = state.lastRect || {
                 left: state.startLeft,
@@ -3542,15 +3749,27 @@
             setupReinscriptionSignatureOverlay();
             const overlayImage = signatureOverlayElements.image;
             const overlay = signatureOverlayElements.overlay;
+            
+            // Elementos móviles
+            const overlayImageMobile = document.getElementById('reinscriptionSignatureOverlayImageMobile');
+            const overlayMobile = document.getElementById('reinscriptionSignatureOverlayMobile');
+            
             if (reinscriptionSignatureDataUrl) {
                 img.src = reinscriptionSignatureDataUrl;
                 wrapper.classList.remove('hidden');
                 if (overlayImage && overlayImage.src !== reinscriptionSignatureDataUrl) {
                     overlayImage.src = reinscriptionSignatureDataUrl;
                 }
+                if (overlayImageMobile && overlayImageMobile.src !== reinscriptionSignatureDataUrl) {
+                    overlayImageMobile.src = reinscriptionSignatureDataUrl;
+                }
                 if (overlay) {
                     overlay.classList.remove('hidden');
                     overlay.setAttribute('aria-hidden', 'false');
+                }
+                if (overlayMobile) {
+                    overlayMobile.classList.remove('hidden');
+                    overlayMobile.setAttribute('aria-hidden', 'false');
                 }
                 updateSignatureOverlayPosition();
             } else {
@@ -3559,10 +3778,18 @@
                 if (overlayImage) {
                     overlayImage.removeAttribute('src');
                 }
+                if (overlayImageMobile) {
+                    overlayImageMobile.removeAttribute('src');
+                }
                 if (overlay) {
                     overlay.classList.add('hidden');
                     overlay.classList.remove('is-active');
                     overlay.setAttribute('aria-hidden', 'true');
+                }
+                if (overlayMobile) {
+                    overlayMobile.classList.add('hidden');
+                    overlayMobile.classList.remove('is-active');
+                    overlayMobile.setAttribute('aria-hidden', 'true');
                 }
                 signatureAspectRatio = 1;
             }
@@ -3617,6 +3844,32 @@
             }
             updateReinscriptionSignaturePreview();
             scheduleReinscriptionPreviewRender();
+        }
+
+        function adjustSignatureSize(factor) {
+            if (!reinscriptionSignatureDataUrl) {
+                return;
+            }
+            const layout = REINSCRIPTION_PDF_LAYOUT.signature || {};
+            
+            // Ajustar tamaño en porcentaje
+            if (Number.isFinite(layout.widthPct)) {
+                layout.widthPct = Math.max(0.05, Math.min(0.6, layout.widthPct * factor));
+            }
+            if (Number.isFinite(layout.heightPct)) {
+                layout.heightPct = Math.max(0.03, Math.min(0.3, layout.heightPct * factor));
+            }
+            
+            // Ajustar tamaño absoluto si existe
+            if (Number.isFinite(layout.widthAbs)) {
+                layout.widthAbs = Math.max(20, layout.widthAbs * factor);
+            }
+            if (Number.isFinite(layout.heightAbs)) {
+                layout.heightAbs = Math.max(15, layout.heightAbs * factor);
+            }
+            
+            saveSignaturePlacement(layout);
+            updateSignatureOverlayPosition();
         }
 
         function scheduleReinscriptionPreviewRender() {
@@ -4167,6 +4420,55 @@
                     clearReinscriptionSignature();
                 });
             }
+            // Botón X para quitar firma en la vista previa
+            const removeSignatureBtn = document.getElementById('removeSignatureButton');
+            if (removeSignatureBtn) {
+                removeSignatureBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    clearReinscriptionSignature();
+                });
+            }
+            // Botón X para quitar firma en móvil
+            const removeSignatureBtnMobile = document.getElementById('removeSignatureButtonMobile');
+            if (removeSignatureBtnMobile) {
+                removeSignatureBtnMobile.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    clearReinscriptionSignature();
+                });
+            }
+            
+            // Botones de zoom para firma (escritorio)
+            const zoomOutBtn = document.getElementById('reinscriptionSignatureZoomOut');
+            const zoomInBtn = document.getElementById('reinscriptionSignatureZoomIn');
+            
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener('click', () => {
+                    adjustSignatureSize(0.9);
+                });
+            }
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener('click', () => {
+                    adjustSignatureSize(1.1);
+                });
+            }
+            
+            // Botones de zoom para firma (móvil)
+            const zoomOutBtnMobile = document.getElementById('reinscriptionSignatureZoomOutMobile');
+            const zoomInBtnMobile = document.getElementById('reinscriptionSignatureZoomInMobile');
+            
+            if (zoomOutBtnMobile) {
+                zoomOutBtnMobile.addEventListener('click', () => {
+                    adjustSignatureSize(0.9);
+                });
+            }
+            if (zoomInBtnMobile) {
+                zoomInBtnMobile.addEventListener('click', () => {
+                    adjustSignatureSize(1.1);
+                });
+            }
+            
             const openDraftBtn = document.getElementById('reinscriptionOpenDraft');
             if (openDraftBtn) {
                 openDraftBtn.addEventListener('click', () => {
