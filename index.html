@@ -1001,12 +1001,28 @@
                             <label for="reinscriptionTutorMessage">Mensaje (opcional)</label>
                             <textarea id="reinscriptionTutorMessage" name="tutorMessage" rows="3" maxlength="500" placeholder="Escribe un mensaje adicional para el tutor (opcional)"></textarea>
                         </div>
+                        <!-- Vista previa integrada en móvil -->
+                        <!-- Vista previa integrada en móvil -->
+                        <div class="reinscription-modal__preview reinscription-modal__preview--mobile-integrated" id="mobilePreviewSection">
+                            <label style="font-weight: 600; color: var(--secondary-color); display: block; margin-bottom: 12px;">Vista previa</label>
+                            <div id="reinscriptionPreviewStageMobile" class="reinscription-preview">
+                                <canvas id="reinscriptionPreviewCanvasMobile" class="reinscription-preview__canvas" aria-hidden="true"></canvas>
+                                <div id="reinscriptionSignatureOverlayMobile" class="reinscription-signature-overlay hidden" aria-hidden="true">
+                                    <div id="reinscriptionSignatureBoxMobile" class="reinscription-signature-box">
+                                        <button id="removeSignatureButtonMobile" type="button" class="reinscription-signature-remove" title="Quitar firma" aria-label="Quitar firma">×</button>
+                                        <img id="reinscriptionSignatureOverlayImageMobile" alt="Firma posicionable" draggable="false">
+                                        <div class="reinscription-signature-handle"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </form>
                     <div class="reinscription-modal__preview">
                         <div id="reinscriptionPreviewStage" class="reinscription-preview">
                             <canvas id="reinscriptionPreviewCanvas" class="reinscription-preview__canvas" aria-hidden="true"></canvas>
                             <div id="reinscriptionSignatureOverlay" class="reinscription-signature-overlay hidden" aria-hidden="true">
                                 <div id="reinscriptionSignatureBox" class="reinscription-signature-box">
+                                    <button id="removeSignatureButton" type="button" class="reinscription-signature-remove" title="Quitar firma" aria-label="Quitar firma">×</button>
                                     <img id="reinscriptionSignatureOverlayImage" alt="Firma posicionable" draggable="false">
                                     <div id="reinscriptionSignatureResize" class="reinscription-signature-handle" role="presentation"></div>
                                 </div>
@@ -1033,7 +1049,7 @@
                 </div>
                 <div class="draw-signature-modal__body">
                     <canvas id="signatureCanvas" class="signature-canvas" width="800" height="300" style="border: 2px solid #ccc; background: white; cursor: crosshair; display: block; margin: 0 auto;"></canvas>
-                    <p style="text-align: center; color: #666; margin-top: 10px; font-size: 14px;">Dibuja tu firma con el ratón</p>
+                    <p style="text-align: center; color: #666; margin-top: 10px; font-size: 14px;">Dibuja tu firma</p>
                 </div>
                 <div class="draw-signature-modal__actions">
                     <button id="resetSignatureCanvas" type="button" class="btn-secondary">Reiniciar</button>
@@ -2695,6 +2711,7 @@
 
         function clearReinscriptionPreviewCanvas() {
             const { canvas, overlay } = signatureOverlayElements;
+            const canvasMobile = document.getElementById('reinscriptionPreviewCanvasMobile');
             if (canvas) {
                 const ctx = canvas.getContext('2d');
                 if (ctx) {
@@ -2704,6 +2721,16 @@
                 canvas.setAttribute('aria-hidden', 'true');
                 canvas.style.width = '';
                 canvas.style.height = '';
+            }
+            if (canvasMobile) {
+                const ctxMobile = canvasMobile.getContext('2d');
+                if (ctxMobile) {
+                    ctxMobile.clearRect(0, 0, canvasMobile.width, canvasMobile.height);
+                }
+                canvasMobile.classList.remove('is-visible');
+                canvasMobile.setAttribute('aria-hidden', 'true');
+                canvasMobile.style.width = '';
+                canvasMobile.style.height = '';
             }
             if (overlay) {
                 overlay.classList.add('hidden');
@@ -2889,6 +2916,7 @@
             const pdfjsLib = await ensurePdfJs();
             setupReinscriptionSignatureOverlay();
             const { stage, canvas, overlay } = signatureOverlayElements;
+            const canvasMobile = document.getElementById('reinscriptionPreviewCanvasMobile');
             if (!stage || !canvas || !pdfjsLib) {
                 return;
             }
@@ -2901,6 +2929,8 @@
             const viewport = page.getViewport({ scale });
             const outputWidth = Math.max(1, Math.round(viewport.width));
             const outputHeight = Math.max(1, Math.round(viewport.height));
+            
+            // Renderizar en canvas desktop
             const ctx = canvas.getContext('2d', { alpha: false });
             const devicePixelRatio = window.devicePixelRatio || 1;
             canvas.width = Math.floor(outputWidth * devicePixelRatio);
@@ -2911,6 +2941,20 @@
             await page.render({ canvasContext: ctx, viewport }).promise;
             canvas.classList.add('is-visible');
             canvas.setAttribute('aria-hidden', 'false');
+            
+            // Renderizar en canvas móvil también
+            if (canvasMobile) {
+                const ctxMobile = canvasMobile.getContext('2d', { alpha: false });
+                canvasMobile.width = Math.floor(outputWidth * devicePixelRatio);
+                canvasMobile.height = Math.floor(outputHeight * devicePixelRatio);
+                canvasMobile.style.width = `${outputWidth}px`;
+                canvasMobile.style.height = `${outputHeight}px`;
+                ctxMobile.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+                await page.render({ canvasContext: ctxMobile, viewport }).promise;
+                canvasMobile.classList.add('is-visible');
+                canvasMobile.setAttribute('aria-hidden', 'false');
+            }
+            
             reinscriptionPreviewMetrics = {
                 width: outputWidth,
                 height: outputHeight,
@@ -4164,6 +4208,24 @@
             if (clearSignatureBtn) {
                 clearSignatureBtn.addEventListener('click', (event) => {
                     event.preventDefault();
+                    clearReinscriptionSignature();
+                });
+            }
+            // Botón X para quitar firma en la vista previa
+            const removeSignatureBtn = document.getElementById('removeSignatureButton');
+            if (removeSignatureBtn) {
+                removeSignatureBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    clearReinscriptionSignature();
+                });
+            }
+            // Botón X para quitar firma en móvil
+            const removeSignatureBtnMobile = document.getElementById('removeSignatureButtonMobile');
+            if (removeSignatureBtnMobile) {
+                removeSignatureBtnMobile.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
                     clearReinscriptionSignature();
                 });
             }

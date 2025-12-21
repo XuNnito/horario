@@ -610,6 +610,7 @@ button:hover {
 
 .reinscription-signature-overlay.is-active {
     pointer-events: auto;
+
 }
 
 .reinscription-signature-box {
@@ -649,6 +650,36 @@ button:hover {
 
 .reinscription-signature-box.dragging .reinscription-signature-handle {
     cursor: grabbing;
+}
+
+/* Botón para quitar firma */
+.reinscription-signature-remove {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 18px;
+    height: 18px;
+    background: #d32f2f;
+    color: white;
+    border: 2px solid white;
+    border-radius: 50%;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    z-index: 10;
+    font-weight: bold;
+    transition: background 0.2s ease;
+    pointer-events: auto;
+}
+
+.reinscription-signature-remove:hover {
+    background: #b71c1c;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .reinscription-modal__preview-hint {
@@ -744,20 +775,7 @@ button:hover {
     border-top: 1px solid rgba(36, 48, 79, 0.12);
 }
 
-@media (max-width: 1024px) {
-    .reinscription-modal__body {
-        flex-direction: column;
-        max-height: none;
-    }
 
-    .reinscription-modal__preview iframe {
-        min-height: 420px;
-    }
-
-    .reinscription-preview {
-        min-height: 420px;
-    }
-}
 
 @media (max-width: 620px) {
     .reinscription-modal {
@@ -1758,12 +1776,51 @@ a img{
   .reinscription-modal__body {
     flex: 1;
     overflow-y: auto;
+    overflow-x: auto;
     padding: 15px !important;
     -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-height: 0;
   }
 
-  .reinscription-modal.is-mobile .reinscription-modal__preview {
-    display: none !important;
+  .reinscription-modal__form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  /* Vista previa integrada en móvil */
+  .reinscription-modal__preview--mobile-integrated {
+    display: block !important;
+    min-height: 300px;
+    margin-top: 12px;
+    padding: 0;
+    flex: 0 0 auto;
+    background: transparent;
+    border-radius: 0;
+    border: none;
+    gap: 12px;
+    overflow: visible;
+  }
+
+  .reinscription-modal__preview--mobile-integrated label {
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .reinscription-modal__preview--mobile-integrated .reinscription-preview {
+    min-height: 300px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
   }
 
   .reinscription-modal__preview {
@@ -1802,6 +1859,10 @@ a img{
     font-size: 16px !important;
     padding: 10px !important;
     width: 100% !important;
+    box-sizing: border-box;
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
   }
 
   .reinscription-grid {
@@ -1823,14 +1884,54 @@ a img{
   .draw-signature-modal.is-mobile .draw-signature-modal__content {
     width: 100vw !important;
     height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
   }
 
   .draw-signature-modal.is-mobile .draw-signature-modal__content {
-    max-width: 100vw !important;
-    max-height: 100vh !important;
     border-radius: 0 !important;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+  }
+
+  .draw-signature-modal.is-mobile .draw-signature-modal__header {
+    padding: 15px 12px;
+    flex-shrink: 0;
+  }
+
+  .draw-signature-modal.is-mobile .draw-signature-modal__body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 15px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .draw-signature-modal.is-mobile .draw-signature-modal__actions {
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    background: white;
+    border-top: 1px solid #eee;
+    padding: 12px !important;
+    gap: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: stretch;
+  }
+
+  .draw-signature-modal.is-mobile .draw-signature-modal__actions button {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 80px;
+    padding: 12px 8px !important;
+    font-size: 14px;
+  }
+
+  .draw-signature-modal.is-mobile #saveDrawnSignature {
+    flex: 1 1 100%;
   }
 
   .draw-signature-modal__content {
@@ -1839,21 +1940,11 @@ a img{
     height: auto;
   }
 
-  .draw-signature-modal__body {
-    flex: 1;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .draw-signature-modal__actions {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .draw-signature-modal__actions button {
-    flex: 1;
-    min-width: 100px;
-    padding: 12px 8px !important;
+  .signature-canvas {
+    max-height: 45vh !important;
+    aspect-ratio: 8 / 3 !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   .reinscription-signature {
@@ -1877,8 +1968,9 @@ a img{
 
 /* Desktop - mantener como estaba */
 @media (min-width: 769px) {
-  .reinscription-modal.is-mobile .reinscription-modal__preview {
-    display: block;
+  /* Ocultar preview integrado en móvil, mostrar el original */
+  .reinscription-modal__preview--mobile-integrated {
+    display: none !important;
   }
 
   .reinscription-modal__preview {
