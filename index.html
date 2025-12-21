@@ -686,7 +686,7 @@
                     const headerText = userName ? `Horario de ${userName}` : 'Horario';
                     if (headerTitle) headerTitle.textContent = headerText;
                     if (printFooter) {
-                        printFooter.textContent = userName ? `${userName}` : 'Nombre: ________________________';
+                        //printFooter.textContent = userName ? `${userName}` : 'Nombre: ________________________';
                     }
                 }
 
@@ -1040,6 +1040,9 @@
                         <p id="reinscriptionPreviewFallback" class="reinscription-modal__preview-hint">Completa los datos para generar la vista previa.</p>
                     </div>
                 </div>
+                <div id="reinscriptionAttachWarning" class="reinscription-attach-warning hidden" role="alert" aria-live="polite">
+                    <strong>IMPORTANTE:</strong> Debes adjuntar manualmente el PDF descargado al borrador en Gmail antes de enviar. Gmail también mostrará su propio aviso.
+                </div>
                 <div class="reinscription-modal__actions">
                     <button id="reinscriptionOpenDraft" type="button" class="btn-link hidden">Abrir borrador en Gmail</button>
                     <button id="reinscriptionSendEmail" type="button" class="btn-primary">Enviar al tutor</button>
@@ -1213,10 +1216,10 @@
 
         const BASE_CAREER_OPTIONS = [
             { id: 'biomedica', name: 'Biomédica', icon: `${CAREER_ICON_BASE_PATH}/biomedica.png`, fallbackIcon: 'biomedica.png' },
-            { id: 'mecatronica', name: 'Mecatrónica', icon: `${CAREER_ICON_BASE_PATH}/mecatronica.png`, fallbackIcon: 'meca.png' },
+            { id: 'mecatronica', name: 'Mecatrónica', icon: `${CAREER_ICON_BASE_PATH}/meca.png`, fallbackIcon: 'meca.png' },
             { id: 'ambiental', name: 'Ambiental', icon: `${CAREER_ICON_BASE_PATH}/ambiental.png`, fallbackIcon: 'ambiental.png' },
             { id: 'manufactura', name: 'Manufactura', icon: `${CAREER_ICON_BASE_PATH}/manu.png`, fallbackIcon: 'manu.png' },
-            { id: 'software', name: 'Software', icon: `${CAREER_ICON_BASE_PATH}/software.png`, fallbackIcon: 'sofware.png' },
+            { id: 'software', name: 'Software', icon: `${CAREER_ICON_BASE_PATH}/sofware.png`, fallbackIcon: 'sofware.png' },
             { id: 'industrial', name: 'Industrial', icon: `${CAREER_ICON_BASE_PATH}/industrial.png`, fallbackIcon: 'industrial.png' },
             { id: 'petrolera', name: 'Petrolera', icon: `${CAREER_ICON_BASE_PATH}/petro.png`, fallbackIcon: 'petro.png' },
             { id: 'nanotecnologia', name: 'Nanotecnologia', icon: `${CAREER_ICON_BASE_PATH}/nano.png`, fallbackIcon: 'nano.png' },
@@ -2232,9 +2235,15 @@
             });
         }
 
-        function hasValidAccessToken() {
+        async function hasValidAccessToken() {
             if (gAccessToken) return true;
-            return restoreTokenFromStorage();
+            try {
+                const res = await restoreTokenFromStorage();
+                return !!res;
+            } catch (e) {
+                console.warn('hasValidAccessToken error', e);
+                return false;
+            }
         }
 
         async function ensureDriveReady(options = {}) {
@@ -2243,9 +2252,10 @@
             let tokenAvailable = !!gAccessToken;
             if (!tokenAvailable) {
                 try {
-                    tokenAvailable = restoreTokenFromStorage();
+                    tokenAvailable = await restoreTokenFromStorage();
                 } catch (e) {
                     console.warn('restoreTokenFromStorage fallo al preparar Drive', e);
+                    tokenAvailable = false;
                 }
             }
 
@@ -2268,7 +2278,7 @@
                     }
                 }
                 
-                tokenAvailable = hasValidAccessToken();
+                tokenAvailable = await hasValidAccessToken();
                 if (!tokenAvailable) {
                     throw new Error('Por favor, autoriza el acceso a Google y vuelve a intentar.');
                 }
@@ -4470,6 +4480,15 @@
                 });
             }
             
+            // Helper: mostrar aviso de adjuntar PDF en Gmail
+            const attachWarningEl = document.getElementById('reinscriptionAttachWarning');
+            function showAttachWarning() {
+                if (attachWarningEl) {
+                    attachWarningEl.classList.remove('hidden');
+                    try { attachWarningEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { /* ignore */ }
+                }
+            }
+
             const openDraftBtn = document.getElementById('reinscriptionOpenDraft');
             if (openDraftBtn) {
                 openDraftBtn.addEventListener('click', () => {
@@ -4478,7 +4497,9 @@
                         return;
                     }
                     const opened = window.open(lastReinscriptionDraftUrl, '_blank', 'noopener');
-                    if (!opened) {
+                    if (opened) {
+                        showAttachWarning();
+                    } else {
                         showMessage(`No se pudo abrir Gmail automáticamente. Copia y pega esta dirección en tu navegador: ${lastReinscriptionDraftUrl}`, 'warning');
                     }
                 });
@@ -4560,6 +4581,8 @@
                             if (!opened) {
                                 showMessage('Gmail no se pudo abrir. Abrelo manualmente e ingresa el email del tutor.', 'warning');
                             } else {
+                                // Mostrar aviso en la interfaz para recordar adjuntar
+                                try { showAttachWarning(); } catch (e) { /* ignore if helper not present */ }
                                 showMessage('✓ Gmail abierto. Adjunta el PDF descargado y envía el correo.', 'success');
                             }
                         });
@@ -5586,20 +5609,17 @@
                     gAccessToken = resp.access_token;
                     driveAuthRetryPending = false;
 
-                    // Guardar token con expiración extendida (4 meses = 120 días)
+                    // Persistir estado de sesión, pero NO confiar en el access_token
+                    // los access_tokens expiran en poco tiempo; en recargas intentaremos
+                    // obtener uno nuevo de forma silenciosa con tokenClient.requestAccessToken.
                     try {
-                        localStorage.setItem('google_token', gAccessToken);
-                        // Establecer expiración a 4 meses (120 días) en lugar de usar expires_in del response
-                        const fourMonthsInMs = 120 * 24 * 60 * 60 * 1000; // 4 meses en milisegundos
-                        const expiryTs = Date.now() + fourMonthsInMs;
-                        localStorage.setItem('google_token_expiry', String(expiryTs));
+                        // Guardamos marca de sesión y timestamp de inicio.
                         localStorage.setItem('google_signed_in', '1');
+                        localStorage.setItem('google_session_start', String(Date.now()));
+                        // Marcar scopes concedidos (banderas locales)
                         localStorage.setItem(DRIVE_SCOPE_FLAG, '1');
                         localStorage.setItem(GMAIL_SCOPE_FLAG, '1');
-                        // Nuevo: marcar timestamp de cuando se inició sesión
-                        localStorage.setItem('google_session_start', String(Date.now()));
-                        localStorage.setItem(DRIVE_SCOPE_FLAG, '1');
-                    } catch (e) { console.warn('No se pudo persistir token', e); }
+                    } catch (e) { console.warn('No se pudo persistir estado de sesión', e); }
 
                     // Inicializar gapi client usando discoveryDocs (más robusto)
                     try {
@@ -5625,45 +5645,72 @@
         /* -- FUNCIONES ADICIONADAS: restaurar token desde localStorage y esperar token -- */
         function restoreTokenFromStorage() {
             try {
-                const token = localStorage.getItem('google_token');
-                const expiry = Number(localStorage.getItem('google_token_expiry') || '0');
                 const sessionStart = Number(localStorage.getItem('google_session_start') || '0');
+                const signedInFlag = localStorage.getItem('google_signed_in') === '1';
                 const scopeGranted = localStorage.getItem(DRIVE_SCOPE_FLAG) === '1';
 
-                // Verificar si el token existe y no ha expirado (4 meses)
-                if (token && expiry && expiry > Date.now() && scopeGranted) {
-                    gAccessToken = token;
-                    driveAuthRetryPending = false;
+                // Si no había sesión registrada, nada que restaurar
+                if (!signedInFlag || !scopeGranted) return false;
 
-                    // Si gapi está listo, aseguramos el token en el cliente
-                    if (typeof gapi !== 'undefined' && gapi.client) {
-                        try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { /* no crítico */ }
-                    }
-
-                    // Cargar perfil (silencioso) y actualizar UI
-                    ensureDriveApiInitialized().then(() => {
-                        try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { console.warn('setToken fallo (restauración)', e); }
-                        return fetchGoogleProfile();
-                    }).then(() => {
-                        updateGoogleButtons(true);
-                        try { onSignedIn(); } catch (e) {/*opcional*/ }
-
-                        // Mostrar mensaje de sesión restaurada con fecha de inicio
-                        if (sessionStart) {
-                            const sessionDate = new Date(sessionStart).toLocaleDateString();
-                            console.log(`Sesión iniciada el ${sessionDate} - Token válido por 4 meses`);
-                            // showMessage(`Sesión restaurada (iniciada el ${sessionDate})`, 'success');
-                        }
-                    }).catch(() => {/*silencioso*/ });
-                    return true;
+                // Si la sesión se inició hace más de 120 días, considerarla expirada
+                const fourMonthsInMs = 120 * 24 * 60 * 60 * 1000;
+                if (sessionStart && (Date.now() - sessionStart) > fourMonthsInMs) {
+                    // limpiar y notificar expiración
+                    try {
+                        localStorage.removeItem('google_signed_in');
+                        localStorage.removeItem('google_session_start');
+                        localStorage.removeItem(DRIVE_SCOPE_FLAG);
+                        localStorage.removeItem(GMAIL_SCOPE_FLAG);
+                        localStorage.removeItem('google_profile');
+                    } catch (e) { }
+                    notifySessionExpired();
+                    return false;
                 }
 
-                // Token ausente o expirado -> limpiar todo
-                localStorage.removeItem('google_token');
-                localStorage.removeItem('google_token_expiry');
-                localStorage.removeItem('google_session_start');
-                localStorage.removeItem('google_signed_in');
-                localStorage.removeItem(DRIVE_SCOPE_FLAG);
+                // Si tokenClient está disponible, intentar obtener token silenciosamente
+                if (tokenClient) {
+                    return new Promise((resolve) => {
+                        let finished = false;
+                        const onSuccess = (respToken) => {
+                            if (finished) return;
+                            finished = true;
+                            gAccessToken = respToken.access_token || respToken;
+                            driveAuthRetryPending = false;
+                            try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { }
+                            fetchGoogleProfile().then(() => {
+                                updateGoogleButtons(true);
+                                try { onSignedIn(); } catch (e) { }
+                                resolve(true);
+                            }).catch(() => { resolve(true); });
+                        };
+
+                        try {
+                            // requestAccessToken sin prompt intenta obtener token silenciosamente
+                            tokenClient.requestAccessToken({ prompt: undefined });
+                        } catch (e) {
+                            // Algunos navegadores/condiciones pueden lanzar. En ese caso resolvemos false
+                            console.warn('restore: requestAccessToken fallo', e);
+                            resolve(false);
+                        }
+
+                        // Esperar a que waitForToken capture el token que setea el callback de tokenClient
+                        waitForToken(8000).then(() => {
+                            resolve(true);
+                        }).catch(() => {
+                            // no se pudo obtener token silencioso -> sesión expirada
+                            try {
+                                localStorage.removeItem('google_signed_in');
+                                localStorage.removeItem('google_session_start');
+                                localStorage.removeItem(DRIVE_SCOPE_FLAG);
+                            } catch (e) { }
+                            notifySessionExpired();
+                            resolve(false);
+                        });
+                    });
+                }
+
+                // tokenClient no listo aún; retornamos false y se intentará más tarde cuando las libs carguen
+                return false;
             } catch (e) {
                 console.warn('restoreTokenFromStorage error', e);
             }
@@ -6226,24 +6273,28 @@
 
                         // Primero intentar restaurar token desde localStorage (si aún es válido)
                         try {
-                            if (restoreTokenFromStorage()) {
-                                try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { }
-                                // cargar perfil y estado sin prompt
-                                fetchGoogleProfile().then(() => {
-                                    onSignedIn();
-                                    console.log('Sesión restaurada desde token en localStorage');
-                                }).catch(() => { /*silencioso*/ });
-                            } else if (localStorage.getItem('google_signed_in') === '1') {
-                                notifySessionExpired();
-                                console.log('La sesión previa expiró; el usuario debe volver a iniciar sesión.');
-                            } else {
-                                // si existe perfil guardado solo para UI, sincronizar
-                                const raw = localStorage.getItem('google_profile');
-                                if (raw) {
-                                    gUserProfile = JSON.parse(raw);
-                                    onProfileLoaded();
+                            (async () => {
+                                const restored = await restoreTokenFromStorage();
+                                if (restored) {
+                                    try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { }
+                                    // cargar perfil y estado sin prompt
+                                    try {
+                                        await fetchGoogleProfile();
+                                        try { onSignedIn(); } catch (e) { }
+                                        console.log('Sesión restaurada desde token en localStorage');
+                                    } catch (e) { /* silencioso */ }
+                                } else if (localStorage.getItem('google_signed_in') === '1') {
+                                    notifySessionExpired();
+                                    console.log('La sesión previa expiró; el usuario debe volver a iniciar sesión.');
+                                } else {
+                                    // si existe perfil guardado solo para UI, sincronizar
+                                    const raw = localStorage.getItem('google_profile');
+                                    if (raw) {
+                                        gUserProfile = JSON.parse(raw);
+                                        onProfileLoaded();
+                                    }
                                 }
-                            }
+                            })();
                         } catch (e) { console.warn('restore session failed', e); }
                     } catch (e) {
                         console.warn('initGoogleAuth fallo:', e);
@@ -6499,12 +6550,13 @@
         function getSessionInfo() {
             try {
                 const sessionStart = Number(localStorage.getItem('google_session_start') || '0');
-                const expiry = Number(localStorage.getItem('google_token_expiry') || '0');
-
-                if (sessionStart && expiry) {
+                // Calculamos expiración a partir del timestamp de inicio + 120 días
+                if (sessionStart) {
                     const startDate = new Date(sessionStart);
-                    const expiryDate = new Date(expiry);
-                    const daysLeft = Math.ceil((expiry - Date.now()) / (24 * 60 * 60 * 1000));
+                    const fourMonthsInMs = 120 * 24 * 60 * 60 * 1000;
+                    const expiryTs = sessionStart + fourMonthsInMs;
+                    const expiryDate = new Date(expiryTs);
+                    const daysLeft = Math.ceil((expiryTs - Date.now()) / (24 * 60 * 60 * 1000));
 
                     console.log(`Sesión iniciada: ${startDate.toLocaleString()}`);
                     console.log(`Expira: ${expiryDate.toLocaleString()}`);
@@ -6744,6 +6796,12 @@
 <footer class="footer">
     <p>&copy; 2025 XuNnito</p>
 
+    <nav class="footer-links" aria-label="Enlaces legales">
+        <a href="politica.html">Política de Privacidad</a>
+        <span>•</span>
+        <a href="terminos.html">Términos y Condiciones</a>
+    </nav>
+
     <a href="https://www.facebook.com/XuNnitohz" target="_blank" rel="noopener noreferrer" aria-label="Facebook"
         class="icon fb">
         <svg viewBox="0 0 24 24">
@@ -6759,6 +6817,5 @@
 
 
 </footer>
-
 
 </html>
