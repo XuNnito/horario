@@ -367,7 +367,7 @@
                     <img id="pmCareerIcon" class="pm-career-select__icon" src="biomedica.png" alt="Carrera actual">
                     <div class="pm-career-select__text">
                         <strong id="pmCareer">Biomédica</strong>
-                        <span class="pm-career-select__hint">Toca para elegir tu carrera</span>
+                        <span class="pm-career-select__hint">Toca para cambiar tu carrera</span>
                     </div>
                 </button>
                 <div><strong>Fecha:</strong> <span id="pmDate">-</span></div>
@@ -746,7 +746,7 @@
             <div class="career-create__panel" role="document">
                 <button id="careerCreateClose" class="career-create__close" type="button" aria-label="Cerrar">&times;</button>
                 <h3 id="careerCreateTitle">Crear nueva carrera</h3>
-                <p class="career-create__subtitle">Asigna un nombre y sube un logo en PNG o JPG. Se aplicará al favicon, marca de agua y fondo.</p>
+                <p class="career-create__subtitle">Asigna un nombre y sube un imagen en PNG o JPG.</p>
                 <form id="careerCreateForm">
                     <label class="career-create__label" for="careerCreateName">Nombre de la carrera</label>
                     <input id="careerCreateName" type="text" name="careerName" maxlength="80" required placeholder="Ingresa el nombre de la carrera">
@@ -756,7 +756,7 @@
                         <input id="careerCreateLogo" type="file" accept="image/png,image/jpeg">
                         <div id="careerCreatePreview" class="career-create__preview career-create__preview--empty" aria-hidden="true"></div>
                     </div>
-                    <p class="career-create__hint">El logo se usará como icono principal, fondo y marca de agua de la aplicación.</p>
+                    <p class="career-create__hint">El logo se usará como icono principal, fondo y marca de impresión del horario pdf.</p>
                     <div class="career-create__actions">
                         <button id="careerCreateCancel" type="button">Cancelar</button>
                         <button id="careerCreateSubmit" type="submit">Crear carrera</button>
@@ -831,7 +831,10 @@
 
             <div class="panel" style="flex: 2; min-width: 600px;">
                 <h2>Horario Semanal</h2>
-                <button onclick="printSchedule()" style="margin-bottom: 10px;">Imprimir Horario</button>
+                <div class="schedule-actions">
+                    <button type="button" onclick="printSchedule()">Imprimir Horario</button>
+                    <button id="openReinscriptionModal" type="button" class="btn-secondary">Solicitud de reinscripción</button>
+                </div>
                 <div class="legend" style="display:flex;gap:10px;align-items:center;margin:10px 0;">
                     <span style="display:inline-flex;align-items:center;gap:6px;">
                         <span
@@ -897,7 +900,9 @@
             </div>
             <div style="display:flex;gap:8px;margin-top:8px">
 
-                <label>Cuatrimestre y Grupo<br><input id="m_inputGrupo" type="text"></label>
+                <label>Cuatrimestre y Grupo<br>
+                    <input id="m_inputGrupo" type="text" placeholder="Ej. 7A" style="background-color: #f0f0f0;">
+                </label>
             </div>
             <div style="margin-top:8px">
                 <label for="m_inputAula">Aula</label>
@@ -937,6 +942,78 @@
             </div>
         </div>
     </div>
+        <div id="reinscriptionModal" class="reinscription-modal hidden" aria-hidden="true" role="dialog"
+            aria-labelledby="reinscriptionTitle" aria-modal="true">
+            <div class="reinscription-modal__panel" role="document">
+                <button id="reinscriptionClose" class="reinscription-modal__close" type="button" aria-label="Cerrar">&times;</button>
+                <h3 id="reinscriptionTitle">Solicitud de reinscripción</h3>
+                <p class="reinscription-modal__subtitle">Completa o ajusta tus datos antes de generar el formato oficial.</p>
+                <div class="reinscription-modal__body">
+                    <form id="reinscriptionForm" class="reinscription-modal__form">
+                        <div class="reinscription-field">
+                            <label for="reinscriptionFullName">Nombre completo</label>
+                            <input id="reinscriptionFullName" name="fullName" type="text" maxlength="120" placeholder="Nombre(s) y apellidos" required>
+                        </div>
+                        <div class="reinscription-grid">
+                            <div class="reinscription-field">
+                                <label for="reinscriptionMatricula">Matrícula</label>
+                                <input id="reinscriptionMatricula" name="matricula" type="text" maxlength="30" placeholder="Ej. 20201234" required>
+                            </div>
+                            <div class="reinscription-field">
+                                <label for="reinscriptionCareer">Carrera</label>
+                                <input id="reinscriptionCareer" name="career" type="text" maxlength="80" required>
+                            </div>
+                        </div>
+                        <div class="reinscription-grid">
+                            <div class="reinscription-field">
+                                <label for="reinscriptionQuarter">Cuatrimestre</label>
+                                <input id="reinscriptionQuarter" name="quarter" type="text" maxlength="20" placeholder="Ej. 7A">
+                            </div>
+                            <div class="reinscription-field">
+                                <label for="reinscriptionGroup">Grupo</label>
+                                <input id="reinscriptionGroup" name="group" type="text" maxlength="20" placeholder="Ej. 7A">
+                            </div>
+                        </div>
+                        <div class="reinscription-field">
+                            <label for="reinscriptionDebtSubject">Materia que adeuda</label>
+                            <input id="reinscriptionDebtSubject" name="debtSubject" type="text" maxlength="120" placeholder="Materia pendiente">
+                            <small class="reinscription-hint">Se rellena automáticamente con la materia ordinaria no cargada, puedes editarla.</small>
+                        </div>
+                        <div class="reinscription-field">
+                            <label for="reinscriptionSignature">Firma (PNG sin fondo)</label>
+                            <input id="reinscriptionSignature" name="signature" type="file" accept="image/png">
+                            <div id="reinscriptionSignaturePreviewWrapper" class="reinscription-signature hidden">
+                                <img id="reinscriptionSignaturePreview" alt="Vista previa de la firma">
+                                <button id="reinscriptionSignatureClear" type="button" class="btn-link">Quitar firma</button>
+                            </div>
+                            <div id="reinscriptionLoadedSubjectsList" class="reinscription-loaded-subjects hidden" aria-live="polite"></div>
+                        </div>
+                        <div class="reinscription-field reinscription-email-field">
+                            <label for="reinscriptionTutorEmail">Correo del tutor</label>
+                            <input id="reinscriptionTutorEmail" name="tutorEmail" type="email" maxlength="120" placeholder="tutor@instituto.edu.mx" autocomplete="email">
+                            <small class="reinscription-hint">Este correo recibirá el formato cuando uses "Enviar al tutor".</small>
+                        </div>
+                    </form>
+                    <div class="reinscription-modal__preview">
+                        <div id="reinscriptionPreviewStage" class="reinscription-preview">
+                            <canvas id="reinscriptionPreviewCanvas" class="reinscription-preview__canvas" aria-hidden="true"></canvas>
+                            <div id="reinscriptionSignatureOverlay" class="reinscription-signature-overlay hidden" aria-hidden="true">
+                                <div id="reinscriptionSignatureBox" class="reinscription-signature-box">
+                                    <img id="reinscriptionSignatureOverlayImage" alt="Firma posicionable" draggable="false">
+                                    <div id="reinscriptionSignatureResize" class="reinscription-signature-handle" role="presentation"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p id="reinscriptionPreviewFallback" class="reinscription-modal__preview-hint">Completa los datos para generar la vista previa.</p>
+                    </div>
+                </div>
+                <div class="reinscription-modal__actions">
+                    <button id="reinscriptionOpenDraft" type="button" class="btn-link hidden">Abrir borrador en Gmail</button>
+                    <button id="reinscriptionSendEmail" type="button" class="btn-primary">Enviar al tutor</button>
+                    <button id="reinscriptionDownload" type="button" class="btn-secondary">Descargar formato</button>
+                </div>
+            </div>
+        </div>
 
 
 
@@ -945,6 +1022,7 @@
 
     <script src="https://accounts.google.com/gsi/client" defer></script>
     <script src="https://apis.google.com/js/api.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
     <script src="funcion.js" defer></script>
     <script>
 
@@ -1013,15 +1091,61 @@
         // NUEVO: copia de las materias predefinidas para reconstruir el catálogo
         let predefinedSubjects = [];
 
+        const REINSCRIPTION_TEMPLATE_PATH = 'SOLIC_REINSCRIPCION.pdf';
+        // Ajusta los porcentajes si necesitas reposicionar el texto dentro del PDF.
+        const REINSCRIPTION_PDF_LAYOUT_DEFAULTS = {
+            fullName: { xPct: 0.19, yPct: 0.875 },
+            matricula: { xPct: 0.75, yPct: 0.875 },
+            career: { xPct: 0.3, yPct: 0.855 },
+            quarter: { xPct: 0.3, yPct: 0.837 },
+            group: { xPct: 0.75, yPct: 0.837 },
+            debtSubject: { xPct: 0.1, yPct: 0.805, maxWidthPct: 0.78, lineHeightPct: 0.02, maxLines: 2 },
+            loadedSubjects: { xPct: 0.23, yPct: 0.753, maxWidthPct: 0.78, lineHeightPct: 0.018, maxLines: 8, tabStopPct: 0.8 },
+            signature: { xPct: 0.68, yPct: 0.53, widthPct: 0.28, heightPct: 0.12 }
+        };
+
+        const REINSCRIPTION_PDF_LAYOUT = JSON.parse(JSON.stringify(REINSCRIPTION_PDF_LAYOUT_DEFAULTS));
+        const REINSCRIPTION_MODAL_STATE_STORAGE_KEY = 'reinscription_modal_open_state_v1';
+        const REINSCRIPTION_FORM_STORAGE_KEY = 'reinscription_form_snapshot_v1';
+        const LEGACY_REINSCRIPTION_LAYOUT_KEYS = [
+            'reinscription_pdf_layout_overrides_v1',
+            'reinscription_layout_panel_state_v1'
+        ];
+        const REINSCRIPTION_SIGNATURE_STORAGE_KEY = 'reinscription_signature_rect_v1';
+        const PDFJS_WORKER_SRC = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.worker.min.js';
+
+        let reinscriptionSignatureDataUrl = null;
+        let reinscriptionPdfTemplateBytes = null;
+        let reinscriptionPreviewRenderTimer = null;
+        let reinscriptionLastFormValues = null;
+        let pdfLibLoaderPromise = null;
+        let pdfJsInitPromise = null;
+        let signatureAspectRatio = 1;
+        let signatureDragState = null;
+        let reinscriptionPreviewMetrics = { width: 0, height: 0, scale: 1, baseWidth: 0, baseHeight: 0 };
+        const signatureOverlayElements = {
+            stage: null,
+            canvas: null,
+            overlay: null,
+            box: null,
+            image: null,
+            handle: null,
+            initialized: false
+        };
+
         // Estado global para Google OAuth/Drive (declarado temprano para evitar errores del TDZ)
         let tokenClient = null;
         let gAccessToken = null;
         let gUserProfile = null; // perfil activo (nombre, email, foto)
         let driveApiInitPromise = null;
         let driveApiReady = false;
+        let gmailApiInitPromise = null;
+        let gmailApiReady = false;
         let authRequestInProgress = false;
         let sessionExpiredWarningShown = false;
         let driveAuthRetryPending = false;
+        let reinscriptionEmailSending = false;
+        let lastReinscriptionDraftUrl = null;
         const AUTH_GATE_DEFAULT_MESSAGE = 'Para cargar, simular tu horario y guardar tus horarios necesitas iniciar sesión con Google.';
         const DRIVE_SCOPE_FLAG = 'google_drive_scope_v2';
         const DEFAULT_BIOMEDICA_SUBJECT_IDS = [57, 58, 59, 60, 61, 67, 68, 69];
@@ -1034,12 +1158,12 @@
         const BASE_CAREER_OPTIONS = [
             { id: 'biomedica', name: 'Biomédica', icon: `${CAREER_ICON_BASE_PATH}/biomedica.png`, fallbackIcon: 'biomedica.png' },
             { id: 'mecatronica', name: 'Mecatrónica', icon: `${CAREER_ICON_BASE_PATH}/mecatronica.png`, fallbackIcon: 'meca.png' },
+            { id: 'ambiental', name: 'Ambiental', icon: `${CAREER_ICON_BASE_PATH}/ambiental.png`, fallbackIcon: 'ambiental.png' },
+            { id: 'manufactura', name: 'Manufactura', icon: `${CAREER_ICON_BASE_PATH}/manu.png`, fallbackIcon: 'manu.png' },
             { id: 'software', name: 'Software', icon: `${CAREER_ICON_BASE_PATH}/software.png`, fallbackIcon: 'sofware.png' },
             { id: 'industrial', name: 'Industrial', icon: `${CAREER_ICON_BASE_PATH}/industrial.png`, fallbackIcon: 'industrial.png' },
             { id: 'petrolera', name: 'Petrolera', icon: `${CAREER_ICON_BASE_PATH}/petro.png`, fallbackIcon: 'petro.png' },
             { id: 'nanotecnologia', name: 'Nanotecnologia', icon: `${CAREER_ICON_BASE_PATH}/nano.png`, fallbackIcon: 'nano.png' },
-            { id: 'manufactura', name: 'Manufactura', icon: `${CAREER_ICON_BASE_PATH}/manu.png`, fallbackIcon: 'manu.png' },
-            { id: 'ambiental', name: 'Ambiental', icon: `${CAREER_ICON_BASE_PATH}/ambiental.png`, fallbackIcon: 'ambiental.png' },
             { id: 'robotica', name: 'Robótica', icon: `${CAREER_ICON_BASE_PATH}/robotica.png`, fallbackIcon: 'robotica.png' },
             { id: 'alimentos', name: 'Alimentos', icon: `${CAREER_ICON_BASE_PATH}/alimentos.png`, fallbackIcon: 'alimentos.png' },
             { id: 'gestionempresarial', name: 'Gestión Empresarial', icon: `${CAREER_ICON_BASE_PATH}/gestionempresarial.png`, fallbackIcon: 'gestionempresarial.png' },
@@ -1389,7 +1513,7 @@
                 createButton.setAttribute('aria-label', 'Crear nueva carrera');
                 createButton.innerHTML = `
                     <span class="career-option__create-icon" aria-hidden="true">＋</span>
-                    <span class="career-option__name">Crear carrera</span>
+                    <span class="career-option__name">Crear</span>
                 `;
                 createButton.addEventListener('click', openCareerCreationModal);
                 grid.appendChild(createButton);
@@ -1961,6 +2085,7 @@
             updateScheduleView();
             updateSelectedSubjectsList();
             defaultSchedulePromptDismissed = false;
+            refreshReinscriptionDefaultsAfterScheduleChange();
 
             if (missingIds.length > 0) {
                 console.warn('No se encontraron algunas materias al cargar el horario:', missingIds);
@@ -2123,6 +2248,8 @@
 
             initAuthGate();
             setupCareerModalListeners();
+            setupReinscriptionModal();
+            updateReinscriptionLoadedSubjectsList();
         });
 
 
@@ -2320,6 +2447,787 @@
                 console.warn('saveSelectedSubjects error', err);
                 showMessage('Tu navegador no permitió guardar el horario localmente.', 'warning');
             }
+        }
+
+        function persistReinscriptionModalOpenState(isOpen) {
+            try {
+                localStorage.setItem(REINSCRIPTION_MODAL_STATE_STORAGE_KEY, isOpen ? 'open' : 'closed');
+            } catch (error) {
+                console.warn('No se pudo guardar el estado del modal de reinscripción', error);
+            }
+        }
+        function loadReinscriptionFormSnapshot() {
+            try {
+                const stored = localStorage.getItem(REINSCRIPTION_FORM_STORAGE_KEY);
+                if (!stored) {
+                    return null;
+                }
+                const parsed = JSON.parse(stored);
+                if (!parsed || typeof parsed !== 'object') {
+                    return null;
+                }
+                return {
+                    fullName: parsed.fullName || '',
+                    matricula: parsed.matricula || '',
+                    career: parsed.career || '',
+                    quarter: parsed.quarter || '',
+                    group: parsed.group || '',
+                    debtSubject: parsed.debtSubject || '',
+                    autoDebtSubject: parsed.autoDebtSubject || '',
+                    tutorEmail: parsed.tutorEmail || ''
+                };
+            } catch (error) {
+                console.warn('No se pudo cargar el formulario de reinscripción guardado', error);
+                return null;
+            }
+        }
+
+        function saveReinscriptionFormSnapshot(snapshot) {
+            if (!snapshot || typeof snapshot !== 'object') {
+                return;
+            }
+            const toPersist = {
+                fullName: snapshot.fullName || '',
+                matricula: snapshot.matricula || '',
+                career: snapshot.career || '',
+                quarter: snapshot.quarter || '',
+                group: snapshot.group || '',
+                debtSubject: snapshot.debtSubject || '',
+                autoDebtSubject: snapshot.autoDebtSubject || '',
+                tutorEmail: snapshot.tutorEmail || ''
+            };
+            try {
+                localStorage.setItem(REINSCRIPTION_FORM_STORAGE_KEY, JSON.stringify(toPersist));
+            } catch (error) {
+                console.warn('No se pudo guardar el formulario de reinscripción', error);
+            }
+        }
+
+        function loadSignaturePlacement() {
+            try {
+                const stored = localStorage.getItem(REINSCRIPTION_SIGNATURE_STORAGE_KEY);
+                if (!stored) {
+                    return null;
+                }
+                const parsed = JSON.parse(stored);
+                if (!parsed || typeof parsed !== 'object') {
+                    return null;
+                }
+                const normalized = {};
+                let hasData = false;
+                ['xPct', 'yPct', 'widthPct', 'heightPct'].forEach(key => {
+                    const value = Number(parsed[key]);
+                    if (Number.isFinite(value)) {
+                        normalized[key] = Math.max(0, Math.min(1, value));
+                        hasData = true;
+                    }
+                });
+                ['xAbs', 'yAbs', 'widthAbs', 'heightAbs'].forEach(key => {
+                    const value = Number(parsed[key]);
+                    if (Number.isFinite(value) && value >= 0) {
+                        normalized[key] = value;
+                        hasData = true;
+                    }
+                });
+                return hasData ? normalized : null;
+            } catch (error) {
+                console.warn('No se pudo cargar la posición guardada de la firma', error);
+                return null;
+            }
+        }
+
+        function saveSignaturePlacement(layout) {
+            if (!layout || typeof layout !== 'object') {
+                return;
+            }
+            const clamp01 = (value) => Math.max(0, Math.min(1, value));
+            const payload = {};
+            ['xPct', 'yPct', 'widthPct', 'heightPct'].forEach(key => {
+                const value = Number(layout[key]);
+                if (Number.isFinite(value)) {
+                    payload[key] = clamp01(value);
+                }
+            });
+            ['xAbs', 'yAbs', 'widthAbs', 'heightAbs'].forEach(key => {
+                const value = Number(layout[key]);
+                if (Number.isFinite(value) && value >= 0) {
+                    payload[key] = Number(value.toFixed(4));
+                }
+            });
+            try {
+                localStorage.setItem(REINSCRIPTION_SIGNATURE_STORAGE_KEY, JSON.stringify(payload));
+            } catch (error) {
+                console.warn('No se pudo guardar la posición de la firma', error);
+            }
+        }
+
+        LEGACY_REINSCRIPTION_LAYOUT_KEYS.forEach((legacyKey) => {
+            try {
+                if (localStorage.getItem(legacyKey) !== null) {
+                    localStorage.removeItem(legacyKey);
+                }
+            } catch (error) {
+                console.warn('No se pudo limpiar un ajuste antiguo de posiciones del PDF', error);
+            }
+        });
+
+        const storedSignaturePlacement = loadSignaturePlacement();
+        if (storedSignaturePlacement) {
+            Object.assign(REINSCRIPTION_PDF_LAYOUT.signature, storedSignaturePlacement);
+        }
+
+        const preloadedReinscriptionFormSnapshot = loadReinscriptionFormSnapshot();
+        if (preloadedReinscriptionFormSnapshot) {
+            const hasPersistedContent = Object.values(preloadedReinscriptionFormSnapshot).some(value => {
+                if (typeof value === 'string') {
+                    return value.trim().length > 0;
+                }
+                return !!value;
+            });
+            if (hasPersistedContent) {
+                reinscriptionLastFormValues = { ...preloadedReinscriptionFormSnapshot };
+            }
+        }
+
+        function ensurePdfLib() {
+            if (window.PDFLib) {
+                return Promise.resolve(window.PDFLib);
+            }
+            if (!pdfLibLoaderPromise) {
+                pdfLibLoaderPromise = new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+                    script.async = true;
+                    script.onload = () => {
+                        if (window.PDFLib) {
+                            resolve(window.PDFLib);
+                        } else {
+                            reject(new Error('PDFLib no disponible tras la carga'));
+                        }
+                    };
+                    script.onerror = () => reject(new Error('No se pudo cargar la librería PDFLib'));
+                    document.head.appendChild(script);
+                });
+            }
+            return pdfLibLoaderPromise;
+        }
+
+        async function ensureReinscriptionTemplate() {
+            if (reinscriptionPdfTemplateBytes) {
+                return reinscriptionPdfTemplateBytes;
+            }
+            const response = await fetch(REINSCRIPTION_TEMPLATE_PATH);
+            if (!response.ok) {
+                throw new Error('No se pudo cargar el formato de solicitud de reinscripción');
+            }
+            const buffer = await response.arrayBuffer();
+            reinscriptionPdfTemplateBytes = new Uint8Array(buffer);
+            return reinscriptionPdfTemplateBytes;
+        }
+
+        function ensurePdfJs() {
+            if (window.pdfjsLib && typeof window.pdfjsLib.getDocument === 'function') {
+                try {
+                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_SRC;
+                } catch (error) {
+                    console.warn('No se pudo configurar el worker de PDF.js', error);
+                }
+                return Promise.resolve(window.pdfjsLib);
+            }
+            if (!pdfJsInitPromise) {
+                pdfJsInitPromise = new Promise((resolve, reject) => {
+                    let attempts = 0;
+                    const attemptLoad = () => {
+                        attempts += 1;
+                        if (window.pdfjsLib && typeof window.pdfjsLib.getDocument === 'function') {
+                            try {
+                                window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_SRC;
+                            } catch (error) {
+                                console.warn('No se pudo configurar el worker de PDF.js', error);
+                            }
+                            resolve(window.pdfjsLib);
+                            return;
+                        }
+                        if (attempts >= 50) {
+                            reject(new Error('PDF.js no está disponible'));
+                            return;
+                        }
+                        setTimeout(attemptLoad, 60);
+                    };
+                    attemptLoad();
+                });
+            }
+            return pdfJsInitPromise;
+        }
+
+        function clearReinscriptionPreviewCanvas() {
+            const { canvas, overlay } = signatureOverlayElements;
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+                canvas.classList.remove('is-visible');
+                canvas.setAttribute('aria-hidden', 'true');
+                canvas.style.width = '';
+                canvas.style.height = '';
+            }
+            if (overlay) {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('is-active');
+                overlay.setAttribute('aria-hidden', 'true');
+                overlay.style.width = '';
+                overlay.style.height = '';
+            }
+            reinscriptionPreviewMetrics = { width: 0, height: 0, scale: 1, baseWidth: 0, baseHeight: 0 };
+        }
+
+        function updateSignatureOverlayPosition() {
+            setupReinscriptionSignatureOverlay();
+            const { overlay, box } = signatureOverlayElements;
+            if (!overlay || !box) {
+                return;
+            }
+            if (!reinscriptionSignatureDataUrl) {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('is-active');
+                overlay.setAttribute('aria-hidden', 'true');
+                return;
+            }
+            const layout = REINSCRIPTION_PDF_LAYOUT.signature || {};
+            const overlayRect = overlay.getBoundingClientRect();
+            let overlayWidth = overlayRect.width;
+            let overlayHeight = overlayRect.height;
+            if (!overlayWidth || !overlayHeight) {
+                overlayWidth = reinscriptionPreviewMetrics.width;
+                overlayHeight = reinscriptionPreviewMetrics.height;
+            }
+            if (!overlayWidth || !overlayHeight) {
+                setTimeout(updateSignatureOverlayPosition, 80);
+                return;
+            }
+            const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+            const clamp01 = (value) => clamp(value, 0, 1);
+            const scale = reinscriptionPreviewMetrics && reinscriptionPreviewMetrics.scale ? reinscriptionPreviewMetrics.scale : (overlayWidth && reinscriptionPreviewMetrics.baseWidth ? overlayWidth / reinscriptionPreviewMetrics.baseWidth : 1) || 1;
+            const baseWidth = reinscriptionPreviewMetrics && reinscriptionPreviewMetrics.baseWidth ? reinscriptionPreviewMetrics.baseWidth : (scale ? overlayWidth / scale : overlayWidth);
+            const baseHeight = reinscriptionPreviewMetrics && reinscriptionPreviewMetrics.baseHeight ? reinscriptionPreviewMetrics.baseHeight : (scale ? overlayHeight / scale : overlayHeight);
+            const defaultSignatureLayout = REINSCRIPTION_PDF_LAYOUT_DEFAULTS && REINSCRIPTION_PDF_LAYOUT_DEFAULTS.signature ? REINSCRIPTION_PDF_LAYOUT_DEFAULTS.signature : {};
+            const toPxFromAbs = (absValue) => {
+                if (!Number.isFinite(absValue)) return null;
+                return absValue * scale;
+            };
+            const resolvePct = (value, fallback) => {
+                if (Number.isFinite(value)) return clamp01(value);
+                if (Number.isFinite(fallback)) return clamp01(fallback);
+                return null;
+            };
+            const clampAbs = (value, max) => Math.max(0, Math.min(max, value));
+            const minWidth = Math.max(20, overlayWidth * 0.04);
+            const minHeight = Math.max(20, overlayHeight * 0.04);
+            const aspect = Number.isFinite(signatureAspectRatio) && signatureAspectRatio > 0 ? signatureAspectRatio : null;
+
+            let widthPx = toPxFromAbs(layout.widthAbs);
+            let heightPx = toPxFromAbs(layout.heightAbs);
+            const widthPctFallback = resolvePct(layout.widthPct, defaultSignatureLayout.widthPct || 0.28);
+            const heightPctFallback = resolvePct(layout.heightPct, defaultSignatureLayout.heightPct || 0.12);
+
+            if (!Number.isFinite(widthPx) || widthPx <= 0) {
+                if (Number.isFinite(widthPctFallback)) {
+                    widthPx = overlayWidth * widthPctFallback;
+                }
+            }
+            if (!Number.isFinite(heightPx) || heightPx <= 0) {
+                if (Number.isFinite(heightPctFallback)) {
+                    heightPx = overlayHeight * heightPctFallback;
+                }
+            }
+            if ((!Number.isFinite(heightPx) || heightPx <= 0) && Number.isFinite(widthPx) && widthPx > 0 && aspect) {
+                heightPx = widthPx / aspect;
+            }
+            if ((!Number.isFinite(widthPx) || widthPx <= 0) && Number.isFinite(heightPx) && heightPx > 0 && aspect) {
+                widthPx = heightPx * aspect;
+            }
+            if (!Number.isFinite(widthPx) || widthPx <= 0) {
+                widthPx = overlayWidth * clamp01(defaultSignatureLayout.widthPct || 0.25);
+            }
+            if (!Number.isFinite(heightPx) || heightPx <= 0) {
+                heightPx = overlayHeight * clamp01(defaultSignatureLayout.heightPct || 0.1);
+            }
+            widthPx = clamp(widthPx, minWidth, overlayWidth);
+            heightPx = clamp(heightPx, minHeight, overlayHeight);
+            if (aspect) {
+                const expectedHeight = widthPx / aspect;
+                if (Math.abs(expectedHeight - heightPx) > 0.6) {
+                    heightPx = clamp(expectedHeight, minHeight, overlayHeight);
+                }
+            }
+
+            let leftPx = toPxFromAbs(layout.xAbs);
+            if (!Number.isFinite(leftPx)) {
+                const xPct = resolvePct(layout.xPct, defaultSignatureLayout.xPct || 0);
+                leftPx = Number.isFinite(xPct) ? overlayWidth * xPct : 0;
+            }
+            leftPx = clamp(leftPx, 0, Math.max(0, overlayWidth - widthPx));
+
+            let bottomPx = toPxFromAbs(layout.yAbs);
+            if (!Number.isFinite(bottomPx)) {
+                const yPct = resolvePct(layout.yPct, defaultSignatureLayout.yPct || 0);
+                bottomPx = Number.isFinite(yPct) ? overlayHeight * yPct : 0;
+            }
+            const maxBottom = Math.max(0, overlayHeight - heightPx);
+            bottomPx = clamp(bottomPx, 0, maxBottom);
+            let topPx = overlayHeight - bottomPx - heightPx;
+            if (!Number.isFinite(topPx)) {
+                topPx = overlayHeight - heightPx;
+            }
+            topPx = clamp(topPx, 0, overlayHeight - heightPx);
+
+            box.style.width = `${widthPx}px`;
+            box.style.height = `${heightPx}px`;
+            box.style.left = `${leftPx}px`;
+            box.style.top = `${topPx}px`;
+            box.classList.remove('dragging');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('is-active');
+            overlay.setAttribute('aria-hidden', 'false');
+
+            const tolerance = 0.01;
+            let shouldPersist = false;
+            const derivedWidthAbs = widthPx / scale;
+            const derivedHeightAbs = heightPx / scale;
+            const derivedLeftAbs = leftPx / scale;
+            const derivedBottomAbs = bottomPx / scale;
+
+            if (!Number.isFinite(layout.widthAbs) || Math.abs(layout.widthAbs - derivedWidthAbs) > tolerance) {
+                layout.widthAbs = clampAbs(derivedWidthAbs, baseWidth);
+                shouldPersist = true;
+            }
+            if (!Number.isFinite(layout.heightAbs) || Math.abs(layout.heightAbs - derivedHeightAbs) > tolerance) {
+                layout.heightAbs = clampAbs(derivedHeightAbs, baseHeight);
+                shouldPersist = true;
+            }
+            if (!Number.isFinite(layout.xAbs) || Math.abs(layout.xAbs - derivedLeftAbs) > tolerance) {
+                layout.xAbs = clampAbs(derivedLeftAbs, Math.max(0, baseWidth - (layout.widthAbs || 0)));
+                shouldPersist = true;
+            }
+            if (!Number.isFinite(layout.yAbs) || Math.abs(layout.yAbs - derivedBottomAbs) > tolerance) {
+                layout.yAbs = clampAbs(derivedBottomAbs, Math.max(0, baseHeight - (layout.heightAbs || 0)));
+                shouldPersist = true;
+            }
+            if (shouldPersist) {
+                saveSignaturePlacement(layout);
+            }
+        }
+
+        function updateSignatureLayoutFromOverlay(rect, overlayWidth, overlayHeight) {
+            if (!rect || !overlayWidth || !overlayHeight) {
+                return;
+            }
+            const layout = REINSCRIPTION_PDF_LAYOUT.signature || {};
+            const clamp01 = (value) => Math.max(0, Math.min(1, value));
+            const clampNonNegative = (value, max) => Math.max(0, Math.min(max, value));
+            const bottomPx = overlayHeight - (rect.top + rect.height);
+            layout.xPct = clamp01(rect.left / overlayWidth);
+            layout.yPct = clamp01(bottomPx / overlayHeight);
+            layout.widthPct = clamp01(rect.width / overlayWidth);
+            layout.heightPct = clamp01(rect.height / overlayHeight);
+
+            const scale = reinscriptionPreviewMetrics && reinscriptionPreviewMetrics.scale ? reinscriptionPreviewMetrics.scale : (overlayWidth && reinscriptionPreviewMetrics.baseWidth ? overlayWidth / reinscriptionPreviewMetrics.baseWidth : 1) || 1;
+            const baseWidth = reinscriptionPreviewMetrics && reinscriptionPreviewMetrics.baseWidth ? reinscriptionPreviewMetrics.baseWidth : (scale ? overlayWidth / scale : overlayWidth);
+            const baseHeight = reinscriptionPreviewMetrics && reinscriptionPreviewMetrics.baseHeight ? reinscriptionPreviewMetrics.baseHeight : (scale ? overlayHeight / scale : overlayHeight);
+
+            const widthAbs = rect.width / scale;
+            const heightAbs = rect.height / scale;
+            const leftAbs = rect.left / scale;
+            const bottomAbs = bottomPx / scale;
+
+            layout.widthAbs = clampNonNegative(widthAbs, baseWidth);
+            layout.heightAbs = clampNonNegative(heightAbs, baseHeight);
+            layout.xAbs = clampNonNegative(leftAbs, Math.max(0, baseWidth - layout.widthAbs));
+            layout.yAbs = clampNonNegative(bottomAbs, Math.max(0, baseHeight - layout.heightAbs));
+            saveSignaturePlacement(layout);
+            if (rect.width > 0 && rect.height > 0) {
+                signatureAspectRatio = rect.width / rect.height;
+            }
+            scheduleReinscriptionPreviewRender();
+        }
+
+        async function renderReinscriptionPreviewCanvas(pdfBytes) {
+            const pdfjsLib = await ensurePdfJs();
+            setupReinscriptionSignatureOverlay();
+            const { stage, canvas, overlay } = signatureOverlayElements;
+            if (!stage || !canvas || !pdfjsLib) {
+                return;
+            }
+            const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
+            const pdf = await loadingTask.promise;
+            const page = await pdf.getPage(1);
+            const baseViewport = page.getViewport({ scale: 1 });
+            const stageWidth = stage.clientWidth || stage.offsetWidth || baseViewport.width;
+            const scale = stageWidth / baseViewport.width;
+            const viewport = page.getViewport({ scale });
+            const outputWidth = Math.max(1, Math.round(viewport.width));
+            const outputHeight = Math.max(1, Math.round(viewport.height));
+            const ctx = canvas.getContext('2d', { alpha: false });
+            const devicePixelRatio = window.devicePixelRatio || 1;
+            canvas.width = Math.floor(outputWidth * devicePixelRatio);
+            canvas.height = Math.floor(outputHeight * devicePixelRatio);
+            canvas.style.width = `${outputWidth}px`;
+            canvas.style.height = `${outputHeight}px`;
+            ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            canvas.classList.add('is-visible');
+            canvas.setAttribute('aria-hidden', 'false');
+            reinscriptionPreviewMetrics = {
+                width: outputWidth,
+                height: outputHeight,
+                scale,
+                baseWidth: baseViewport ? baseViewport.width : outputWidth,
+                baseHeight: baseViewport ? baseViewport.height : outputHeight
+            };
+            if (overlay) {
+                overlay.style.width = `${outputWidth}px`;
+                overlay.style.height = `${outputHeight}px`;
+            }
+            updateSignatureOverlayPosition();
+        }
+
+        function setupReinscriptionSignatureOverlay() {
+            if (signatureOverlayElements.initialized) {
+                return;
+            }
+            signatureOverlayElements.stage = document.getElementById('reinscriptionPreviewStage');
+            signatureOverlayElements.canvas = document.getElementById('reinscriptionPreviewCanvas');
+            signatureOverlayElements.overlay = document.getElementById('reinscriptionSignatureOverlay');
+            signatureOverlayElements.box = document.getElementById('reinscriptionSignatureBox');
+            signatureOverlayElements.image = document.getElementById('reinscriptionSignatureOverlayImage');
+            signatureOverlayElements.handle = document.getElementById('reinscriptionSignatureResize');
+            const { overlay, box, image } = signatureOverlayElements;
+            if (!overlay || !box) {
+                return;
+            }
+            overlay.addEventListener('pointerdown', handleSignaturePointerDown);
+            overlay.addEventListener('pointermove', handleSignaturePointerMove);
+            overlay.addEventListener('pointerup', handleSignaturePointerUp);
+            overlay.addEventListener('pointercancel', handleSignaturePointerUp);
+            overlay.classList.add('hidden');
+            overlay.setAttribute('aria-hidden', 'true');
+            if (image) {
+                image.draggable = false;
+                image.addEventListener('load', () => {
+                    if (image.naturalWidth && image.naturalHeight) {
+                        signatureAspectRatio = image.naturalWidth / image.naturalHeight;
+                        updateSignatureOverlayPosition();
+                    }
+                });
+            }
+            signatureOverlayElements.initialized = true;
+        }
+
+        function handleSignaturePointerDown(event) {
+            if (!reinscriptionSignatureDataUrl) {
+                return;
+            }
+            const { overlay, box, handle } = signatureOverlayElements;
+            if (!overlay || !box) {
+                return;
+            }
+            if (!box.contains(event.target)) {
+                return;
+            }
+            event.preventDefault();
+            const overlayRect = overlay.getBoundingClientRect();
+            const boxRect = box.getBoundingClientRect();
+            const overlayWidth = overlayRect.width || reinscriptionPreviewMetrics.width;
+            const overlayHeight = overlayRect.height || reinscriptionPreviewMetrics.height;
+            if (!overlayWidth || !overlayHeight) {
+                return;
+            }
+            const isResize = handle ? handle.contains(event.target) : false;
+            signatureDragState = {
+                mode: isResize ? 'resize' : 'move',
+                pointerId: event.pointerId,
+                startX: event.clientX,
+                startY: event.clientY,
+                startLeft: boxRect.left - overlayRect.left,
+                startTop: boxRect.top - overlayRect.top,
+                startWidth: boxRect.width,
+                startHeight: boxRect.height,
+                overlayWidth,
+                overlayHeight,
+                minWidth: Math.max(30, overlayWidth * 0.05),
+                minHeight: Math.max(20, overlayHeight * 0.04),
+                aspectRatio: signatureAspectRatio || (boxRect.width / boxRect.height) || 1,
+                lastRect: {
+                    left: boxRect.left - overlayRect.left,
+                    top: boxRect.top - overlayRect.top,
+                    width: boxRect.width,
+                    height: boxRect.height
+                }
+            };
+            overlay.setPointerCapture(event.pointerId);
+            box.classList.add('dragging');
+        }
+
+        function handleSignaturePointerMove(event) {
+            if (!signatureDragState || event.pointerId !== signatureDragState.pointerId) {
+                return;
+            }
+            const { box } = signatureOverlayElements;
+            if (!box) {
+                return;
+            }
+            event.preventDefault();
+            const state = signatureDragState;
+            const overlayWidth = state.overlayWidth || reinscriptionPreviewMetrics.width;
+            const overlayHeight = state.overlayHeight || reinscriptionPreviewMetrics.height;
+            if (!overlayWidth || !overlayHeight) {
+                return;
+            }
+            const deltaX = event.clientX - state.startX;
+            const deltaY = event.clientY - state.startY;
+            let left = state.startLeft;
+            let top = state.startTop;
+            let width = state.startWidth;
+            let height = state.startHeight;
+            if (state.mode === 'move') {
+                left = Math.max(0, Math.min(overlayWidth - width, state.startLeft + deltaX));
+                top = Math.max(0, Math.min(overlayHeight - height, state.startTop + deltaY));
+            } else {
+                const ratio = state.aspectRatio || 1;
+                width = Math.max(state.minWidth, state.startWidth + deltaX);
+                height = width / ratio;
+                if (state.startTop + height > overlayHeight) {
+                    height = overlayHeight - state.startTop;
+                    width = height * ratio;
+                }
+                if (state.startLeft + width > overlayWidth) {
+                    width = overlayWidth - state.startLeft;
+                    height = width / ratio;
+                }
+                width = Math.max(state.minWidth, Math.min(width, overlayWidth - state.startLeft));
+                height = Math.max(state.minHeight, Math.min(height, overlayHeight - state.startTop));
+            }
+            box.style.left = `${left}px`;
+            box.style.top = `${top}px`;
+            box.style.width = `${width}px`;
+            box.style.height = `${height}px`;
+            signatureDragState.lastRect = { left, top, width, height };
+        }
+
+        function handleSignaturePointerUp(event) {
+            if (!signatureDragState || event.pointerId !== signatureDragState.pointerId) {
+                return;
+            }
+            event.preventDefault();
+            const { overlay, box } = signatureOverlayElements;
+            const state = signatureDragState;
+            if (overlay) {
+                try {
+                    overlay.releasePointerCapture(event.pointerId);
+                } catch (error) {
+                    /* sin acción */
+                }
+            }
+            if (box) {
+                box.classList.remove('dragging');
+            }
+            const finalRect = state.lastRect || {
+                left: state.startLeft,
+                top: state.startTop,
+                width: state.startWidth,
+                height: state.startHeight
+            };
+            const overlayWidth = state.overlayWidth || reinscriptionPreviewMetrics.width;
+            const overlayHeight = state.overlayHeight || reinscriptionPreviewMetrics.height;
+            signatureDragState = null;
+            if (!overlayWidth || !overlayHeight) {
+                return;
+            }
+            updateSignatureLayoutFromOverlay(finalRect, overlayWidth, overlayHeight);
+        }
+
+        function getCurrentUserFullName() {
+            if (window.__googleProfile && window.__googleProfile.name) {
+                return window.__googleProfile.name;
+            }
+            const nameEl = document.getElementById('googleUserName');
+            if (nameEl && nameEl.textContent) {
+                const text = nameEl.textContent.trim();
+                if (text) return text;
+            }
+            const headerTitle = document.getElementById('headerTitle');
+            if (headerTitle && headerTitle.textContent) {
+                const text = headerTitle.textContent.trim();
+                if (text.startsWith('Horario de')) {
+                    return text.replace('Horario de', '').trim();
+                }
+            }
+            return '';
+        }
+
+        function guessGroupFromSelectedSubjects() {
+            if (!Array.isArray(selectedSubjects) || selectedSubjects.length === 0) {
+                return '';
+            }
+            const counts = {};
+            selectedSubjects.forEach(subject => {
+                if (!subject || !subject.group) return;
+                const key = String(subject.group).trim();
+                if (!key) return;
+                counts[key] = (counts[key] || 0) + 1;
+            });
+            let topGroup = '';
+            let topCount = 0;
+            Object.keys(counts).forEach(groupKey => {
+                if (counts[groupKey] > topCount) {
+                    topGroup = groupKey;
+                    topCount = counts[groupKey];
+                }
+            });
+            return topGroup;
+        }
+
+        function guessQuarterFromGroup(groupValue) {
+            if (!groupValue) return '';
+            const match = String(groupValue).match(/\d+/);
+            if (!match || !match[0]) return '';
+            return `${match[0]}°`;
+        }
+
+        function findMissingScheduledSubjectNames() {
+            const referenceSubjects = Array.isArray(predefinedSubjects) && predefinedSubjects.length
+                ? predefinedSubjects
+                : Array.isArray(catalogSubjects) ? catalogSubjects : [];
+            if (!referenceSubjects.length) {
+                return '';
+            }
+            const selectedIds = new Set();
+            selectedSubjects.forEach(subject => {
+                if (!subject) return;
+                if (typeof subject.id === 'undefined' || subject.id === null) return;
+                selectedIds.add(String(subject.id));
+            });
+
+            const missingNames = [];
+            const seen = {};
+            referenceSubjects.forEach(subject => {
+                if (!subject) return;
+                const subjectId = typeof subject.id !== 'undefined' && subject.id !== null ? String(subject.id) : null;
+                if (subjectId && selectedIds.has(subjectId)) {
+                    return;
+                }
+                const nameCandidate = subject.name ? String(subject.name).trim() : '';
+                if (!nameCandidate) {
+                    return;
+                }
+                const key = nameCandidate.toLowerCase();
+                if (!seen[key]) {
+                    missingNames.push(nameCandidate);
+                    seen[key] = true;
+                }
+            });
+            return missingNames.length > 0 ? missingNames.join(', ') : '';
+        }
+
+        function buildLoadedSubjectsSummary() {
+            if (!Array.isArray(selectedSubjects) || selectedSubjects.length === 0) {
+                return '';
+            }
+            const lines = ['\t '];
+            selectedSubjects.forEach(subject => {
+                if (!subject) return;
+                const name = subject.name ? String(subject.name).trim() : '';
+                const group = subject.group != null ? String(subject.group).trim() : '';
+                if (!name) {
+                    return;
+                }
+                lines.push(`${name}\t${group || '-'}`);
+            });
+            if (lines.length <= 1) {
+                return '';
+            }
+            return lines.join('\n');
+        }
+
+        function buildReinscriptionDefaults() {
+            const currentCareer = typeof getSelectedCareerOption === 'function' ? getSelectedCareerOption() : null;
+            const group = guessGroupFromSelectedSubjects();
+            const quarter = guessQuarterFromGroup(group);
+            const debtSubject = findMissingScheduledSubjectNames();
+            return {
+                fullName: getCurrentUserFullName() || '',
+                matricula: '',
+                career: currentCareer && currentCareer.name ? currentCareer.name : 'Biomédica',
+                quarter: quarter || '',
+                group: group || '',
+                debtSubject: debtSubject || '',
+                autoDebtSubject: debtSubject || '',
+                signatureDataUrl: reinscriptionSignatureDataUrl || null,
+                tutorEmail: reinscriptionLastFormValues && reinscriptionLastFormValues.tutorEmail ? reinscriptionLastFormValues.tutorEmail : ''
+            };
+        }
+
+        function updateReinscriptionLoadedSubjectsList() {
+            const container = document.getElementById('reinscriptionLoadedSubjectsList');
+            if (!container) {
+                return;
+            }
+            const subjects = Array.isArray(selectedSubjects) ? selectedSubjects : [];
+            if (!subjects.length) {
+                container.innerHTML = '';
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            container.innerHTML = '';
+            container.setAttribute('aria-label', 'Materias cargadas en el horario');
+
+            const title = document.createElement('div');
+            title.className = 'reinscription-loaded-subjects__title';
+            title.textContent = `Materias cargadas (${subjects.length})`;
+            container.appendChild(title);
+
+            const header = document.createElement('div');
+            header.className = 'reinscription-loaded-subjects__header';
+            header.innerHTML = '<span>Materia</span><span>Grupo</span>';
+            container.appendChild(header);
+
+            subjects.forEach(subject => {
+                if (!subject) {
+                    return;
+                }
+                const name = subject.name ? String(subject.name).trim() : '';
+                const group = subject.group != null ? String(subject.group).trim() : '';
+                if (!name) {
+                    return;
+                }
+                const row = document.createElement('div');
+                row.className = 'reinscription-loaded-subjects__row';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'reinscription-loaded-subjects__name';
+                nameSpan.textContent = name;
+
+                const groupSpan = document.createElement('span');
+                groupSpan.className = 'reinscription-loaded-subjects__group';
+                groupSpan.textContent = group || '-';
+
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'reinscription-loaded-subjects__remove';
+                removeBtn.textContent = 'Quitar';
+                removeBtn.setAttribute('aria-label', `Quitar ${name} del horario`);
+                removeBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    removeFromSchedule(subject.id);
+                });
+
+                row.appendChild(nameSpan);
+                row.appendChild(groupSpan);
+                row.appendChild(removeBtn);
+                container.appendChild(row);
+            });
         }
 
         // Función para generar la estructura de la tabla de horarios
@@ -2526,6 +3434,848 @@
             });
         }
 
+        function applyReinscriptionValuesToForm(values) {
+            if (!values) return;
+            const assign = (id, value) => {
+                const input = document.getElementById(id);
+                if (!input) return;
+                input.value = value || '';
+                if (id === 'reinscriptionDebtSubject') {
+                    const autoValue = values.autoDebtSubject || '';
+                    if (autoValue) {
+                        input.dataset.autoValue = autoValue;
+                    } else {
+                        delete input.dataset.autoValue;
+                    }
+                    if (!values.debtSubject) {
+                        input.dataset.userEdited = 'false';
+                    } else if (autoValue && values.debtSubject === autoValue) {
+                        input.dataset.userEdited = 'false';
+                    } else {
+                        input.dataset.userEdited = 'true';
+                    }
+                }
+            };
+            assign('reinscriptionFullName', values.fullName);
+            assign('reinscriptionMatricula', values.matricula);
+            assign('reinscriptionCareer', values.career);
+            assign('reinscriptionQuarter', values.quarter);
+            assign('reinscriptionGroup', values.group);
+            assign('reinscriptionDebtSubject', values.debtSubject);
+            assign('reinscriptionTutorEmail', values.tutorEmail);
+            reinscriptionSignatureDataUrl = values.signatureDataUrl || null;
+            updateReinscriptionSignaturePreview();
+        }
+
+        function collectReinscriptionFormData() {
+            const nameInput = document.getElementById('reinscriptionFullName');
+            if (!nameInput) return null;
+            const matriculaInput = document.getElementById('reinscriptionMatricula');
+            const careerInput = document.getElementById('reinscriptionCareer');
+            const quarterInput = document.getElementById('reinscriptionQuarter');
+            const groupInput = document.getElementById('reinscriptionGroup');
+            const debtInput = document.getElementById('reinscriptionDebtSubject');
+            const tutorEmailInput = document.getElementById('reinscriptionTutorEmail');
+            const data = {
+                fullName: nameInput.value.trim(),
+                matricula: matriculaInput ? matriculaInput.value.trim() : '',
+                career: careerInput ? careerInput.value.trim() : '',
+                quarter: quarterInput ? quarterInput.value.trim() : '',
+                group: groupInput ? groupInput.value.trim() : '',
+                debtSubject: debtInput ? debtInput.value.trim() : '',
+                signatureDataUrl: reinscriptionSignatureDataUrl || null,
+                loadedSubjectsSummary: buildLoadedSubjectsSummary(),
+                autoDebtSubject: '',
+                tutorEmail: tutorEmailInput ? tutorEmailInput.value.trim() : ''
+            };
+            if (debtInput && debtInput.dataset && debtInput.dataset.autoValue) {
+                data.autoDebtSubject = debtInput.dataset.autoValue;
+            } else if (reinscriptionLastFormValues && reinscriptionLastFormValues.autoDebtSubject) {
+                data.autoDebtSubject = reinscriptionLastFormValues.autoDebtSubject;
+            }
+            reinscriptionLastFormValues = { ...data };
+            saveReinscriptionFormSnapshot(reinscriptionLastFormValues);
+            return data;
+        }
+
+        function updateReinscriptionSignaturePreview() {
+            const wrapper = document.getElementById('reinscriptionSignaturePreviewWrapper');
+            const img = document.getElementById('reinscriptionSignaturePreview');
+            if (!wrapper || !img) return;
+            setupReinscriptionSignatureOverlay();
+            const overlayImage = signatureOverlayElements.image;
+            const overlay = signatureOverlayElements.overlay;
+            if (reinscriptionSignatureDataUrl) {
+                img.src = reinscriptionSignatureDataUrl;
+                wrapper.classList.remove('hidden');
+                if (overlayImage && overlayImage.src !== reinscriptionSignatureDataUrl) {
+                    overlayImage.src = reinscriptionSignatureDataUrl;
+                }
+                if (overlay) {
+                    overlay.classList.remove('hidden');
+                    overlay.setAttribute('aria-hidden', 'false');
+                }
+                updateSignatureOverlayPosition();
+            } else {
+                img.removeAttribute('src');
+                wrapper.classList.add('hidden');
+                if (overlayImage) {
+                    overlayImage.removeAttribute('src');
+                }
+                if (overlay) {
+                    overlay.classList.add('hidden');
+                    overlay.classList.remove('is-active');
+                    overlay.setAttribute('aria-hidden', 'true');
+                }
+                signatureAspectRatio = 1;
+            }
+        }
+
+        function handleReinscriptionSignatureChange(event) {
+            const file = event.target && event.target.files ? event.target.files[0] : null;
+            if (!file) {
+                reinscriptionSignatureDataUrl = null;
+                if (reinscriptionLastFormValues) {
+                    reinscriptionLastFormValues.signatureDataUrl = null;
+                }
+                updateReinscriptionSignaturePreview();
+                scheduleReinscriptionPreviewRender();
+                return;
+            }
+            if (file.type !== 'image/png') {
+                showMessage('La firma debe estar en formato PNG sin fondo.', 'warning');
+                event.target.value = '';
+                return;
+            }
+            if (file.size && file.size > 2 * 1024 * 1024) {
+                showMessage('La firma es demasiado pesada. Utiliza un PNG menor a 2 MB.', 'warning');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (loadEvent) => {
+                reinscriptionSignatureDataUrl = loadEvent && loadEvent.target ? loadEvent.target.result : null;
+                if (!reinscriptionLastFormValues) {
+                    reinscriptionLastFormValues = buildReinscriptionDefaults();
+                }
+                reinscriptionLastFormValues.signatureDataUrl = reinscriptionSignatureDataUrl;
+                updateReinscriptionSignaturePreview();
+                saveReinscriptionFormSnapshot(reinscriptionLastFormValues);
+                scheduleReinscriptionPreviewRender();
+            };
+            reader.onerror = () => {
+                showMessage('No se pudo leer el archivo de firma seleccionado.', 'error');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearReinscriptionSignature() {
+            const input = document.getElementById('reinscriptionSignature');
+            if (input) {
+                input.value = '';
+            }
+            reinscriptionSignatureDataUrl = null;
+            if (reinscriptionLastFormValues) {
+                reinscriptionLastFormValues.signatureDataUrl = null;
+                saveReinscriptionFormSnapshot(reinscriptionLastFormValues);
+            }
+            updateReinscriptionSignaturePreview();
+            scheduleReinscriptionPreviewRender();
+        }
+
+        function scheduleReinscriptionPreviewRender() {
+            if (reinscriptionPreviewRenderTimer) {
+                clearTimeout(reinscriptionPreviewRenderTimer);
+            }
+            reinscriptionPreviewRenderTimer = setTimeout(() => {
+                updateReinscriptionPreview().catch(err => {
+                    console.warn('No se pudo actualizar la vista previa de la solicitud', err);
+                });
+                reinscriptionPreviewRenderTimer = null;
+            }, 220);
+        }
+
+        async function updateReinscriptionPreview() {
+            const modal = document.getElementById('reinscriptionModal');
+            if (!modal || modal.classList.contains('hidden')) {
+                return;
+            }
+            const fallback = document.getElementById('reinscriptionPreviewFallback');
+            if (!fallback) {
+                return;
+            }
+            const data = collectReinscriptionFormData();
+            if (!data || !data.fullName || !data.matricula || !data.career) {
+                fallback.classList.remove('hidden');
+                clearReinscriptionPreviewCanvas();
+                return;
+            }
+            try {
+                const pdfBytes = await generateReinscriptionPdf(data, { includeSignature: false });
+                await renderReinscriptionPreviewCanvas(pdfBytes);
+                fallback.classList.add('hidden');
+            } catch (error) {
+                console.error('No se pudo generar la vista previa de la solicitud', error);
+                fallback.classList.remove('hidden');
+                clearReinscriptionPreviewCanvas();
+                showMessage('No se pudo generar la vista previa del formato. Revisa los datos e inténtalo de nuevo.', 'error');
+            }
+        }
+
+        async function generateReinscriptionPdf(data, options = {}) {
+            if (!data || !data.fullName) {
+                throw new Error('Faltan datos obligatorios para el PDF');
+            }
+            const PDFLib = await ensurePdfLib();
+            const templateBytes = await ensureReinscriptionTemplate();
+            const pdfDoc = await PDFLib.PDFDocument.load(templateBytes.slice(0));
+            const { StandardFonts, rgb } = PDFLib;
+            const page = pdfDoc.getPages()[0];
+            if (!page) {
+                throw new Error('El formato de solicitud no tiene páginas.');
+            }
+            const width = page.getWidth();
+            const height = page.getHeight();
+            const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+            const drawText = (text, layout, options = {}) => {
+                if (text == null || text === '') return;
+                const rawValue = typeof text === 'string' ? text : String(text);
+                const font = options.font || regularFont;
+                const fontSize = options.size || 12;
+                const color = options.color || rgb(0, 0, 0);
+                const baseX = layout.xPct != null ? width * layout.xPct : (layout.x != null ? layout.x : 40);
+                const baseY = layout.yPct != null ? height * layout.yPct : (layout.y != null ? layout.y : height - 80);
+                const maxWidth = layout.maxWidthPct ? width * layout.maxWidthPct : (layout.maxWidth || options.maxWidth || null);
+                const lineHeight = layout.lineHeightPct ? height * layout.lineHeightPct : (options.lineHeight || fontSize * 1.25);
+                const maxLinesSetting = layout.maxLines != null ? layout.maxLines : options.maxLines;
+                const maxLines = Number.isFinite(maxLinesSetting) && maxLinesSetting > 0 ? maxLinesSetting : Infinity;
+                const allowWrapping = !!maxWidth && maxWidth > 0;
+
+                const measureText = (valueToMeasure) => {
+                    const sanitized = valueToMeasure.replace(/\t/g, '    ');
+                    return font.widthOfTextAtSize(sanitized, fontSize);
+                };
+
+                const lines = [];
+                let truncated = false;
+
+                const appendLine = (line) => {
+                    if (lines.length < maxLines) {
+                        lines.push(line);
+                    } else if (lines.length > 0) {
+                        const lastIndex = lines.length - 1;
+                        lines[lastIndex] = `${lines[lastIndex]} ${line}`.trim();
+                        truncated = true;
+                    }
+                };
+
+                const wrapSegment = (segment) => {
+                    if (!allowWrapping || segment.includes('\t')) {
+                        appendLine(segment);
+                        return;
+                    }
+                    const words = segment.split(/\s+/).filter(Boolean);
+                    if (!words.length) {
+                        appendLine('');
+                        return;
+                    }
+                    let currentLine = '';
+                    words.forEach(word => {
+                        if (lines.length >= maxLines && truncated) {
+                            return;
+                        }
+                        const candidate = currentLine ? `${currentLine} ${word}` : word;
+                        if (measureText(candidate) <= maxWidth || !currentLine) {
+                            currentLine = candidate;
+                        } else {
+                            appendLine(currentLine);
+                            currentLine = word;
+                        }
+                    });
+                    if (currentLine) {
+                        appendLine(currentLine);
+                    }
+                };
+
+                const segments = rawValue.split(/\r?\n/);
+                segments.forEach(segment => {
+                    if (lines.length >= maxLines && truncated) {
+                        return;
+                    }
+                    if (allowWrapping) {
+                        wrapSegment(segment);
+                    } else {
+                        appendLine(segment);
+                    }
+                });
+
+                if (!lines.length) {
+                    lines.push(rawValue);
+                }
+
+                if (truncated && lines.length) {
+                    const lastIndex = lines.length - 1;
+                    if (!lines[lastIndex].endsWith('...')) {
+                        lines[lastIndex] = `${lines[lastIndex]}...`;
+                    }
+                }
+
+                const tabStopsPct = Array.isArray(layout.tabStopsPct) ? layout.tabStopsPct : null;
+                const singleTabStopPct = !tabStopsPct && layout.tabStopPct != null ? [layout.tabStopPct] : null;
+                const tabOffsetPct = layout.tabOffsetPct != null ? layout.tabOffsetPct : null;
+                const tabOffsetAbs = layout.tabOffset != null ? layout.tabOffset : null;
+
+                const computeTabX = (tabIndex) => {
+                    if (tabStopsPct && tabStopsPct.length) {
+                        const index = Math.min(tabIndex, tabStopsPct.length - 1);
+                        return width * tabStopsPct[index];
+                    }
+                    if (singleTabStopPct && singleTabStopPct.length) {
+                        return width * singleTabStopPct[0];
+                    }
+                    if (tabOffsetPct != null) {
+                        return baseX + (width * tabOffsetPct);
+                    }
+                    if (tabOffsetAbs != null) {
+                        return baseX + tabOffsetAbs;
+                    }
+                    if (maxWidth) {
+                        return baseX + Math.max(80, maxWidth * 0.6);
+                    }
+                    return baseX + 220;
+                };
+
+                lines.forEach((line, index) => {
+                    const rawLine = typeof line === 'string' ? line : String(line);
+                    const trimmedLine = rawLine.trim();
+                    if (!trimmedLine && index > 0) {
+                        return;
+                    }
+                    const yPosition = baseY - (index * lineHeight);
+                    if (rawLine.includes('\t')) {
+                        const columns = rawLine.split('\t');
+                        columns.forEach((columnText, columnIndex) => {
+                            const textToDraw = columnText.trim();
+                            if (!textToDraw) {
+                                return;
+                            }
+                            const xPosition = columnIndex === 0 ? baseX : computeTabX(columnIndex - 1);
+                            page.drawText(textToDraw, {
+                                x: xPosition,
+                                y: yPosition,
+                                size: fontSize,
+                                font,
+                                color
+                            });
+                        });
+                    } else {
+                        page.drawText(trimmedLine, {
+                            x: baseX,
+                            y: yPosition,
+                            size: fontSize,
+                            font,
+                            color
+                        });
+                    }
+                });
+            };
+
+            drawText(data.fullName, REINSCRIPTION_PDF_LAYOUT.fullName);
+            drawText(data.matricula, REINSCRIPTION_PDF_LAYOUT.matricula);
+            drawText(data.career, REINSCRIPTION_PDF_LAYOUT.career);
+            drawText(data.quarter, REINSCRIPTION_PDF_LAYOUT.quarter);
+            drawText(data.group, REINSCRIPTION_PDF_LAYOUT.group);
+            drawText(data.debtSubject, REINSCRIPTION_PDF_LAYOUT.debtSubject);
+            drawText(data.loadedSubjectsSummary, REINSCRIPTION_PDF_LAYOUT.loadedSubjects, { size: 11 });
+
+            const includeSignature = options.includeSignature !== false;
+            if (includeSignature && data.signatureDataUrl) {
+                try {
+                    const response = await fetch(data.signatureDataUrl);
+                    const signatureBuffer = await response.arrayBuffer();
+                    const signatureImage = await pdfDoc.embedPng(signatureBuffer);
+                    const layout = REINSCRIPTION_PDF_LAYOUT.signature || {};
+                    const defaultSignatureLayout = REINSCRIPTION_PDF_LAYOUT_DEFAULTS.signature || {};
+                    const imageRatio = signatureImage.width && signatureImage.height ? signatureImage.width / signatureImage.height : null;
+                    const hasAbsoluteSize = Number.isFinite(layout.widthAbs) && layout.widthAbs > 0 && Number.isFinite(layout.heightAbs) && layout.heightAbs > 0;
+                    let targetWidth;
+                    let targetHeight;
+
+                    if (hasAbsoluteSize) {
+                        targetWidth = layout.widthAbs;
+                        targetHeight = layout.heightAbs;
+                    } else {
+                        const fallbackWidthPct = Number.isFinite(layout.widthPct) ? layout.widthPct : (Number.isFinite(defaultSignatureLayout.widthPct) ? defaultSignatureLayout.widthPct : 0.25);
+                        const fallbackHeightPct = Number.isFinite(layout.heightPct) ? layout.heightPct : (Number.isFinite(defaultSignatureLayout.heightPct) ? defaultSignatureLayout.heightPct : null);
+                        targetWidth = fallbackWidthPct ? width * fallbackWidthPct : signatureImage.width;
+                        if (fallbackHeightPct) {
+                            const candidateHeight = height * fallbackHeightPct;
+                            if (imageRatio) {
+                                const heightFromWidth = targetWidth / imageRatio;
+                                if (heightFromWidth > candidateHeight + 0.5) {
+                                    targetHeight = candidateHeight;
+                                    targetWidth = candidateHeight * imageRatio;
+                                } else {
+                                    targetHeight = heightFromWidth;
+                                }
+                            } else {
+                                targetHeight = candidateHeight;
+                            }
+                        } else if (imageRatio) {
+                            targetHeight = targetWidth / imageRatio;
+                        } else {
+                            targetHeight = signatureImage.height;
+                        }
+                    }
+
+                    if (!Number.isFinite(targetWidth) || targetWidth <= 0 || !Number.isFinite(targetHeight) || targetHeight <= 0) {
+                        console.warn('El tamaño calculado para la firma en el PDF no es válido. Se omite.');
+                    } else {
+                        targetWidth = Math.min(targetWidth, width);
+                        targetHeight = Math.min(targetHeight, height);
+                        const maxX = Math.max(0, width - targetWidth);
+                        const maxY = Math.max(0, height - targetHeight);
+
+                        let x = Number.isFinite(layout.xAbs) ? layout.xAbs : (Number.isFinite(layout.xPct) ? width * layout.xPct : Number(defaultSignatureLayout.xPct || 0) * width);
+                        let y = Number.isFinite(layout.yAbs) ? layout.yAbs : (Number.isFinite(layout.yPct) ? height * layout.yPct : Number(defaultSignatureLayout.yPct || 0) * height);
+
+                        if (!Number.isFinite(x)) {
+                            x = width * 0.55;
+                        }
+                        if (!Number.isFinite(y)) {
+                            y = height * 0.25;
+                        }
+
+                        x = Math.max(0, Math.min(maxX, x));
+                        y = Math.max(0, Math.min(maxY, y));
+
+                        page.drawImage(signatureImage, {
+                            x,
+                            y,
+                            width: targetWidth,
+                            height: targetHeight
+                        });
+                    }
+                } catch (signatureError) {
+                    console.warn('No se pudo incrustar la firma en el PDF', signatureError);
+                }
+            }
+
+            return pdfDoc.save();
+        }
+
+        async function ensureGmailApiInitialized() {
+            if (gmailApiReady) {
+                return;
+            }
+            if (gmailApiInitPromise) {
+                return gmailApiInitPromise;
+            }
+            gmailApiInitPromise = (async () => {
+                await ensureDriveApiInitialized();
+                if (typeof gapi === 'undefined' || !gapi.client) {
+                    throw new Error('Cliente de Google no disponible para Gmail.');
+                }
+                if (!gapi.client.gmail) {
+                    await gapi.client.load('https://gmail.googleapis.com/$discovery/rest?version=v1');
+                }
+                gmailApiReady = true;
+            })().catch(error => {
+                gmailApiInitPromise = null;
+                throw error;
+            });
+            return gmailApiInitPromise;
+        }
+
+        function isValidEmail(email) {
+            if (!email) return false;
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
+        }
+
+        function uint8ArrayToBase64(bytes) {
+            if (!(bytes instanceof Uint8Array)) {
+                bytes = new Uint8Array(bytes || 0);
+            }
+            let binary = '';
+            const chunkSize = 8192;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                const chunk = bytes.subarray(i, i + chunkSize);
+                binary += String.fromCharCode.apply(null, chunk);
+            }
+            return btoa(binary);
+        }
+
+        function chunkString(str, size) {
+            if (!str) {
+                return '';
+            }
+            const chunks = [];
+            for (let i = 0; i < str.length; i += size) {
+                chunks.push(str.slice(i, i + size));
+            }
+            return chunks.join('\r\n');
+        }
+
+        function toBase64Url(base64) {
+            return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+        }
+
+        function encodeStringToBase64(str) {
+            if (typeof TextEncoder !== 'undefined') {
+                const encoder = new TextEncoder();
+                return uint8ArrayToBase64(encoder.encode(str));
+            }
+            return btoa(unescape(encodeURIComponent(str)));
+        }
+
+        function encodeSubject(subject) {
+            const raw = subject && subject.trim() ? subject.trim() : 'Solicitud de reinscripción';
+            return `=?utf-8?B?${encodeStringToBase64(raw)}?=`;
+        }
+
+        function buildReinscriptionEmailBody(data) {
+            const lines = ['Hola tutor(a),', '', 'Adjunto la solicitud de reinscripción en formato PDF para su revisión y firma.'];
+            if (data && typeof data === 'object') {
+                if (data.fullName) {
+                    lines.push(`Nombre: ${data.fullName}`);
+                }
+                if (data.matricula) {
+                    lines.push(`Matrícula: ${data.matricula}`);
+                }
+                if (data.career) {
+                    lines.push(`Carrera: ${data.career}`);
+                }
+                const extra = [data.quarter, data.group].filter(Boolean).join(' | ');
+                if (extra) {
+                    lines.push(`Detalle: ${extra}`);
+                }
+            }
+            lines.push('', 'Quedo atento(a) a cualquier comentario o ajuste necesario.', '', 'Saludos cordiales.');
+            return lines.join('\r\n');
+        }
+
+        async function createReinscriptionEmailDraft({ pdfBytes, tutorEmail, data }) {
+            if (!tutorEmail || !isValidEmail(tutorEmail)) {
+                throw new Error('Correo de tutor no válido.');
+            }
+            const bytes = pdfBytes instanceof Uint8Array ? pdfBytes : new Uint8Array(pdfBytes);
+            if (!bytes || !bytes.length) {
+                throw new Error('El archivo PDF no se pudo generar.');
+            }
+
+            await ensureDriveReady({ interactive: true });
+            await ensureGmailApiInitialized();
+            try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { /* silencioso */ }
+
+            const pdfBase64 = uint8ArrayToBase64(bytes);
+            const pdfBase64Chunked = chunkString(pdfBase64, 76);
+            const boundary = 'reinscription_' + Date.now().toString(16);
+            const subjectText = `Solicitud de reinscripción - ${data.fullName || data.matricula || 'Estudiante'}`;
+            const subject = encodeSubject(subjectText);
+            const body = buildReinscriptionEmailBody(data);
+
+            const rawMessageParts = [
+                `To: ${tutorEmail}`,
+                `Subject: ${subject}`,
+                'Content-Type: multipart/mixed; boundary="' + boundary + '"',
+                '',
+                `--${boundary}`,
+                'Content-Type: text/plain; charset="UTF-8"',
+                'Content-Transfer-Encoding: 7bit',
+                '',
+                body,
+                '',
+                `--${boundary}`,
+                'Content-Type: application/pdf',
+                'Content-Transfer-Encoding: base64',
+                'Content-Disposition: attachment; filename="Solicitud_reinscripcion.pdf"',
+                '',
+                pdfBase64Chunked,
+                '',
+                `--${boundary}--`,
+                ''
+            ];
+
+            const rawMessage = rawMessageParts.join('\r\n');
+            const rawBase64Url = toBase64Url(encodeStringToBase64(rawMessage));
+
+            const draftResponse = await gapi.client.gmail.users.drafts.create({
+                userId: 'me',
+                resource: { message: { raw: rawBase64Url } }
+            });
+            const draftId = draftResponse && draftResponse.result && draftResponse.result.id;
+            if (!draftId) {
+                throw new Error('No se pudo crear el borrador en Gmail.');
+            }
+            return { draftId, subject: subjectText };
+        }
+
+        function openReinscriptionModal() {
+            const modal = document.getElementById('reinscriptionModal');
+            if (!modal) return;
+            const defaults = buildReinscriptionDefaults();
+            const values = reinscriptionLastFormValues ? { ...defaults, ...reinscriptionLastFormValues } : defaults;
+            if (!values.debtSubject && defaults.debtSubject) {
+                values.debtSubject = defaults.debtSubject;
+            }
+            if (typeof values.autoDebtSubject === 'undefined') {
+                values.autoDebtSubject = values.debtSubject || '';
+            }
+            applyReinscriptionValuesToForm(values);
+            const preservedSignature = reinscriptionLastFormValues && reinscriptionLastFormValues.signatureDataUrl ? reinscriptionLastFormValues.signatureDataUrl : null;
+            reinscriptionLastFormValues = { ...values, signatureDataUrl: preservedSignature };
+            saveReinscriptionFormSnapshot(reinscriptionLastFormValues);
+            modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('reinscription-modal-active');
+            persistReinscriptionModalOpenState(true);
+            const nameInput = document.getElementById('reinscriptionFullName');
+            if (nameInput) {
+                nameInput.focus();
+                nameInput.select();
+            }
+            updateReinscriptionLoadedSubjectsList();
+            scheduleReinscriptionPreviewRender();
+        }
+
+        function closeReinscriptionModal() {
+            const modal = document.getElementById('reinscriptionModal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('reinscription-modal-active');
+            if (reinscriptionPreviewRenderTimer) {
+                clearTimeout(reinscriptionPreviewRenderTimer);
+                reinscriptionPreviewRenderTimer = null;
+            }
+            clearReinscriptionPreviewCanvas();
+            persistReinscriptionModalOpenState(false);
+            const openDraftBtn = document.getElementById('reinscriptionOpenDraft');
+            if (openDraftBtn) {
+                openDraftBtn.classList.add('hidden');
+            }
+        }
+
+        function setupReinscriptionModal() {
+            const modal = document.getElementById('reinscriptionModal');
+            const openBtn = document.getElementById('openReinscriptionModal');
+            if (!modal || !openBtn) return;
+            const closeBtn = document.getElementById('reinscriptionClose');
+            const form = document.getElementById('reinscriptionForm');
+            const debtInput = document.getElementById('reinscriptionDebtSubject');
+            setupReinscriptionSignatureOverlay();
+            openBtn.addEventListener('click', () => {
+                try {
+                    openReinscriptionModal();
+                } catch (error) {
+                    console.error('No se pudo abrir el modal de reinscripción', error);
+                    showMessage('No se pudo preparar la solicitud de reinscripción. Intenta nuevamente.', 'error');
+                }
+            });
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeReinscriptionModal);
+            }
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeReinscriptionModal();
+                }
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeReinscriptionModal();
+                }
+            });
+            if (form) {
+                form.addEventListener('input', (event) => {
+                    if (event && event.target && event.target.id === 'reinscriptionDebtSubject') {
+                        event.target.dataset.userEdited = 'true';
+                    }
+                    collectReinscriptionFormData();
+                    scheduleReinscriptionPreviewRender();
+                });
+            }
+            if (debtInput) {
+                debtInput.addEventListener('focus', () => {
+                    debtInput.dataset.userEdited = 'true';
+                });
+            }
+            const signatureInput = document.getElementById('reinscriptionSignature');
+            if (signatureInput) {
+                signatureInput.addEventListener('change', handleReinscriptionSignatureChange);
+            }
+            const clearSignatureBtn = document.getElementById('reinscriptionSignatureClear');
+            if (clearSignatureBtn) {
+                clearSignatureBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    clearReinscriptionSignature();
+                });
+            }
+            const openDraftBtn = document.getElementById('reinscriptionOpenDraft');
+            if (openDraftBtn) {
+                openDraftBtn.addEventListener('click', () => {
+                    if (!lastReinscriptionDraftUrl) {
+                        showMessage('No hay un borrador reciente. Usa “Enviar al tutor” para generar uno nuevo.', 'warning');
+                        return;
+                    }
+                    const opened = window.open(lastReinscriptionDraftUrl, '_blank', 'noopener');
+                    if (!opened) {
+                        showMessage(`No se pudo abrir Gmail automáticamente. Copia y pega esta dirección en tu navegador: ${lastReinscriptionDraftUrl}`, 'warning');
+                    }
+                });
+            }
+            const sendEmailBtn = document.getElementById('reinscriptionSendEmail');
+            if (sendEmailBtn) {
+                sendEmailBtn.addEventListener('click', async () => {
+                    if (reinscriptionEmailSending) {
+                        return;
+                    }
+                    const data = collectReinscriptionFormData();
+                    if (!data || !data.fullName || !data.matricula || !data.career) {
+                        showMessage('Completa el nombre completo, la matrícula y la carrera antes de enviar.', 'warning');
+                        return;
+                    }
+                    const tutorEmailInput = document.getElementById('reinscriptionTutorEmail');
+                    const tutorEmail = tutorEmailInput ? tutorEmailInput.value.trim() : '';
+                    if (!tutorEmail) {
+                        showMessage('Ingresa el correo del tutor antes de enviar el formato.', 'warning');
+                        if (tutorEmailInput) {
+                            tutorEmailInput.focus();
+                        }
+                        return;
+                    }
+                    if (!isValidEmail(tutorEmail)) {
+                        showMessage('Verifica que el correo del tutor sea válido.', 'warning');
+                        if (tutorEmailInput) {
+                            tutorEmailInput.focus();
+                        }
+                        return;
+                    }
+
+                    const originalText = sendEmailBtn.textContent;
+                    reinscriptionEmailSending = true;
+                    lastReinscriptionDraftUrl = null;
+                    if (openDraftBtn) {
+                        openDraftBtn.classList.add('hidden');
+                    }
+                    sendEmailBtn.disabled = true;
+                    sendEmailBtn.textContent = 'Enviando...';
+                    showLoader('Preparando borrador en Gmail...');
+                    try {
+                        const pdfBytes = await generateReinscriptionPdf(data, { includeSignature: true });
+                        const draftInfo = await createReinscriptionEmailDraft({ pdfBytes, tutorEmail, data });
+                        const composeUrl = `https://mail.google.com/mail/u/0/#drafts?compose=${encodeURIComponent(draftInfo.draftId)}`;
+                        lastReinscriptionDraftUrl = composeUrl;
+                        const opened = window.open(composeUrl, '_blank', 'noopener');
+                        if (!opened) {
+                            showMessage(`Se creó un borrador en Gmail. Usa el botón “Abrir borrador en Gmail” o abre directamente: ${composeUrl}`, 'success');
+                            if (openDraftBtn) {
+                                openDraftBtn.classList.remove('hidden');
+                            }
+                        } else {
+                            showMessage('Se creó el borrador en Gmail. Revisa la nueva pestaña para enviarlo (también puedes usar “Abrir borrador en Gmail”).', 'success');
+                            if (openDraftBtn) {
+                                openDraftBtn.classList.remove('hidden');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error al enviar el correo de reinscripción', error);
+                        const status = error && (error.status || (error.result && error.result.error && error.result.error.code));
+                        if (status === 401 || status === 403) {
+                            handleAuthError(error);
+                            showMessage('Google rechazó el envío. Reautoriza el acceso e inténtalo de nuevo.', 'error');
+                        } else if (error && error.message && /gmail/i.test(error.message) && /not configured|not enabled/i.test(error.message)) {
+                            showMessage('Tu cuenta no permite enviar correos automáticamente. Descarga el PDF y compártelo manualmente.', 'error');
+                        } else {
+                            showMessage('No se pudo crear el borrador. Intenta nuevamente en unos minutos.', 'error');
+                        }
+                    } finally {
+                        hideLoader();
+                        reinscriptionEmailSending = false;
+                        sendEmailBtn.disabled = false;
+                        sendEmailBtn.textContent = originalText;
+                    }
+                });
+            }
+            const downloadBtn = document.getElementById('reinscriptionDownload');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', async () => {
+                    const data = collectReinscriptionFormData();
+                    if (!data || !data.fullName || !data.matricula || !data.career) {
+                        showMessage('Completa al menos el nombre completo, la matrícula y la carrera.', 'warning');
+                        return;
+                    }
+                    showLoader('Generando formato de reinscripción...');
+                    try {
+                        const pdfBytes = await generateReinscriptionPdf(data, { includeSignature: true });
+                        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = 'Solicitud_reinscripcion.pdf';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        setTimeout(() => URL.revokeObjectURL(url), 4000);
+                    } catch (error) {
+                        console.error('Error al generar el PDF de reinscripción', error);
+                        showMessage('No se pudo generar el formato de reinscripción. Intenta nuevamente.', 'error');
+                    } finally {
+                        hideLoader();
+                    }
+                });
+            }
+
+            let shouldReopen = false;
+            try {
+                shouldReopen = localStorage.getItem(REINSCRIPTION_MODAL_STATE_STORAGE_KEY) === 'open';
+            } catch (error) {
+                console.warn('No se pudo leer el estado persistido del modal de reinscripción', error);
+            }
+            if (shouldReopen && modal.classList.contains('hidden')) {
+                setTimeout(() => {
+                    if (modal.classList.contains('hidden')) {
+                        try {
+                            openReinscriptionModal();
+                        } catch (error) {
+                            console.warn('No se pudo reabrir automáticamente el modal de reinscripción', error);
+                        }
+                    }
+                }, 0);
+            }
+        }
+
+        function refreshReinscriptionDefaultsAfterScheduleChange() {
+            if (!Array.isArray(DEFAULT_BIOMEDICA_SUBJECT_IDS)) return;
+            const modal = document.getElementById('reinscriptionModal');
+            const isOpen = modal && !modal.classList.contains('hidden');
+            const newDebtSubject = findMissingScheduledSubjectNames() || '';
+            if (reinscriptionLastFormValues) {
+                const previousAuto = reinscriptionLastFormValues.autoDebtSubject || '';
+                if (!reinscriptionLastFormValues.debtSubject || reinscriptionLastFormValues.debtSubject === previousAuto) {
+                    reinscriptionLastFormValues.debtSubject = newDebtSubject;
+                    reinscriptionLastFormValues.autoDebtSubject = newDebtSubject;
+                    saveReinscriptionFormSnapshot(reinscriptionLastFormValues);
+                }
+            }
+            if (!isOpen) {
+                return;
+            }
+            const debtInput = document.getElementById('reinscriptionDebtSubject');
+            if (!debtInput) return;
+            const userEdited = debtInput.dataset && debtInput.dataset.userEdited === 'true';
+            if (userEdited && debtInput.value && debtInput.value !== (debtInput.dataset ? debtInput.dataset.autoValue : '')) {
+                return;
+            }
+            debtInput.value = newDebtSubject;
+            if (newDebtSubject) {
+                debtInput.dataset.autoValue = newDebtSubject;
+            } else if (debtInput.dataset) {
+                delete debtInput.dataset.autoValue;
+            }
+            debtInput.dataset.userEdited = 'false';
+            updateReinscriptionLoadedSubjectsList();
+            scheduleReinscriptionPreviewRender();
+        }
+
         // Función para añadir una materia del catálogo al horario
         function addSubjectToSchedule(id) {
             // Buscar la materia en el catálogo
@@ -2566,6 +4316,8 @@
             } else {
                 showMessage(`Materia "${subject.name}" añadida al horario correctamente`, 'success');
             }
+            refreshReinscriptionDefaultsAfterScheduleChange();
+            updateReinscriptionLoadedSubjectsList();
         }
 
         // Función para quitar una materia del horario
@@ -2595,6 +4347,8 @@
                 updateSelectedSubjectsList();
 
                 showMessage(`Materia "${subject.name}" quitada del horario`, 'success');
+                refreshReinscriptionDefaultsAfterScheduleChange();
+                updateReinscriptionLoadedSubjectsList();
 
                 if (selectedSubjects.length === 0) {
                     defaultSchedulePromptDismissed = false;
@@ -3108,8 +4862,8 @@
         */
         const GOOGLE_CLIENT_ID = '71872340835-9lk4h2hc9kbgld7bjencc7r8ceekahmh.apps.googleusercontent.com'; // <-- reemplazar
         const GOOGLE_API_KEY = 'AIzaSyCLppH0XCX487jf4xmrth4PPsnPYUy0QIk'; // <-- reemplazar
-        // añadir scopes de perfil/email además de drive.appdata
-        const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata openid profile email';
+        // scopes requeridos: Drive appData, envío por Gmail y perfil básico
+        const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/gmail.send openid profile email';
 
         // Las variables globales tokenClient / gAccessToken / gUserProfile / driveApiInitPromise /
         // driveApiReady / authRequestInProgress / sessionExpiredWarningShown se declaran al inicio
@@ -3151,6 +4905,7 @@
                         localStorage.setItem('google_signed_in', '1');
                         // Nuevo: marcar timestamp de cuando se inició sesión
                         localStorage.setItem('google_session_start', String(Date.now()));
+                        localStorage.setItem(DRIVE_SCOPE_FLAG, '1');
                     } catch (e) { console.warn('No se pudo persistir token', e); }
 
                     // Inicializar gapi client usando discoveryDocs (más robusto)
@@ -3953,6 +5708,8 @@
             const { skipLoader = false, loaderMessage = 'Cerrando sesión...' } = options;
             unlockInterface();
             driveAuthRetryPending = false;
+            gmailApiReady = false;
+            gmailApiInitPromise = null;
                     localStorage.removeItem(DRIVE_SCOPE_FLAG);
             if (!skipLoader) {
                 showLoader(loaderMessage);
