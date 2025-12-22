@@ -1194,6 +1194,8 @@
         let tokenClient = null;
         let gAccessToken = null;
         let gUserProfile = null; // perfil activo (nombre, email, foto)
+        // Si es true, el primer gesto del usuario requerirá re-autenticación
+        let requireSignInOnInteraction = false;
         let driveApiInitPromise = null;
         let driveApiReady = false;
         let gmailApiInitPromise = null;
@@ -2235,6 +2237,35 @@
             });
         }
 
+        // Añade un guard que fuerza iniciar sesión en el primer gesto del usuario
+        function addInteractionSignInGuard() {
+            if (window._forceSignInHandler) return; // ya activo
+            const handler = function (e) {
+                if (!requireSignInOnInteraction) return;
+                if (isSessionActive()) return;
+                try {
+                    if (e.target && e.target.closest && (e.target.closest('#authGate') || e.target.closest('#googleSignIn') || e.target.closest('#authGateSignIn'))) return;
+                } catch (ex) { }
+                // Evitar que la interacción realice acciones no autorizadas
+                try { e.preventDefault(); e.stopPropagation(); } catch (ex) { }
+                authGateDismissed = false;
+                lockInterface('Debes iniciar sesión para interactuar.');
+                try { requestGoogleSignIn(); } catch (ex) { console.warn('requestGoogleSignIn fallo desde guard:', ex); }
+            };
+            window._forceSignInHandler = handler;
+            document.addEventListener('click', handler, true);
+            document.addEventListener('touchstart', handler, true);
+            document.addEventListener('keydown', handler, true);
+        }
+
+        function removeInteractionSignInGuard() {
+            const h = window._forceSignInHandler;
+            if (!h) return;
+            try { document.removeEventListener('click', h, true); document.removeEventListener('touchstart', h, true); document.removeEventListener('keydown', h, true); } catch (e) { }
+            window._forceSignInHandler = null;
+            requireSignInOnInteraction = false;
+        }
+
         async function hasValidAccessToken() {
             if (gAccessToken) return true;
             try {
@@ -2539,7 +2570,8 @@
                     career: parsed.career || '',
                     quarter: parsed.quarter || '',
                     group: parsed.group || '',
-                    debtSubject: parsed.debtSubject || '',
+                    // NOTE: intentional: do NOT load or persist user-entered debtSubject
+                    // to avoid storing potentially sensitive or dynamic auto-filled values.
                     autoDebtSubject: parsed.autoDebtSubject || '',
                     tutorEmail: parsed.tutorEmail || '',
                     tutorMessage: parsed.tutorMessage || ''
@@ -2560,7 +2592,7 @@
                 career: snapshot.career || '',
                 quarter: snapshot.quarter || '',
                 group: snapshot.group || '',
-                debtSubject: snapshot.debtSubject || '',
+                // Do NOT persist debtSubject: it should be computed and not stored locally
                 autoDebtSubject: snapshot.autoDebtSubject || '',
                 tutorEmail: snapshot.tutorEmail || '',
                 tutorMessage: snapshot.tutorMessage || ''
@@ -3382,6 +3414,40 @@
             return missingNames.length > 0 ? missingNames.join(', ') : '';
         }
 
+        // Calcula la materia adeudada priorizando la lista por defecto `DEFAULT_BIOMEDICA_SUBJECT_IDS`.
+        // Devuelve un string con los nombres faltantes (separados por ', ') o cadena vacía.
+        function computeAutoDebtSubject() {
+            try {
+                if (!Array.isArray(DEFAULT_BIOMEDICA_SUBJECT_IDS) || DEFAULT_BIOMEDICA_SUBJECT_IDS.length === 0) return '';
+                // Construir set de ids seleccionados (como strings) para comparaciones
+                const selectedIds = new Set((Array.isArray(selectedSubjects) ? selectedSubjects : []).map(s => (s && typeof s.id !== 'undefined' && s.id !== null) ? String(s.id) : null));
+                const names = [];
+                DEFAULT_BIOMEDICA_SUBJECT_IDS.forEach(defId => {
+                    try {
+                        const sid = defId == null ? null : String(defId);
+                        if (!sid) return;
+                        if (selectedIds.has(sid)) return; // ya está en horario
+                        // Buscar en predefinedSubjects primero, luego en catalogSubjects
+                        let subj = null;
+                        if (Array.isArray(predefinedSubjects) && predefinedSubjects.length) {
+                            subj = predefinedSubjects.find(x => String(x.id) === sid) || null;
+                        }
+                        if (!subj && Array.isArray(catalogSubjects) && catalogSubjects.length) {
+                            subj = catalogSubjects.find(x => String(x.id) === sid) || null;
+                        }
+                        if (subj && subj.name) {
+                            const name = String(subj.name).trim();
+                            if (name) names.push(name);
+                        }
+                    } catch (e) { /* ignore per-item errors */ }
+                });
+                return names.length > 0 ? names.join(', ') : '';
+            } catch (e) {
+                console.warn('computeAutoDebtSubject error', e);
+                return '';
+            }
+        }
+
         function buildLoadedSubjectsSummary() {
             if (!Array.isArray(selectedSubjects) || selectedSubjects.length === 0) {
                 return '';
@@ -3406,7 +3472,8 @@
             const currentCareer = typeof getSelectedCareerOption === 'function' ? getSelectedCareerOption() : null;
             const group = guessGroupFromSelectedSubjects();
             const quarter = guessQuarterFromGroup(group);
-            const debtSubject = findMissingScheduledSubjectNames();
+            // Priorizar cálculo basado en DEFAULT_BIOMEDICA_SUBJECT_IDS para mayor consistencia
+            const debtSubject = (typeof computeAutoDebtSubject === 'function' ? computeAutoDebtSubject() : '') || findMissingScheduledSubjectNames();
             return {
                 fullName: getCurrentUserFullName() || '',
                 matricula: '',
@@ -3714,7 +3781,10 @@
             assign('reinscriptionCareer', values.career);
             assign('reinscriptionQuarter', values.quarter);
             assign('reinscriptionGroup', values.group);
-            assign('reinscriptionDebtSubject', values.debtSubject);
+            // For the debt input prefer the auto-computed value; do not treat stored
+            // user-entered debt as authoritative because we no longer persist it.
+            const preferredDebt = (values.debtSubject && values.debtSubject.trim()) ? values.debtSubject : (values.autoDebtSubject || '');
+            assign('reinscriptionDebtSubject', preferredDebt);
             assign('reinscriptionTutorEmail', values.tutorEmail);
             assign('reinscriptionTutorMessage', values.tutorMessage);
             reinscriptionSignatureDataUrl = values.signatureDataUrl || null;
@@ -4962,7 +5032,8 @@
             if (!Array.isArray(DEFAULT_BIOMEDICA_SUBJECT_IDS)) return;
             const modal = document.getElementById('reinscriptionModal');
             const isOpen = modal && !modal.classList.contains('hidden');
-            const newDebtSubject = findMissingScheduledSubjectNames() || '';
+            // Preferir cálculo por IDs predefinidos para consistencia
+            const newDebtSubject = (typeof computeAutoDebtSubject === 'function' ? computeAutoDebtSubject() : '') || findMissingScheduledSubjectNames() || '';
             if (reinscriptionLastFormValues) {
                 const previousAuto = reinscriptionLastFormValues.autoDebtSubject || '';
                 if (!reinscriptionLastFormValues.debtSubject || reinscriptionLastFormValues.debtSubject === previousAuto) {
@@ -5033,6 +5104,26 @@
             }
             refreshReinscriptionDefaultsAfterScheduleChange();
             updateReinscriptionLoadedSubjectsList();
+            // Asegurar que el valor auto calculado se actualice en memoria y en el input si procede
+            try {
+                const newDebt = (typeof computeAutoDebtSubject === 'function' ? computeAutoDebtSubject() : '') || '';
+                if (!reinscriptionLastFormValues) reinscriptionLastFormValues = buildReinscriptionDefaults();
+                reinscriptionLastFormValues.autoDebtSubject = newDebt;
+                // Guardar snapshot (no persistirá debtSubject por diseño)
+                saveReinscriptionFormSnapshot(reinscriptionLastFormValues);
+                const modal = document.getElementById('reinscriptionModal');
+                const debtInput = document.getElementById('reinscriptionDebtSubject');
+                const isOpen = modal && !modal.classList.contains('hidden');
+                if (isOpen && debtInput) {
+                    const userEdited = debtInput.dataset && debtInput.dataset.userEdited === 'true';
+                    if (!userEdited) {
+                        debtInput.value = newDebt;
+                        if (newDebt) debtInput.dataset.autoValue = newDebt; else if (debtInput.dataset) delete debtInput.dataset.autoValue;
+                        debtInput.dataset.userEdited = 'false';
+                        scheduleReinscriptionPreviewRender();
+                    }
+                }
+            } catch (e) { console.warn('No se pudo actualizar deuda tras añadir materia', e); }
         }
 
         // Función para quitar una materia del horario
@@ -5062,8 +5153,27 @@
                 updateSelectedSubjectsList();
 
                 showMessage(`Materia "${subject.name}" quitada del horario`, 'success');
-                refreshReinscriptionDefaultsAfterScheduleChange();
-                updateReinscriptionLoadedSubjectsList();
+                    refreshReinscriptionDefaultsAfterScheduleChange();
+                    updateReinscriptionLoadedSubjectsList();
+                    // Actualizar en memoria y en el input si está abierto y no fue editado por el usuario
+                    try {
+                        const newDebt = (typeof computeAutoDebtSubject === 'function' ? computeAutoDebtSubject() : '') || '';
+                        if (!reinscriptionLastFormValues) reinscriptionLastFormValues = buildReinscriptionDefaults();
+                        reinscriptionLastFormValues.autoDebtSubject = newDebt;
+                        saveReinscriptionFormSnapshot(reinscriptionLastFormValues);
+                        const modal = document.getElementById('reinscriptionModal');
+                        const debtInput = document.getElementById('reinscriptionDebtSubject');
+                        const isOpen = modal && !modal.classList.contains('hidden');
+                        if (isOpen && debtInput) {
+                            const userEdited = debtInput.dataset && debtInput.dataset.userEdited === 'true';
+                            if (!userEdited) {
+                                debtInput.value = newDebt;
+                                if (newDebt) debtInput.dataset.autoValue = newDebt; else if (debtInput.dataset) delete debtInput.dataset.autoValue;
+                                debtInput.dataset.userEdited = 'false';
+                                scheduleReinscriptionPreviewRender();
+                            }
+                        }
+                    } catch (e) { console.warn('No se pudo actualizar deuda tras quitar materia', e); }
 
                 if (selectedSubjects.length === 0) {
                     defaultSchedulePromptDismissed = false;
@@ -6217,6 +6327,8 @@
 
         // Al iniciar sesión correctamente, cargar automáticamente si hay datos guardados
         async function onSignedIn() {
+            // Si había un guard activado, quitarlo porque el usuario ya inició sesión
+            try { removeInteractionSignInGuard(); } catch (e) { }
             updateGoogleButtons(true);
             updateAuthGateState();
             sessionExpiredWarningShown = false;
@@ -6226,9 +6338,34 @@
                 try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { }
                 const existing = await findAppDataFile('horario_data.json');
                 if (existing) {
-                    // Cargar automáticamente sin pregunta
-                    console.log('Cargando horario automáticamente desde Google Drive...');
-                    await loadFromDrive();
+                    // Si hay datos locales guardados por el usuario, preservarlos y subirlos a Drive
+                    let localStored = null;
+                    try {
+                        const raw = localStorage.getItem('selectedSubjects');
+                        if (raw) localStored = JSON.parse(raw);
+                    } catch (e) { /* ignore parse errors */ }
+
+                    if (Array.isArray(localStored) && localStored.length > 0) {
+                        console.log('Datos locales detectados tras iniciar sesión — preservando y sincronizando en Drive.');
+                        // aplicar local a memoria y sincronizar hacia Drive
+                        selectedSubjects = localStored;
+                        try { saveSelectedSubjects(); } catch (e) { }
+                        try {
+                            await syncDriveAfterChange({ interactive: true, successMessage: 'Cambios locales sincronizados con Drive' });
+                            showMessage('Se preservaron tus cambios locales y se sincronizaron con Google Drive.', 'success');
+                        } catch (e) {
+                            console.warn('No se pudo sincronizar cambios locales tras inicio de sesión', e);
+                            showMessage('No se pudo sincronizar tus cambios locales con Drive.', 'warning');
+                        }
+                        // actualizar vistas con los datos locales
+                        updateScheduleView();
+                        updateSelectedSubjectsList();
+                        updateReinscriptionLoadedSubjectsList();
+                    } else {
+                        // Cargar automáticamente desde Drive si no hay datos locales
+                        console.log('Cargando horario automáticamente desde Google Drive...');
+                        await loadFromDrive();
+                    }
                 } else {
                     maybePromptDefaultSchedule();
                 }
@@ -6328,8 +6465,15 @@
                                         console.log('Sesión restaurada desde token en localStorage');
                                     } catch (e) { /* silencioso */ }
                                 } else if (localStorage.getItem('google_signed_in') === '1') {
+                                    // La sesión previa expiró: limpiar horario local para evitar datos obsoletos
+                                    try {
+                                        clearLocalScheduleAndCatalogOnSignOut();
+                                    } catch (e) { console.warn('Error limpiando horario tras sesión expirada', e); }
+                                    // Activar guard que obliga a iniciar sesión en el siguiente gesto del usuario
+                                    requireSignInOnInteraction = true;
+                                    try { addInteractionSignInGuard(); } catch (e) { console.warn('No se activó guard de interacción:', e); }
                                     notifySessionExpired();
-                                    console.log('La sesión previa expiró; el usuario debe volver a iniciar sesión.');
+                                    console.log('La sesión previa expiró; horario local limpiado. El usuario debe volver a iniciar sesión.');
                                 } else {
                                     // si existe perfil guardado solo para UI, sincronizar
                                     const raw = localStorage.getItem('google_profile');
@@ -6804,13 +6948,18 @@
 
         function clearLocalScheduleAndCatalogOnSignOut() {
             selectedSubjects = [];
-            saveSelectedSubjects();
+            try {
+                // Eliminar la copia local del horario en vez de guardar un arreglo vacío.
+                localStorage.removeItem('selectedSubjects');
+            } catch (e) { console.warn('No se pudo eliminar selectedSubjects del localStorage', e); }
 
             try {
                 localStorage.removeItem(CUSTOM_KEY);
                 localStorage.removeItem(CAREER_STORAGE_KEY);
                 localStorage.removeItem(CAREER_LEGACY_KEY);
                 localStorage.removeItem(CUSTOM_CAREERS_KEY);
+                // También eliminar snapshot de reinscripción para no persistir datos del formulario
+                try { localStorage.removeItem(REINSCRIPTION_FORM_STORAGE_KEY); } catch (e) { }
             } catch (e) {
                 console.warn('No se pudo limpiar materias personalizadas', e);
             }

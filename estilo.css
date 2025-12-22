@@ -489,6 +489,19 @@ button:hover {
     font-size: 15px;
 }
 
+.reinscription-pdf-attachment-alert {
+    background-color: #ffebee;
+    border: 3px solid #d32f2f;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 24px 0 24px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #b71c1c;
+    line-height: 1.6;
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.2);
+}
+
 .reinscription-modal__body {
     display: flex;
     gap: 20px;
