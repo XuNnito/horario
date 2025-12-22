@@ -10,13 +10,14 @@
 	<main class="container">
 		<h1>Política de Privacidad</h1>
 
-		<p>Fecha de entrada en vigor: 21 de diciembre de 2025</p>
+		<p>Fecha de entrada en vigor: <span id="fecha-entrada">21 de diciembre de 2025</span></p>
+
 
 		<h2>1. Introducción</h2>
-		<p>Bienvenido a <strong>Horario Bio</strong> (la "Aplicación", "sitio" o "nosotros"). La Aplicación es un simulador de horarios diseñado para la Universidad Politécnica de Chiapas (UPChiapas) y facilita la organización de tu horario, especialmente para estudiantes irregulares. En esta política explicamos qué datos recogemos, cómo los usamos, con quién los compartimos y qué derechos tienes sobre ellos. Nuestro objetivo es ser claros y transparentes.</p>
+		<p>Bienvenido a <strong>Horario Bio</strong> (en adelante, «la Aplicación» o «nosotros»). La Aplicación es un simulador de horarios para la Universidad Politécnica de Chiapas (UPChiapas) que facilita la organización, especialmente para estudiantes irregulares. En esta política explicamos qué datos recogemos, cómo los usamos, con quién los compartimos y qué derechos tienes sobre ellos. Nuestro objetivo es ser claros y transparentes.</p>
 
 		<h2>2. Responsable del tratamiento</h2>
-		<p>El responsable del tratamiento de los datos es el propietario del proyecto: XuNnito. Si necesitas contactarnos para cuestiones de privacidad, actualizaciones o ejercer tus derechos, por favor utiliza el correo electrónico de contacto que figuraría en el proyecto <code>contactoxunito.com@gmail.com</code>.</p>
+		<p>El responsable del tratamiento de los datos es el propietario del proyecto: XuNnito. Si necesitas contactarnos para cuestiones de privacidad, actualizaciones o para ejercer tus derechos, por favor escríbenos a <code>contactoxunito.com@gmail.com</code>.</p>
 
 		<h2>3. Datos que recopilamos</h2>
 		<p>La Aplicación puede recopilar, almacenar o procesar los siguientes datos:</p>
@@ -80,5 +81,17 @@
 
 		<p><a href="index.html">← Volver</a></p>
 	</main>
+
+	<script>
+	// Actualiza solo el número del día en el texto existente
+	(function(){
+		const el = document.getElementById('fecha-entrada');
+		if(!el) return;
+		const d = new Date();
+		const day = d.getDate();
+		// Reemplaza la primera aparición de un número en el contenido por el día actual
+		el.textContent = el.textContent.replace(/\d+/, String(day));
+	})();
+	</script>
 </body>
 </html>

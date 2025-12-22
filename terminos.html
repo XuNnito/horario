@@ -10,10 +10,10 @@
 	<main class="container">
 		<h1>Términos y Condiciones</h1>
 
-		<p>Fecha de entrada en vigor: 21 de diciembre de 2025</p>
+		<p>Fecha de entrada en vigor: <span id="fecha-entrada">21 de diciembre de 2025</span></p>
 
 		<h2>1. Aceptación de los términos</h2>
-		<p>Al usar <strong>Horario Bio</strong> (la "Aplicación"), aceptas estos Términos y Condiciones. Si no estás de acuerdo, por favor no uses la Aplicación.</p>
+		<p>Al usar <strong>Horario Bio</strong> (en adelante, «la Aplicación»), aceptas estos Términos y Condiciones. Si no estás de acuerdo, por favor no uses la Aplicación.</p>
 
 		<h2>2. Servicios ofrecidos</h2>
 		<p>Horario Bio es un simulador de horarios para la Universidad Politécnica de Chiapas (UPChiapas). Está diseñado para crear, simular y exportar horarios académicos y facilita la organización, especialmente para estudiantes irregulares. La Aplicación puede generar PDFs, permitir inicio de sesión con Google para funciones opcionales, guardar archivos en Google Drive y crear borradores en Gmail cuando lo solicites.</p>
@@ -50,6 +50,18 @@
 
 		<p><a href="index.html">← Volver</a></p>
 	</main>
+
+	<script>
+	// Actualiza solo el número del día en el texto existente
+	(function(){
+		const el = document.getElementById('fecha-entrada');
+		if(!el) return;
+		const d = new Date();
+		const day = d.getDate();
+		// Reemplaza la primera aparición de un número en el contenido por el día actual
+		el.textContent = el.textContent.replace(/\d+/, String(day));
+	})();
+	</script>
 </body>
 </html>
 

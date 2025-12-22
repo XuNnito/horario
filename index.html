@@ -13,7 +13,7 @@
     <meta property="og:locale" content="es-MX">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Horarios Bio">
-    <meta name="twitter:description" content="Plataforma para estudiantes irregulares donde puedes crear y organizar tu horario académico mas facil, administrar materias, detectar choques de horas y generar solicitudes de reinscripción para tu tutor academico.">
+    <meta name="twitter:description" content="Plataforma para personas irregulares donde puedes crear y organizar tu horario académico mas facil, administrar materias, detectar choques de horas y generar solicitudes de reinscripción para tu tutor academico.">
     <meta name="twitter:image" content="https://xunnito.github.io/horario/biomedica.png">
     <title> Horarios Bio</title>
     <link rel="icon" type="image/png" sizes="512x512" href="https://xunnito.github.io/horario/biomedica.png">
@@ -891,6 +891,8 @@
                     <h3>Materias Seleccionadas</h3>
                     <div id="selectedSubjectsList"></div>
                 </div>
+
+                
             </div>
         </div>
     </div>
@@ -3045,10 +3047,13 @@
             if (!overlay || !box) {
                 return;
             }
-            overlay.addEventListener('pointerdown', handleSignaturePointerDown);
-            overlay.addEventListener('pointermove', handleSignaturePointerMove);
-            overlay.addEventListener('pointerup', handleSignaturePointerUp);
-            overlay.addEventListener('pointercancel', handleSignaturePointerUp);
+            // Registramos los handlers directamente en la caja de la firma
+            // para evitar que el overlay (que ocupa todo el preview) bloquee
+            // toques y gestos en otras áreas (p. ej. botones móviles o pinch-zoom).
+            box.addEventListener('pointerdown', handleSignaturePointerDown);
+            box.addEventListener('pointermove', handleSignaturePointerMove);
+            box.addEventListener('pointerup', handleSignaturePointerUp);
+            box.addEventListener('pointercancel', handleSignaturePointerUp);
             overlay.classList.add('hidden');
             overlay.setAttribute('aria-hidden', 'true');
             if (image) {
@@ -3067,10 +3072,11 @@
             const imageMobile = document.getElementById('reinscriptionSignatureOverlayImageMobile');
             
             if (overlayMobile && boxMobile) {
-                overlayMobile.addEventListener('pointerdown', handleSignaturePointerDownMobile);
-                overlayMobile.addEventListener('pointermove', handleSignaturePointerMoveMobile);
-                overlayMobile.addEventListener('pointerup', handleSignaturePointerUpMobile);
-                overlayMobile.addEventListener('pointercancel', handleSignaturePointerUpMobile);
+                // Igual que en escritorio: atachar los eventos sobre la caja móvil
+                boxMobile.addEventListener('pointerdown', handleSignaturePointerDownMobile);
+                boxMobile.addEventListener('pointermove', handleSignaturePointerMoveMobile);
+                boxMobile.addEventListener('pointerup', handleSignaturePointerUpMobile);
+                boxMobile.addEventListener('pointercancel', handleSignaturePointerUpMobile);
                 overlayMobile.classList.add('hidden');
                 overlayMobile.setAttribute('aria-hidden', 'true');
                 if (imageMobile) {
@@ -3102,6 +3108,18 @@
             if (!box.contains(event.target)) {
                 return;
             }
+            // Track active pointers. Initialize set lazily to avoid changing top-level declarations.
+            if (!window._sigActivePointers) window._sigActivePointers = new Set();
+            window._sigActivePointers.add(event.pointerId);
+
+            // Si hay múltiples punteros táctiles, permitimos que el navegador maneje el pinch-zoom
+            // evitando preventDefault() y setPointerCapture().
+            const isTouch = event.pointerType === 'touch' || event.pointerType === 'pen';
+            if (isTouch && window._sigActivePointers.size > 1) {
+                // No iniciar arrastre; dejar que el navegador gestione el gesto (pinch)
+                return;
+            }
+
             event.preventDefault();
             const overlayRect = overlay.getBoundingClientRect();
             const boxRect = box.getBoundingClientRect();
@@ -3132,12 +3150,22 @@
                     height: boxRect.height
                 }
             };
-            overlay.setPointerCapture(event.pointerId);
+            // Capturar el puntero en la caja para que solo la caja maneje el drag
+            try {
+                box.setPointerCapture(event.pointerId);
+            } catch (err) {
+                try { overlay.setPointerCapture && overlay.setPointerCapture(event.pointerId); } catch (e) { /* no-op */ }
+            }
             box.classList.add('dragging');
         }
 
         function handleSignaturePointerMove(event) {
+            // Solo procesar movimiento si estamos en un drag iniciado y sólo hay un puntero activo
             if (!signatureDragState || event.pointerId !== signatureDragState.pointerId) {
+                return;
+            }
+            if (window._sigActivePointers && window._sigActivePointers.size > 1) {
+                // Hay más de un puntero: no interferir con el gesto de pinch del navegador
                 return;
             }
             const { box } = signatureOverlayElements;
@@ -3183,17 +3211,19 @@
         }
 
         function handleSignaturePointerUp(event) {
+            // Siempre remover el puntero del conjunto activo
+            try { if (window._sigActivePointers) window._sigActivePointers.delete(event.pointerId); } catch (e) { }
             if (!signatureDragState || event.pointerId !== signatureDragState.pointerId) {
                 return;
             }
             event.preventDefault();
             const { overlay, box } = signatureOverlayElements;
             const state = signatureDragState;
-            if (overlay) {
+            if (box) {
                 try {
-                    overlay.releasePointerCapture(event.pointerId);
+                    box.releasePointerCapture(event.pointerId);
                 } catch (error) {
-                    /* sin acción */
+                    try { overlay && overlay.releasePointerCapture && overlay.releasePointerCapture(event.pointerId); } catch (e) { /* sin acción */ }
                 }
             }
             if (box) {
@@ -3232,6 +3262,12 @@
             if (!boxMobile.contains(event.target)) {
                 return;
             }
+            if (!window._sigActivePointers) window._sigActivePointers = new Set();
+            window._sigActivePointers.add(event.pointerId);
+            const isTouch = event.pointerType === 'touch' || event.pointerType === 'pen';
+            if (isTouch && window._sigActivePointers.size > 1) {
+                return;
+            }
             event.preventDefault();
             const overlayRect = overlayMobile.getBoundingClientRect();
             const boxRect = boxMobile.getBoundingClientRect();
@@ -3263,11 +3299,19 @@
                 },
                 isMobile: true
             };
-            overlayMobile.setPointerCapture(event.pointerId);
+            try {
+                boxMobile.setPointerCapture(event.pointerId);
+            } catch (err) {
+                try { overlayMobile.setPointerCapture && overlayMobile.setPointerCapture(event.pointerId); } catch (e) { /* no-op */ }
+            }
             boxMobile.classList.add('dragging');
         }
 
         function handleSignaturePointerMoveMobile(event) {
+            // Si hay múltiples punteros activos, permitir que el navegador procese pinch/zoom
+            if (window._sigActivePointers && window._sigActivePointers.size > 1) {
+                return;
+            }
             if (!signatureDragState || event.pointerId !== signatureDragState.pointerId) {
                 return;
             }
@@ -3309,6 +3353,7 @@
         }
 
         function handleSignaturePointerUpMobile(event) {
+            try { if (window._sigActivePointers) window._sigActivePointers.delete(event.pointerId); } catch (e) { }
             if (!signatureDragState || event.pointerId !== signatureDragState.pointerId) {
                 return;
             }
@@ -3316,11 +3361,11 @@
             const overlayMobile = document.getElementById('reinscriptionSignatureOverlayMobile');
             const boxMobile = document.getElementById('reinscriptionSignatureBoxMobile');
             const state = signatureDragState;
-            if (overlayMobile) {
+            if (boxMobile) {
                 try {
-                    overlayMobile.releasePointerCapture(event.pointerId);
+                    boxMobile.releasePointerCapture(event.pointerId);
                 } catch (error) {
-                    /* sin acción */
+                    try { overlayMobile && overlayMobile.releasePointerCapture && overlayMobile.releasePointerCapture(event.pointerId); } catch (e) { /* sin acción */ }
                 }
             }
             if (boxMobile) {
@@ -7039,6 +7084,16 @@
 
         // Crear modal de confirmación personalizado
     </script>
+
+    <!-- Banner de mantenimiento (aparece al final de la página) -->
+    <div id="maintenanceBanner" class="maintenance-banner" role="status" aria-live="polite">
+        <div class="maintenance-inner">
+            <strong>Estamos en mantenimiento:</strong>
+            Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. También estamos
+            ajustando integraciones con Drive; puede requerir 2-3 intentos de inicio de sesión para guardar tu horario.
+        </div>
+    </div>
+
 </body>
 <footer class="footer">
     <p>&copy; 2025 XuNnito</p>
