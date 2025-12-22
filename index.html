@@ -958,7 +958,7 @@
                         <div class="reinscription-grid">
                             <div class="reinscription-field">
                                 <label for="reinscriptionMatricula">Matrícula</label>
-                                <input id="reinscriptionMatricula" name="matricula" type="text" maxlength="30" placeholder="Ej. 20201234" required>
+                                <input id="reinscriptionMatricula" name="matricula" type="text" maxlength="30" placeholder="Ej. 241104" required>
                             </div>
                             <div class="reinscription-field">
                                 <label for="reinscriptionCareer">Carrera</label>
@@ -4642,21 +4642,65 @@
                         `;
                         document.body.appendChild(confirmModal);
                         
-                        document.getElementById('confirmOpenGmail').addEventListener('click', () => {
-                            confirmModal.remove();
-                            const subject = encodeURIComponent(REINSCRIPTION_EMAIL_SUBJECT);
-                            const body = buildReinscriptionEmailBody(data);
-                            const bodyEncoded = encodeURIComponent(body);
-                            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(tutorEmail)}&su=${subject}&body=${bodyEncoded}`;
-                            const opened = window.open(gmailUrl, '_blank');
-                            if (!opened) {
-                                showMessage('Gmail no se pudo abrir. Abrelo manualmente e ingresa el email del tutor.', 'warning');
-                            } else {
-                                // Mostrar aviso en la interfaz para recordar adjuntar
-                                try { showAttachWarning(); } catch (e) { /* ignore if helper not present */ }
-                                showMessage('✓ Gmail abierto. Adjunta el PDF descargado y envía el correo.', 'success');
-                            }
-                        });
+                            document.getElementById('confirmOpenGmail').addEventListener('click', () => {
+                                confirmModal.remove();
+                                const subject = encodeURIComponent(REINSCRIPTION_EMAIL_SUBJECT);
+                                const body = buildReinscriptionEmailBody(data);
+                                const bodyEncoded = encodeURIComponent(body);
+
+                                // En dispositivos móviles: intentar abrir la app de Gmail, si falla usar mailto, y al final usar Gmail web
+                                if (isMobileDevice()) {
+                                    const gmailAppUrl = `googlegmail://co?to=${encodeURIComponent(tutorEmail)}&su=${subject}&body=${bodyEncoded}`;
+                                    const mailtoUrl = `mailto:${encodeURIComponent(tutorEmail)}?subject=${subject}&body=${bodyEncoded}`;
+                                    // Intentar abrir la app de Gmail mediante scheme. Si el navegador no la abre, haremos fallback.
+                                    try {
+                                        // Esto normalmente lanzará el selector de apps en Android / iOS si la app está instalada
+                                        window.location.href = gmailAppUrl;
+                                    } catch (e) {
+                                        // Si falla al asignar, seguiremos con el fallback
+                                    }
+
+                                    // Fallback programado: si la app no se abrió (o el navegador no la soporta), abrir mailto
+                                    setTimeout(() => {
+                                        const openedMailto = (() => {
+                                            try {
+                                                return !!window.open(mailtoUrl, '_blank');
+                                            } catch (e) {
+                                                return false;
+                                            }
+                                        })();
+                                        if (!openedMailto) {
+                                            // Último recurso: abrir Gmail web
+                                            const webGmail = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(tutorEmail)}&su=${subject}&body=${bodyEncoded}`;
+                                            const openedWeb = (() => {
+                                                try {
+                                                    return !!window.open(webGmail, '_blank');
+                                                } catch (e) {
+                                                    return false;
+                                                }
+                                            })();
+                                            if (!openedWeb) {
+                                                showMessage('Gmail no se pudo abrir. Abrelo manualmente e ingresa el email del tutor.', 'warning');
+                                            } else {
+                                                try { showAttachWarning(); } catch (e) { /* ignore */ }
+                                                showMessage('✓ Gmail abierto. Adjunta el PDF descargado y envía el correo.', 'success');
+                                            }
+                                        } else {
+                                            try { showAttachWarning(); } catch (e) { /* ignore */ }
+                                            showMessage('✓ Cliente de correo abierto. Adjunta el PDF descargado y envía el correo.', 'success');
+                                        }
+                                    }, 700);
+                                } else {
+                                    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(tutorEmail)}&su=${subject}&body=${bodyEncoded}`;
+                                    const opened = window.open(gmailUrl, '_blank');
+                                    if (!opened) {
+                                        showMessage('Gmail no se pudo abrir. Abrelo manualmente e ingresa el email del tutor.', 'warning');
+                                    } else {
+                                        try { showAttachWarning(); } catch (e) { /* ignore if helper not present */ }
+                                        showMessage('✓ Gmail abierto. Adjunta el PDF descargado y envía el correo.', 'success');
+                                    }
+                                }
+                            });
                         reinscriptionEmailSending = false;
                         sendEmailBtn.disabled = false;
                         sendEmailBtn.textContent = originalText;
