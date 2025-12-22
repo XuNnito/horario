@@ -2287,6 +2287,7 @@
             await ensureDriveApiInitialized();
             if (typeof gapi !== 'undefined' && gapi.client && gAccessToken) {
                 try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { /* silencioso */ }
+                try { console.log('gapi.client.setToken llamado desde ensureDriveReady. token length:', gAccessToken ? gAccessToken.length : 0); } catch (e) { }
             }
         }
 
@@ -5576,8 +5577,8 @@
         */
         const GOOGLE_CLIENT_ID = '71872340835-9lk4h2hc9kbgld7bjencc7r8ceekahmh.apps.googleusercontent.com'; // <-- reemplazar
         const GOOGLE_API_KEY = 'AIzaSyCLppH0XCX487jf4xmrth4PPsnPYUy0QIk'; // <-- reemplazar
-        // scopes requeridos: Drive appData, envío por Gmail y perfil básico
-        const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/gmail.send openid profile email';
+        // scopes requeridos: Drive appData y perfil básico (se removió gmail.send)
+        const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata openid profile email';
 
         // Las variables globales tokenClient / gAccessToken / gUserProfile / driveApiInitPromise /
         // driveApiReady / authRequestInProgress / sessionExpiredWarningShown se declaran al inicio
@@ -5609,6 +5610,8 @@
                     gAccessToken = resp.access_token;
                     driveAuthRetryPending = false;
 
+                    console.log('Google token recibido (callback initTokenClient). access_token length:', gAccessToken ? gAccessToken.length : 0);
+
                     // Persistir estado de sesión, pero NO confiar en el access_token
                     // los access_tokens expiran en poco tiempo; en recargas intentaremos
                     // obtener uno nuevo de forma silenciosa con tokenClient.requestAccessToken.
@@ -5625,7 +5628,8 @@
                     try {
                         ensureDriveApiInitialized().then(() => {
                             try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { console.warn('setToken fallo', e); }
-                            onSignedIn();
+                                    try { console.log('gapi.client.setToken llamado desde initGoogleAuth callback. token length:', gAccessToken ? gAccessToken.length : 0); } catch (e) { }
+                                    onSignedIn();
                             return fetchGoogleProfile();
                         }).then(() => {
                             showMessage('Conectado a Google', 'success');
@@ -5677,6 +5681,7 @@
                             gAccessToken = respToken.access_token || respToken;
                             driveAuthRetryPending = false;
                             try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { }
+                            try { console.log('gapi.client.setToken llamado desde restoreTokenFromStorage. token length:', gAccessToken ? gAccessToken.length : 0); } catch (e) { }
                             fetchGoogleProfile().then(() => {
                                 updateGoogleButtons(true);
                                 try { onSignedIn(); } catch (e) { }
@@ -5734,6 +5739,14 @@
                 }, 200);
             });
         }
+
+        // Helper de depuración: mostrar token actual en consola (no recomendado en producción)
+        window.debugGetAccessToken = function () {
+            console.log('gAccessToken:', gAccessToken);
+            return gAccessToken;
+        };
+
+        // Removed interactive prompt; now we will request sign-in automatically when needed.
 
         // --- FIX: funciones faltantes (fetchGoogleProfile, updateGoogleButtons, onProfileLoaded) ---
         // Insertar justo después de initGoogleAuth() para evitar ReferenceError al inicializar Drive.
@@ -5882,7 +5895,7 @@
         }
 
         // Buscar archivo por nombre en appDataFolder
-        async function findAppDataFile(fileName) {
+        async function findAppDataFile(fileName, _retry = true) {
             try {
                 const resp = await gapi.client.drive.files.list({
                     spaces: 'appDataFolder',
@@ -5897,6 +5910,35 @@
                     err.isQuotaExceeded = true;
                     console.warn('findAppDataFile quota exceeded', err);
                 }
+
+                // Detectar permisos insuficientes (insufficientPermissions / insufficient scopes)
+                try {
+                    const status = err.status || (err.result && err.result.error && err.result.error.code);
+                    const message = String(err.message || (err.result && err.result.error && err.result.error.message) || '').toLowerCase();
+                    const nested = err.result && err.result.error && err.result.error.errors;
+                    const nestedInsufficient = Array.isArray(nested) && nested.some(e => String((e && e.reason) || '').toLowerCase().includes('insufficient'));
+
+                    if ((_retry) && (status === 403 || status === 401) && (message.includes('insufficient') || message.includes('permission') || nestedInsufficient)) {
+                        console.warn('findAppDataFile: permisos insuficientes detectados, mostrando instrucción para reautenticación interactiva...');
+                        try {
+                            // Mostrar prompt que pide al usuario hacer clic para autorizar (evita popup blocking)
+                            // Intentar reautenticación automática (sin modal)
+                            try {
+                                if (typeof requestGoogleSignIn === 'function') {
+                                    requestGoogleSignIn(false, { forceGmailScope: true });
+                                }
+                                await waitForToken(15000);
+                                try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { /* silencioso */ }
+                                return await findAppDataFile(fileName, false);
+                            } catch (reAuthErr) {
+                                console.warn('Reautenticación automática falló o expiró', reAuthErr);
+                            }
+                        } catch (reAuthErr) {
+                            console.warn('Reautenticación interactiva falló o expiró', reAuthErr);
+                        }
+                    }
+                } catch (x) { /* ignore detection errors */ }
+
                 throw err;
             }
         }
@@ -6224,6 +6266,7 @@
                         authRequestInProgress = true;
                         const prompt = (silent && !forceGmailScope) ? undefined : 'consent';
                         try {
+                            console.log('requestGoogleSignIn: solicitando token (iniciado desde timeout). prompt=', prompt);
                             if (prompt) tokenClient.requestAccessToken({ prompt }); else tokenClient.requestAccessToken();
                         } catch (e) {
                             console.warn('requestAccessToken fallo', e);
@@ -6241,6 +6284,7 @@
             authRequestInProgress = true;
             const prompt = (silent && !forceGmailScope) ? undefined : 'consent';
             try {
+                console.log('requestGoogleSignIn: solicitando token. prompt=', prompt);
                 if (prompt) tokenClient.requestAccessToken({ prompt }); else tokenClient.requestAccessToken();
             } catch (e) {
                 console.warn('requestAccessToken error', e);
