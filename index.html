@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es_MX">
+<html lang="es-MX">
 
 <head>
     <meta charset="UTF-8">
@@ -1007,8 +1007,15 @@
                         </div>
                         <div class="reinscription-field reinscription-email-field">
                             <label for="reinscriptionTutorEmail">Correo del tutor (opcional)</label>
-                            <input id="reinscriptionTutorEmail" name="tutorEmail" type="email" maxlength="120" placeholder="vazquez@ib.upchiapas.edu.mx" autocomplete="email">
-                            <small class="reinscription-hint">Podrás buscarlo después en el redactor de Gmail.</small>
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap; ">
+                                <input id="reinscriptionTutorEmail" name="tutorEmail" type="email" maxlength="80" placeholder="vazquez@ib.upchiapas.edu.mx" autocomplete="email" style="flex: 1; min-width: 250px; padding: 10px 12px; font-size: 15px; border: 1px solid rgba(36, 48, 79, 0.25); border-radius: 8px;">
+                                <label for="reinscriptionTutorDefault" style="display:flex;">
+                                    <input id="reinscriptionTutorDefault" type="checkbox" aria-label="Seleccionar como tutor predeterminado">
+                                    <span style="display:flex; align-items:center; gap:6px; font-size:12px; color:#54617d; font-weight:400; white-space:nowrap;">¿Tu tutor es<strong style="color:#1a73e8; background:rgba(26,115,232,0.08); padding:1px 2px; border-radius:3px; font-size:11px;">JOSE OCTAVIO VAZQUEZ</strong>?</span>
+                                </label>
+                            </div>
+                            <input id="reinscriptionTutorName" name="tutorName" type="hidden">
+                            <small class="reinscription-hint">Si no, podrás buscarlo después en el redactor de Gmail.</small>
                         </div>
                         <div class="reinscription-field">
                             <label for="reinscriptionTutorMessage">Mensaje (opcional)</label>
@@ -1166,8 +1173,11 @@
             quarter: { xPct: 0.3, yPct: 0.837 },
             group: { xPct: 0.63, yPct: 0.837 },
             debtSubject: { xPct: 0.1, yPct: 0.805, maxWidthPct: 0.78, lineHeightPct: 0.02, maxLines: 2 },
-            loadedSubjects: { xPct: 0.23, yPct: 0.753, maxWidthPct: 0.78, lineHeightPct: 0.018, maxLines: 8, tabStopPct: 0.8 },
-            signature: { xPct: 0.68, yPct: 0.53, widthPct: 0.16, heightPct: 0.07 }
+            loadedSubjects: { xPct: 0.23, yPct: 0.753, maxWidthPct: 0.78, lineHeightPct: 0.018, maxLines: 10, tabStopPct: 0.8 },
+            signature: { xPct: 0.68, yPct: 0.53, widthPct: 0.16, heightPct: 0.07 },
+          
+            tutorSignature: { xPct: 0.1, yPct: 0.42, widthPct: 0.3, heightPct: 0.929 },
+            tutorName: { xPct: 0.082, yPct: 0.566 }
         };
 
         const REINSCRIPTION_PDF_LAYOUT = JSON.parse(JSON.stringify(REINSCRIPTION_PDF_LAYOUT_DEFAULTS));
@@ -1182,6 +1192,14 @@
         const REINSCRIPTION_EMAIL_SUBJECT = 'Reinscripción enero-abril 2026';
 
         let reinscriptionSignatureDataUrl = null;
+        // Firma y nombre del tutor (si se selecciona la opción)
+        let reinscriptionTutorSignatureDataUrl = null;
+        const DEFAULT_TUTOR = {
+            name: 'JOSE OCTAVIO VAZQUEZ BUENOS AIRES',
+            email: 'vazquez@ib.upchiapas.edu.mx',
+            // Archivo PNG con la firma del tutor en el mismo directorio del proyecto
+            signaturePath: 'Firma_Tutor.png'
+        };
         let reinscriptionPdfTemplateBytes = null;
         let reinscriptionPreviewRenderTimer = null;
         let reinscriptionLastFormValues = null;
@@ -2586,7 +2604,10 @@
                     // to avoid storing potentially sensitive or dynamic auto-filled values.
                     autoDebtSubject: parsed.autoDebtSubject || '',
                     tutorEmail: parsed.tutorEmail || '',
-                    tutorMessage: parsed.tutorMessage || ''
+                    tutorMessage: parsed.tutorMessage || '',
+                    tutorName: parsed.tutorName || '',
+                    tutorSignatureDataUrl: parsed.tutorSignatureDataUrl || null,
+                    tutorIsDefault: !!parsed.tutorIsDefault
                 };
             } catch (error) {
                 console.warn('No se pudo cargar el formulario de reinscripción guardado', error);
@@ -2607,7 +2628,10 @@
                 // Do NOT persist debtSubject: it should be computed and not stored locally
                 autoDebtSubject: snapshot.autoDebtSubject || '',
                 tutorEmail: snapshot.tutorEmail || '',
-                tutorMessage: snapshot.tutorMessage || ''
+                tutorMessage: snapshot.tutorMessage || '',
+                tutorName: snapshot.tutorName || '',
+                tutorSignatureDataUrl: snapshot.tutorSignatureDataUrl || null,
+                tutorIsDefault: !!snapshot.tutorIsDefault
             };
             try {
                 localStorage.setItem(REINSCRIPTION_FORM_STORAGE_KEY, JSON.stringify(toPersist));
@@ -2915,6 +2939,46 @@
             overlay.classList.add('is-active');
             overlay.setAttribute('aria-hidden', 'false');
 
+            // También actualizar overlay móvil si existe
+            try {
+                const overlayMobile = document.getElementById('reinscriptionSignatureOverlayMobile');
+                const boxMobile = document.getElementById('reinscriptionSignatureBoxMobile');
+                if (overlayMobile && boxMobile && reinscriptionPreviewMetrics && reinscriptionPreviewMetrics.mobile) {
+                    const mobileMetrics = reinscriptionPreviewMetrics.mobile;
+                    const mobileScale = mobileMetrics.scale || scale;
+                    const mobileOverlayWidth = mobileMetrics.width || overlayWidth;
+                    const mobileOverlayHeight = mobileMetrics.height || overlayHeight;
+
+                    const minWidthM = Math.max(20, mobileOverlayWidth * 0.04);
+                    const minHeightM = Math.max(20, mobileOverlayHeight * 0.04);
+
+                    let widthPxM = mobileMetrics.baseWidth ? (layout.widthAbs ? layout.widthAbs * mobileScale : mobileOverlayWidth * (layout.widthPct || 0.28)) : widthPx;
+                    let heightPxM = mobileMetrics.baseHeight ? (layout.heightAbs ? layout.heightAbs * mobileScale : mobileOverlayHeight * (layout.heightPct || 0.12)) : heightPx;
+
+                    if (!Number.isFinite(widthPxM) || widthPxM <= 0) widthPxM = mobileOverlayWidth * (defaultSignatureLayout.widthPct || 0.25);
+                    if (!Number.isFinite(heightPxM) || heightPxM <= 0) heightPxM = mobileOverlayHeight * (defaultSignatureLayout.heightPct || 0.1);
+                    widthPxM = clamp(widthPxM, minWidthM, mobileOverlayWidth);
+                    heightPxM = clamp(heightPxM, minHeightM, mobileOverlayHeight);
+
+                    let leftPxM = Number.isFinite(layout.xPct) ? mobileOverlayWidth * layout.xPct : (Number.isFinite(layout.xAbs) ? layout.xAbs * mobileScale : 0);
+                    leftPxM = clamp(leftPxM, 0, Math.max(0, mobileOverlayWidth - widthPxM));
+
+                    let bottomPxM = Number.isFinite(layout.yPct) ? mobileOverlayHeight * layout.yPct : (Number.isFinite(layout.yAbs) ? layout.yAbs * mobileScale : 0);
+                    bottomPxM = clamp(bottomPxM, 0, Math.max(0, mobileOverlayHeight - heightPxM));
+                    let topPxM = mobileOverlayHeight - bottomPxM - heightPxM;
+                    topPxM = clamp(topPxM, 0, mobileOverlayHeight - heightPxM);
+
+                    boxMobile.style.width = `${Math.round(widthPxM)}px`;
+                    boxMobile.style.height = `${Math.round(heightPxM)}px`;
+                    boxMobile.style.left = `${Math.round(leftPxM)}px`;
+                    boxMobile.style.top = `${Math.round(topPxM)}px`;
+                    boxMobile.classList.remove('dragging');
+                    overlayMobile.classList.remove('hidden');
+                    overlayMobile.classList.add('is-active');
+                    overlayMobile.setAttribute('aria-hidden', 'false');
+                }
+            } catch (e) { /* ignore mobile overlay errors */ }
+
             const tolerance = 0.01;
             let shouldPersist = false;
             const derivedWidthAbs = widthPx / scale;
@@ -2984,6 +3048,8 @@
             if (!stage || !canvas || !pdfjsLib) {
                 return;
             }
+
+            // Cargar PDF y página
             const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
             const pdf = await loadingTask.promise;
             const page = await pdf.getPage(1);
@@ -2993,32 +3059,96 @@
             const viewport = page.getViewport({ scale });
             const outputWidth = Math.max(1, Math.round(viewport.width));
             const outputHeight = Math.max(1, Math.round(viewport.height));
-            
-            // Renderizar en canvas desktop
-            const ctx = canvas.getContext('2d', { alpha: false });
             const devicePixelRatio = window.devicePixelRatio || 1;
-            canvas.width = Math.floor(outputWidth * devicePixelRatio);
-            canvas.height = Math.floor(outputHeight * devicePixelRatio);
-            canvas.style.width = `${outputWidth}px`;
-            canvas.style.height = `${outputHeight}px`;
-            ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-            await page.render({ canvasContext: ctx, viewport }).promise;
-            canvas.classList.add('is-visible');
-            canvas.setAttribute('aria-hidden', 'false');
-            
-            // Renderizar en canvas móvil también
-            if (canvasMobile) {
-                const ctxMobile = canvasMobile.getContext('2d', { alpha: false });
-                canvasMobile.width = Math.floor(outputWidth * devicePixelRatio);
-                canvasMobile.height = Math.floor(outputHeight * devicePixelRatio);
-                canvasMobile.style.width = `${outputWidth}px`;
-                canvasMobile.style.height = `${outputHeight}px`;
-                ctxMobile.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-                await page.render({ canvasContext: ctxMobile, viewport }).promise;
-                canvasMobile.classList.add('is-visible');
-                canvasMobile.setAttribute('aria-hidden', 'false');
+
+            // Renderizar en offscreen canvas primero para evitar parpadeos
+            const offscreen = document.createElement('canvas');
+            offscreen.width = Math.floor(outputWidth * devicePixelRatio);
+            offscreen.height = Math.floor(outputHeight * devicePixelRatio);
+            offscreen.style.width = `${outputWidth}px`;
+            offscreen.style.height = `${outputHeight}px`;
+            const offCtx = offscreen.getContext('2d', { alpha: false });
+            offCtx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+
+            // Usar render a offscreen
+            await page.render({ canvasContext: offCtx, viewport }).promise;
+
+            // Copiar desde offscreen al canvas visible sin limpiar/ocultar antes
+            try {
+                const visibleCtx = canvas.getContext('2d', { alpha: false });
+                // Ajustar tamaño del canvas visible en píxeles (esto limpia, pero la copia es inmediata)
+                canvas.width = offscreen.width;
+                canvas.height = offscreen.height;
+                canvas.style.width = `${outputWidth}px`;
+                canvas.style.height = `${outputHeight}px`;
+                // Dibujar la imagen renderizada
+                visibleCtx.setTransform(1, 0, 0, 1, 0, 0);
+                visibleCtx.clearRect(0, 0, canvas.width, canvas.height);
+                visibleCtx.drawImage(offscreen, 0, 0, canvas.width, canvas.height);
+                canvas.classList.add('is-visible');
+                canvas.setAttribute('aria-hidden', 'false');
+            } catch (err) {
+                // En caso de error, intentar renderizar directamente (caída segura)
+                console.warn('Error copiando preview al canvas visible, intentando render directo', err);
+                const ctx = canvas.getContext('2d', { alpha: false });
+                canvas.width = Math.floor(outputWidth * devicePixelRatio);
+                canvas.height = Math.floor(outputHeight * devicePixelRatio);
+                canvas.style.width = `${outputWidth}px`;
+                canvas.style.height = `${outputHeight}px`;
+                ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+                await page.render({ canvasContext: ctx, viewport }).promise;
+                canvas.classList.add('is-visible');
+                canvas.setAttribute('aria-hidden', 'false');
             }
-            
+
+            const mobileStage = document.getElementById('reinscriptionPreviewStageMobile');
+            // Render móvil (si existe) calculando escala específica para que quepa en pantalla
+            if (canvasMobile && mobileStage) {
+                const mobileStageWidth = mobileStage.clientWidth || Math.min(stageWidth, Math.round(window.innerWidth * 0.95));
+                const mobileScale = mobileStageWidth / baseViewport.width;
+                const viewportMobile = page.getViewport({ scale: mobileScale });
+                const mobileOutputWidth = Math.max(1, Math.round(viewportMobile.width));
+                const mobileOutputHeight = Math.max(1, Math.round(viewportMobile.height));
+
+                const offscreenMobile = document.createElement('canvas');
+                offscreenMobile.width = Math.floor(mobileOutputWidth * devicePixelRatio);
+                offscreenMobile.height = Math.floor(mobileOutputHeight * devicePixelRatio);
+                offscreenMobile.style.width = `${mobileOutputWidth}px`;
+                offscreenMobile.style.height = `${mobileOutputHeight}px`;
+                const offCtxMobile = offscreenMobile.getContext('2d', { alpha: false });
+                offCtxMobile.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+                await page.render({ canvasContext: offCtxMobile, viewport: viewportMobile }).promise;
+                try {
+                    const ctxMobile = canvasMobile.getContext('2d', { alpha: false });
+                    canvasMobile.width = offscreenMobile.width;
+                    canvasMobile.height = offscreenMobile.height;
+                    canvasMobile.style.width = `${mobileOutputWidth}px`;
+                    canvasMobile.style.height = `${mobileOutputHeight}px`;
+                    ctxMobile.setTransform(1, 0, 0, 1, 0, 0);
+                    ctxMobile.clearRect(0, 0, canvasMobile.width, canvasMobile.height);
+                    ctxMobile.drawImage(offscreenMobile, 0, 0, canvasMobile.width, canvasMobile.height);
+                    canvasMobile.classList.add('is-visible');
+                    canvasMobile.setAttribute('aria-hidden', 'false');
+                } catch (err) {
+                    console.warn('Error copiando preview móvil, intentando render directo', err);
+                }
+
+                // Guardar métricas móviles para posicionamiento de la firma en móvil
+                reinscriptionPreviewMetrics.mobile = {
+                    width: mobileOutputWidth,
+                    height: mobileOutputHeight,
+                    scale: mobileScale,
+                    baseWidth: baseViewport ? baseViewport.width : mobileOutputWidth,
+                    baseHeight: baseViewport ? baseViewport.height : mobileOutputHeight
+                };
+                // Actualizar tamaño del overlay móvil si existe
+                const overlayMobile = document.getElementById('reinscriptionSignatureOverlayMobile');
+                if (overlayMobile) {
+                    overlayMobile.style.width = `${mobileOutputWidth}px`;
+                    overlayMobile.style.height = `${mobileOutputHeight}px`;
+                }
+            }
+
             reinscriptionPreviewMetrics = {
                 width: outputWidth,
                 height: outputHeight,
@@ -3090,6 +3220,8 @@
                 }
             }
             
+            // Inicializar mapa de punteros si no existe (se usa para gestos multi-táctiles)
+            if (!window._sigPointerMap) window._sigPointerMap = new Map();
             signatureOverlayElements.initialized = true;
         }
 
@@ -3263,10 +3395,49 @@
                 return;
             }
             if (!window._sigActivePointers) window._sigActivePointers = new Set();
+            if (!window._sigPointerMap) window._sigPointerMap = new Map();
             window._sigActivePointers.add(event.pointerId);
+            // Registrar la posición inicial del puntero en el mapa
+            window._sigPointerMap.set(event.pointerId, { x: event.clientX, y: event.clientY });
             const isTouch = event.pointerType === 'touch' || event.pointerType === 'pen';
+            // Si hay más de un puntero táctil, manejamos el gesto 'pinch' localmente
             if (isTouch && window._sigActivePointers.size > 1) {
-                return;
+                // Preparar estado de pinch
+                const overlayRect = overlayMobile.getBoundingClientRect();
+                const boxRect = boxMobile.getBoundingClientRect();
+                const pointers = Array.from(window._sigPointerMap.values());
+                if (pointers.length >= 2) {
+                    const p0 = pointers[0];
+                    const p1 = pointers[1];
+                    const dx = p1.x - p0.x;
+                    const dy = p1.y - p0.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const midX = (p0.x + p1.x) / 2;
+                    const midY = (p0.y + p1.y) / 2;
+                    signatureDragState = {
+                        mode: 'pinch',
+                        pointerId: null,
+                        startPinchDistance: dist,
+                        startMid: { x: midX, y: midY },
+                        startLeft: boxRect.left - overlayRect.left,
+                        startTop: boxRect.top - overlayRect.top,
+                        startWidth: boxRect.width,
+                        startHeight: boxRect.height,
+                        overlayWidth: overlayRect.width || reinscriptionPreviewMetrics.width,
+                        overlayHeight: overlayRect.height || reinscriptionPreviewMetrics.height,
+                        minWidth: Math.max(30, (overlayRect.width || reinscriptionPreviewMetrics.width) * 0.05),
+                        minHeight: Math.max(20, (overlayRect.height || reinscriptionPreviewMetrics.height) * 0.04),
+                        aspectRatio: signatureAspectRatio || (boxRect.width / boxRect.height) || 1,
+                        lastRect: {
+                            left: boxRect.left - overlayRect.left,
+                            top: boxRect.top - overlayRect.top,
+                            width: boxRect.width,
+                            height: boxRect.height
+                        },
+                        isMobile: true
+                    };
+                }
+                // No retornar: queremos capturar punteros para el gesto personalizado
             }
             event.preventDefault();
             const overlayRect = overlayMobile.getBoundingClientRect();
@@ -3308,11 +3479,55 @@
         }
 
         function handleSignaturePointerMoveMobile(event) {
-            // Si hay múltiples punteros activos, permitir que el navegador procese pinch/zoom
-            if (window._sigActivePointers && window._sigActivePointers.size > 1) {
+            // Actualizar posición del puntero en el mapa
+            try {
+                if (window._sigPointerMap) window._sigPointerMap.set(event.pointerId, { x: event.clientX, y: event.clientY });
+            } catch (e) { /* ignore */ }
+            // Si estamos en gesto pinch personalizado, manejarlo aquí
+            if (signatureDragState && signatureDragState.mode === 'pinch') {
+                // Necesitamos al menos dos punteros registrados
+                const ptrs = window._sigPointerMap ? Array.from(window._sigPointerMap.values()) : [];
+                if (ptrs.length < 2) return;
+                const p0 = ptrs[0];
+                const p1 = ptrs[1];
+                const dx = p1.x - p0.x;
+                const dy = p1.y - p0.y;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                const scale = dist / (signatureDragState.startPinchDistance || dist);
+                // Calcular nuevo tamaño manteniendo el centro del pinch
+                const newWidth = Math.max(signatureDragState.minWidth, Math.min(signatureDragState.overlayWidth, Math.round(signatureDragState.startWidth * scale)));
+                const newHeight = Math.max(signatureDragState.minHeight, Math.min(signatureDragState.overlayHeight, Math.round(newWidth / signatureDragState.aspectRatio)));
+                // Centro actual del pinch
+                const midX = (p0.x + p1.x) / 2;
+                const midY = (p0.y + p1.y) / 2;
+                // Ajustar left/top para mantener el centro relativo
+                const overlayRect = document.getElementById('reinscriptionSignatureOverlayMobile').getBoundingClientRect();
+                const relMidX = midX - overlayRect.left;
+                const relMidY = midY - overlayRect.top;
+                const startCenterX = signatureDragState.startLeft + signatureDragState.startWidth / 2;
+                const startCenterY = signatureDragState.startTop + signatureDragState.startHeight / 2;
+                const dxCenter = relMidX - startCenterX;
+                const dyCenter = relMidY - startCenterY;
+                // El nuevo centro será startCenter + dxCenter * (scale)
+                const newCenterX = startCenterX + dxCenter * scale;
+                const newCenterY = startCenterY + dyCenter * scale;
+                let left = Math.round(newCenterX - newWidth / 2);
+                let top = Math.round(newCenterY - newHeight / 2);
+                left = Math.max(0, Math.min(signatureDragState.overlayWidth - newWidth, left));
+                top = Math.max(0, Math.min(signatureDragState.overlayHeight - newHeight, top));
+                const boxMobile = document.getElementById('reinscriptionSignatureBoxMobile');
+                if (boxMobile) {
+                    boxMobile.style.left = `${left}px`;
+                    boxMobile.style.top = `${top}px`;
+                    boxMobile.style.width = `${newWidth}px`;
+                    boxMobile.style.height = `${newHeight}px`;
+                }
+                signatureDragState.lastRect = { left, top, width: newWidth, height: newHeight };
                 return;
             }
-            if (!signatureDragState || event.pointerId !== signatureDragState.pointerId) {
+
+            // Si no hay estado de drag o el evento no pertenece al puntero activo, ignorar
+            if (!signatureDragState || (signatureDragState.pointerId && event.pointerId !== signatureDragState.pointerId)) {
                 return;
             }
             const boxMobile = document.getElementById('reinscriptionSignatureBoxMobile');
@@ -3354,7 +3569,23 @@
 
         function handleSignaturePointerUpMobile(event) {
             try { if (window._sigActivePointers) window._sigActivePointers.delete(event.pointerId); } catch (e) { }
-            if (!signatureDragState || event.pointerId !== signatureDragState.pointerId) {
+            try { if (window._sigPointerMap) window._sigPointerMap.delete(event.pointerId); } catch (e) { }
+            // Si estábamos en pinch y otro puntero sigue activo, solo quitar este puntero
+            if (signatureDragState && signatureDragState.mode === 'pinch') {
+                const remaining = window._sigPointerMap ? window._sigPointerMap.size : 0;
+                if (remaining >= 1) {
+                    // Si aún quedan dos punteros, no finalizar
+                    if (remaining >= 2) {
+                        return;
+                    }
+                    // Si quedó 1 puntero, convertimos a estado de 'move' con el puntero restante
+                    const remainingEntry = window._sigPointerMap && Array.from(window._sigPointerMap.keys())[0];
+                    signatureDragState = null; // forzar recalculo en next down if needed
+                    return;
+                }
+                // Si no quedan punteros, continuar para finalizar y guardar
+            }
+            if (!signatureDragState || (signatureDragState.pointerId && event.pointerId !== signatureDragState.pointerId)) {
                 return;
             }
             event.preventDefault();
@@ -3403,6 +3634,40 @@
                 }
             }
             return '';
+        }
+
+        function getCurrentUserEmail() {
+            if (window.__googleProfile && window.__googleProfile.email) return window.__googleProfile.email;
+            const circle = document.getElementById('googleProfileCircle');
+            if (circle && circle.title) {
+                const t = String(circle.title).trim();
+                if (t && t.indexOf('@') > -1) return t;
+            }
+            return '';
+        }
+
+        function parseMatriculaFromEmail(email) {
+            if (!email || typeof email !== 'string') return '';
+            email = email.trim().toLowerCase();
+            // Aceptar dominios institucionales de UP Chiapas (ej: @ib.upchiapas.edu.mx, @upchiapas.edu.mx)
+            const institutionalDomainRegex = /@(?:[a-z0-9.-]*\.)?upchiapas\.edu\.mx$/i;
+            if (!institutionalDomainRegex.test(email)) return '';
+            const local = email.split('@')[0] || '';
+            // Solo aceptar si la parte local es completamente numérica (matrícula)
+            if (/^\d+$/.test(local)) return local;
+            return '';
+        }
+
+        function autoFillReinscriptionMatriculaInput() {
+            const input = document.getElementById('reinscriptionMatricula');
+            if (!input) return;
+            const current = (input.value || '').trim();
+            if (current) return; // no sobreescribir valor ya ingresado
+            const email = getCurrentUserEmail();
+            const m = parseMatriculaFromEmail(email);
+            if (m) {
+                input.value = m;
+            }
         }
 
         function guessGroupFromSelectedSubjects() {
@@ -3483,7 +3748,7 @@
                         if (!sid) return;
                         if (selectedIds.has(sid)) return; // ya está en horario
                         // Buscar en predefinedSubjects primero, luego en catalogSubjects
-                        let subj = null;
+                        let subj = null;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
                         if (Array.isArray(predefinedSubjects) && predefinedSubjects.length) {
                             subj = predefinedSubjects.find(x => String(x.id) === sid) || null;
                         }
@@ -3501,7 +3766,7 @@
                 console.warn('computeAutoDebtSubject error', e);
                 return '';
             }
-        }
+        }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
 
         function buildLoadedSubjectsSummary() {
             if (!Array.isArray(selectedSubjects) || selectedSubjects.length === 0) {
@@ -3529,9 +3794,12 @@
             const quarter = guessQuarterFromGroup(group);
             // Priorizar cálculo basado en DEFAULT_BIOMEDICA_SUBJECT_IDS para mayor consistencia
             const debtSubject = (typeof computeAutoDebtSubject === 'function' ? computeAutoDebtSubject() : '') || findMissingScheduledSubjectNames();
+            // intentar detectar matrícula desde el correo institucional
+            const detectedEmail = getCurrentUserEmail();
+            const detectedMatricula = parseMatriculaFromEmail(detectedEmail) || '';
             return {
                 fullName: getCurrentUserFullName() || '',
-                matricula: '',
+                matricula: detectedMatricula,
                 career: currentCareer && currentCareer.name ? currentCareer.name : 'Biomédica',
                 quarter: quarter || '',
                 group: group || '',
@@ -3842,7 +4110,14 @@
             assign('reinscriptionDebtSubject', preferredDebt);
             assign('reinscriptionTutorEmail', values.tutorEmail);
             assign('reinscriptionTutorMessage', values.tutorMessage);
+            // Tutor name hidden field and checkbox
+            const tutorNameInput = document.getElementById('reinscriptionTutorName');
+            const tutorDefaultCheckbox = document.getElementById('reinscriptionTutorDefault');
+            if (tutorNameInput) tutorNameInput.value = values.tutorName || '';
+            if (tutorDefaultCheckbox) tutorDefaultCheckbox.checked = !!values.tutorIsDefault;
             reinscriptionSignatureDataUrl = values.signatureDataUrl || null;
+            // Si el snapshot trae firma del tutor, conservarla
+            reinscriptionTutorSignatureDataUrl = values.tutorSignatureDataUrl || reinscriptionTutorSignatureDataUrl || null;
             updateReinscriptionSignaturePreview();
         }
 
@@ -3867,7 +4142,10 @@
                 loadedSubjectsSummary: buildLoadedSubjectsSummary(),
                 autoDebtSubject: '',
                 tutorEmail: tutorEmailInput ? tutorEmailInput.value.trim() : '',
-                tutorMessage: tutorMessageInput ? tutorMessageInput.value.trim() : ''
+                tutorMessage: tutorMessageInput ? tutorMessageInput.value.trim() : '',
+                tutorName: (document.getElementById('reinscriptionTutorName') || {}).value || '',
+                tutorSignatureDataUrl: reinscriptionTutorSignatureDataUrl || null,
+                tutorIsDefault: !!(document.getElementById('reinscriptionTutorDefault') || {}).checked
             };
             if (debtInput && debtInput.dataset && debtInput.dataset.autoValue) {
                 data.autoDebtSubject = debtInput.dataset.autoValue;
@@ -3877,6 +4155,93 @@
             reinscriptionLastFormValues = { ...data };
             saveReinscriptionFormSnapshot(reinscriptionLastFormValues);
             return data;
+        }
+
+        // Cargar una imagen desde una ruta relativa y devolver un dataURL (o null si falla).
+        // Primero intenta cargarla como <img> (funciona con archivos locales y servidores),
+        // y en caso de error intenta usar fetch como fallback.
+        async function loadImageDataUrlFromPath(path) {
+            if (!path) return null;
+            return await new Promise((resolve) => {
+                try {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    let settled = false;
+                    img.onload = function () {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.naturalWidth || img.width || 1;
+                            canvas.height = img.naturalHeight || img.height || 1;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            const dataUrl = canvas.toDataURL('image/png');
+                            settled = true;
+                            resolve(dataUrl);
+                        } catch (e) {
+                            settled = true;
+                            resolve(null);
+                        }
+                    };
+                    img.onerror = async function () {
+                        if (settled) return;
+                        // Fallback: intentar fetch -> blob -> dataURL
+                        try {
+                            const res = await fetch(path);
+                            if (!res.ok) {
+                                settled = true;
+                                resolve(null);
+                                return;
+                            }
+                            const blob = await res.blob();
+                            const reader = new FileReader();
+                            reader.onload = () => { settled = true; resolve(reader.result); };
+                            reader.onerror = () => { settled = true; resolve(null); };
+                            reader.readAsDataURL(blob);
+                        } catch (err) {
+                            settled = true;
+                            resolve(null);
+                        }
+                    };
+                    // Asignar la fuente al final para iniciar la carga
+                    img.src = path;
+                    // Si la imagen ya está en caché y completa, el evento onload puede no dispararse en algunos navegadores,
+                    // por lo que comprobamos si está completa inmediatamente.
+                    if (img.complete && img.naturalWidth) {
+                        img.onload();
+                    }
+                } catch (err) {
+                    resolve(null);
+                }
+            });
+        }
+
+        // Activa o desactiva la opción de tutor predeterminado
+        async function setDefaultTutor(enabled) {
+            const tutorEmailInput = document.getElementById('reinscriptionTutorEmail');
+            const tutorNameInput = document.getElementById('reinscriptionTutorName');
+            if (!tutorEmailInput || !tutorNameInput) return;
+            if (enabled) {
+                tutorEmailInput.value = DEFAULT_TUTOR.email;
+                tutorNameInput.value = DEFAULT_TUTOR.name;
+                // Intentar cargar la firma desde la ruta indicada
+                const dataUrl = await loadImageDataUrlFromPath(DEFAULT_TUTOR.signaturePath);
+                if (dataUrl) {
+                    reinscriptionTutorSignatureDataUrl = dataUrl;
+                } else {
+                    reinscriptionTutorSignatureDataUrl = reinscriptionTutorSignatureDataUrl || null;
+                }
+            } else {
+                // Si desmarcó, limpiar los campos relacionados al tutor (no borrar mensaje)
+                tutorEmailInput.value = '';
+                tutorNameInput.value = '';
+                reinscriptionTutorSignatureDataUrl = null;
+            }
+
+            // No mostrar vista previa inline de la firma del tutor (opción desactivada)
+
+            scheduleReinscriptionPreviewRender();
+            const baseSnapshot = reinscriptionLastFormValues || {};
+            saveReinscriptionFormSnapshot({ ...baseSnapshot, tutorIsDefault: !!enabled, tutorSignatureDataUrl: reinscriptionTutorSignatureDataUrl });
         }
 
         function updateReinscriptionSignaturePreview() {
@@ -3890,7 +4255,8 @@
             // Elementos móviles
             const overlayImageMobile = document.getElementById('reinscriptionSignatureOverlayImageMobile');
             const overlayMobile = document.getElementById('reinscriptionSignatureOverlayMobile');
-            
+            // No mostrar vista previa de la firma del tutor aquí
+
             if (reinscriptionSignatureDataUrl) {
                 img.src = reinscriptionSignatureDataUrl;
                 wrapper.classList.remove('hidden');
@@ -4287,6 +4653,71 @@
                 }
             }
 
+            // Incrustar firma y nombre del tutor si existe
+            if (data && data.tutorSignatureDataUrl) {
+                try {
+                    const responseT = await fetch(data.tutorSignatureDataUrl);
+                    const signatureBufferT = await responseT.arrayBuffer();
+                    const signatureImageT = await pdfDoc.embedPng(signatureBufferT);
+                    const layoutT = REINSCRIPTION_PDF_LAYOUT.tutorSignature || {};
+                    const defaultT = REINSCRIPTION_PDF_LAYOUT_DEFAULTS.tutorSignature || {};
+                    const imageRatioT = signatureImageT.width && signatureImageT.height ? signatureImageT.width / signatureImageT.height : null;
+                    let tWidth;
+                    let tHeight;
+                    const hasAbsT = Number.isFinite(layoutT.widthAbs) && layoutT.widthAbs > 0 && Number.isFinite(layoutT.heightAbs) && layoutT.heightAbs > 0;
+                    if (hasAbsT) {
+                        tWidth = layoutT.widthAbs;
+                        tHeight = layoutT.heightAbs;
+                    } else {
+                        const wPct = Number.isFinite(layoutT.widthPct) ? layoutT.widthPct : (Number.isFinite(defaultT.widthPct) ? defaultT.widthPct : 0.16);
+                        const hPct = Number.isFinite(layoutT.heightPct) ? layoutT.heightPct : (Number.isFinite(defaultT.heightPct) ? defaultT.heightPct : null);
+                        tWidth = wPct ? width * wPct : signatureImageT.width;
+                        if (hPct) {
+                            const candidateH = height * hPct;
+                            if (imageRatioT) {
+                                const hFromW = tWidth / imageRatioT;
+                                if (hFromW > candidateH + 0.5) {
+                                    tHeight = candidateH;
+                                    tWidth = candidateH * imageRatioT;
+                                } else {
+                                    tHeight = hFromW;
+                                }
+                            } else {
+                                tHeight = candidateH;
+                            }
+                        } else if (imageRatioT) {
+                            tHeight = tWidth / imageRatioT;
+                        } else {
+                            tHeight = signatureImageT.height;
+                        }
+                    }
+                    if (Number.isFinite(tWidth) && tWidth > 0 && Number.isFinite(tHeight) && tHeight > 0) {
+                        tWidth = Math.min(tWidth, width);
+                        tHeight = Math.min(tHeight, height);
+                        let tx = Number.isFinite(layoutT.xAbs) ? layoutT.xAbs : (Number.isFinite(layoutT.xPct) ? width * layoutT.xPct : Number(defaultT.xPct || 0) * width);
+                        let ty = Number.isFinite(layoutT.yAbs) ? layoutT.yAbs : (Number.isFinite(layoutT.yPct) ? height * layoutT.yPct : Number(defaultT.yPct || 0) * height);
+                        if (!Number.isFinite(tx)) tx = width * 0.1;
+                        if (!Number.isFinite(ty)) ty = height * 0.25;
+                        tx = Math.max(0, Math.min(Math.max(0, width - tWidth), tx));
+                        ty = Math.max(0, Math.min(Math.max(0, height - tHeight), ty));
+                        page.drawImage(signatureImageT, { x: tx, y: ty, width: tWidth, height: tHeight });
+                    }
+                } catch (errT) {
+                    console.warn('No se pudo incrustar la firma del tutor en el PDF', errT);
+                }
+            }
+
+            // Dibujar nombre del tutor si se proporcionó
+            if (data && data.tutorName) {
+                try {
+                    const layoutN = REINSCRIPTION_PDF_LAYOUT.tutorName || {};
+                    // Usar color azul puro: rgb(0,0,1)
+                    drawText(data.tutorName, layoutN, { size: 10, color: rgb(0, 0, 1) });
+                } catch (errName) {
+                    console.warn('No se pudo dibujar el nombre del tutor en el PDF', errName);
+                }
+            }
+
             return pdfDoc.save();
         }
 
@@ -4480,6 +4911,11 @@
                 nameInput.select();
             }
             updateReinscriptionLoadedSubjectsList();
+            // Asegurarse de cargar la firma del tutor si la casilla estaba marcada
+            const tutorDefaultCheckbox = document.getElementById('reinscriptionTutorDefault');
+            if (tutorDefaultCheckbox && tutorDefaultCheckbox.checked) {
+                setDefaultTutor(true).catch(() => {});
+            }
             scheduleReinscriptionPreviewRender();
         }
 
@@ -4549,6 +4985,12 @@
             const signatureInput = document.getElementById('reinscriptionSignature');
             if (signatureInput) {
                 signatureInput.addEventListener('change', handleReinscriptionSignatureChange);
+            }
+            const tutorDefaultCheckbox = document.getElementById('reinscriptionTutorDefault');
+            if (tutorDefaultCheckbox) {
+                tutorDefaultCheckbox.addEventListener('change', (e) => {
+                    setDefaultTutor(!!e.target.checked).catch(() => {});
+                });
             }
             const clearSignatureBtn = document.getElementById('reinscriptionSignatureClear');
             if (clearSignatureBtn) {
@@ -6056,6 +6498,11 @@
 
             window.__googleProfile = gUserProfile;
 
+            // Si hay perfil, intentar completar automáticamente la matrícula en el formulario
+            try {
+                autoFillReinscriptionMatriculaInput();
+            } catch (e) { /* no bloquear carga por este helper */ }
+
             if (typeof getSelectedCareerOption === 'function' && typeof applyCareerSelection === 'function') {
                 const currentCareer = getSelectedCareerOption();
                 if (currentCareer) {
@@ -7089,8 +7536,8 @@
     <div id="maintenanceBanner" class="maintenance-banner" role="status" aria-live="polite">
         <div class="maintenance-inner">
             <strong>Estamos en mantenimiento:</strong>
-            Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. También estamos
-            ajustando integraciones con Drive; puede requerir 2-3 intentos de inicio de sesión para guardar tu horario.
+            Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. Ten algunos casos puede ser
+      necesario iniciar sesión hasta 2–3 veces para guardar el horario correctamente.
         </div>
     </div>
 

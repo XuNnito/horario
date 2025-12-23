@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # .gitignore - agregar aquí las carpetas/archivos que no deben subirse
 # Ejemplos comunes:
 node_modules/
@@ -22,4 +23,30 @@ app.py
 # Carpeta personalizada (cambie el nombre por la que necesita ignorar)
 carpeta_que_no_deben_subir/
 *.txt
+=======
+# .gitignore - agregar aquí las carpetas/archivos que no deben subirse
+# Ejemplos comunes:
+node_modules/
+venv/
+.env
+.env.local
+dist/
+build/
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+coverage/
+tmp/
+uploads/
+app.py
+*.py
+*.sql
+# Carpeta personalizada (cambie el nombre por la que necesita ignorar)
+carpeta_que_no_deben_subir/
+*.txt
+>>>>>>> 609fc5fff91c0bf23953ae5b8b5034c5ab4e3510
 .venv

@@ -395,6 +395,13 @@ button:hover {
     margin-top: 12px;
 }
 
+/* Mejor interacción táctil para la caja de firma en móvil: gestionar gestos dentro de la app */
+#reinscriptionSignatureOverlayMobile,
+#reinscriptionSignatureBoxMobile {
+    touch-action: none; /* permitir que la app capture touch/pointer y gestione pinch/drag */
+    -ms-touch-action: none;
+}
+
 .schedule-actions {
     display: flex;
     flex-wrap: wrap;
@@ -892,7 +899,6 @@ button:hover {
     *::after {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        color-adjust: exact !important;
     }
 
     body {
