@@ -2238,6 +2238,36 @@ a img{
 }
 
 @media (max-width: 600px) {
-    .maintenance-banner { bottom: 88px; padding: 6px; }
+    .maintenance-banner { bottom: 30px; padding: 6px; }
     .maintenance-inner { font-size: 0.9rem; padding: 10px 12px; }
 }
+
+/* Botón de cerrar para el banner de mantenimiento */
+.maintenance-close {
+    position: absolute;
+    right: 7%;
+    top: -6%;
+    background: rgba(0,0,0,0.08);
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #111;
+    cursor: pointer;
+    z-index: 40;
+}
+@media (max-width: 600px) {
+    .maintenance-close {
+        right: -1px;
+        top: -10px;
+        width: 26px;
+        height: 26px;
+        font-size: 16px;
+    }
+}
+
+.maintenance-close:focus { outline: 2px solid rgba(0,0,0,0.2); }

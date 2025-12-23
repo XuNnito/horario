@@ -1008,7 +1008,7 @@
                         <div class="reinscription-field reinscription-email-field">
                             <label for="reinscriptionTutorEmail">Correo del tutor (opcional)</label>
                             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap; ">
-                                <input id="reinscriptionTutorEmail" name="tutorEmail" type="email" maxlength="80" placeholder="vazquez@ib.upchiapas.edu.mx" autocomplete="email" style="flex: 1; min-width: 250px; padding: 10px 12px; font-size: 15px; border: 1px solid rgba(36, 48, 79, 0.25); border-radius: 8px;">
+                                <input id="reinscriptionTutorEmail" name="tutorEmail" type="email" maxlength="80" placeholder="Ej: vazquez@ib.upchiapas.edu.mx" autocomplete="email" style="flex: 1; min-width: 250px; padding: 10px 12px; font-size: 15px; border: 1px solid rgba(36, 48, 79, 0.25); border-radius: 8px;">
                                 <label for="reinscriptionTutorDefault" style="display:flex;">
                                     <input id="reinscriptionTutorDefault" type="checkbox" aria-label="Seleccionar como tutor predeterminado">
                                     <span style="display:flex; align-items:center; gap:6px; font-size:12px; color:#54617d; font-weight:400; white-space:nowrap;">¿Tu tutor es<strong style="color:#1a73e8; background:rgba(26,115,232,0.08); padding:1px 2px; border-radius:3px; font-size:11px;">JOSE OCTAVIO VAZQUEZ</strong>?</span>
@@ -1174,7 +1174,7 @@
             group: { xPct: 0.63, yPct: 0.837 },
             debtSubject: { xPct: 0.1, yPct: 0.805, maxWidthPct: 0.78, lineHeightPct: 0.02, maxLines: 2 },
             loadedSubjects: { xPct: 0.23, yPct: 0.753, maxWidthPct: 0.78, lineHeightPct: 0.018, maxLines: 10, tabStopPct: 0.8 },
-            signature: { xPct: 0.68, yPct: 0.53, widthPct: 0.16, heightPct: 0.07 },
+            signature: { xPct: 0.08, yPct: 4.53, widthPct: 0.16, heightPct: 0.07 },
           
             tutorSignature: { xPct: 0.1, yPct: 0.42, widthPct: 0.3, heightPct: 0.929 },
             tutorName: { xPct: 0.082, yPct: 0.566 }
@@ -2856,7 +2856,17 @@
             }
             const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
             const clamp01 = (value) => clamp(value, 0, 1);
-            const scale = reinscriptionPreviewMetrics && reinscriptionPreviewMetrics.scale ? reinscriptionPreviewMetrics.scale : (overlayWidth && reinscriptionPreviewMetrics.baseWidth ? overlayWidth / reinscriptionPreviewMetrics.baseWidth : 1) || 1;
+            // Preferir métricas móviles si coinciden con el tamaño del overlay proporcionado
+            let scale = 1;
+            if (reinscriptionPreviewMetrics && reinscriptionPreviewMetrics.mobile && (overlayWidth === reinscriptionPreviewMetrics.mobile.width || overlayHeight === reinscriptionPreviewMetrics.mobile.height)) {
+                scale = reinscriptionPreviewMetrics.mobile.scale || 1;
+            } else if (reinscriptionPreviewMetrics && reinscriptionPreviewMetrics.scale) {
+                scale = reinscriptionPreviewMetrics.scale;
+            } else if (overlayWidth && reinscriptionPreviewMetrics && reinscriptionPreviewMetrics.baseWidth) {
+                scale = overlayWidth / reinscriptionPreviewMetrics.baseWidth;
+            } else {
+                scale = 1;
+            }
             const baseWidth = reinscriptionPreviewMetrics && reinscriptionPreviewMetrics.baseWidth ? reinscriptionPreviewMetrics.baseWidth : (scale ? overlayWidth / scale : overlayWidth);
             const baseHeight = reinscriptionPreviewMetrics && reinscriptionPreviewMetrics.baseHeight ? reinscriptionPreviewMetrics.baseHeight : (scale ? overlayHeight / scale : overlayHeight);
             const defaultSignatureLayout = REINSCRIPTION_PDF_LAYOUT_DEFAULTS && REINSCRIPTION_PDF_LAYOUT_DEFAULTS.signature ? REINSCRIPTION_PDF_LAYOUT_DEFAULTS.signature : {};
@@ -3207,6 +3217,19 @@
                 boxMobile.addEventListener('pointermove', handleSignaturePointerMoveMobile);
                 boxMobile.addEventListener('pointerup', handleSignaturePointerUpMobile);
                 boxMobile.addEventListener('pointercancel', handleSignaturePointerUpMobile);
+                // Además atachar al overlay para que, si el dedo sale de la caja, sigamos recibiendo movimientos
+                overlayMobile.addEventListener('pointermove', handleSignaturePointerMoveMobile);
+                overlayMobile.addEventListener('pointerup', handleSignaturePointerUpMobile);
+                overlayMobile.addEventListener('pointercancel', handleSignaturePointerUpMobile);
+                overlayMobile.addEventListener('pointerdown', (e) => {
+                    // Si el usuario inicia el touch en el overlay pero dentro de la caja, redirigir al handler
+                    if (boxMobile.contains(e.target) || e.target === boxMobile) return;
+                    // Emular un pointerdown en la caja si el touch cae sobre la imagen
+                    const rect = boxMobile.getBoundingClientRect();
+                    if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                        handleSignaturePointerDownMobile(e);
+                    }
+                });
                 overlayMobile.classList.add('hidden');
                 overlayMobile.setAttribute('aria-hidden', 'true');
                 if (imageMobile) {
@@ -3400,20 +3423,21 @@
             // Registrar la posición inicial del puntero en el mapa
             window._sigPointerMap.set(event.pointerId, { x: event.clientX, y: event.clientY });
             const isTouch = event.pointerType === 'touch' || event.pointerType === 'pen';
-            // Si hay más de un puntero táctil, manejamos el gesto 'pinch' localmente
+            // Si hay más de un puntero táctil, inicializar un gesto pinch manejado por la app
             if (isTouch && window._sigActivePointers.size > 1) {
-                // Preparar estado de pinch
                 const overlayRect = overlayMobile.getBoundingClientRect();
                 const boxRect = boxMobile.getBoundingClientRect();
-                const pointers = Array.from(window._sigPointerMap.values());
-                if (pointers.length >= 2) {
-                    const p0 = pointers[0];
-                    const p1 = pointers[1];
+                const pointersArr = Array.from(window._sigPointerMap.values());
+                if (pointersArr.length >= 2) {
+                    const p0 = pointersArr[0];
+                    const p1 = pointersArr[1];
                     const dx = p1.x - p0.x;
                     const dy = p1.y - p0.y;
                     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
                     const midX = (p0.x + p1.x) / 2;
                     const midY = (p0.y + p1.y) / 2;
+                    const overlayW = overlayRect.width || reinscriptionPreviewMetrics.width;
+                    const overlayH = overlayRect.height || reinscriptionPreviewMetrics.height;
                     signatureDragState = {
                         mode: 'pinch',
                         pointerId: null,
@@ -3423,10 +3447,10 @@
                         startTop: boxRect.top - overlayRect.top,
                         startWidth: boxRect.width,
                         startHeight: boxRect.height,
-                        overlayWidth: overlayRect.width || reinscriptionPreviewMetrics.width,
-                        overlayHeight: overlayRect.height || reinscriptionPreviewMetrics.height,
-                        minWidth: Math.max(30, (overlayRect.width || reinscriptionPreviewMetrics.width) * 0.05),
-                        minHeight: Math.max(20, (overlayRect.height || reinscriptionPreviewMetrics.height) * 0.04),
+                        overlayWidth: overlayW,
+                        overlayHeight: overlayH,
+                        minWidth: Math.max(30, overlayW * 0.05),
+                        minHeight: Math.max(20, overlayH * 0.04),
                         aspectRatio: signatureAspectRatio || (boxRect.width / boxRect.height) || 1,
                         lastRect: {
                             left: boxRect.left - overlayRect.left,
@@ -3434,10 +3458,17 @@
                             width: boxRect.width,
                             height: boxRect.height
                         },
-                        isMobile: true
+                        isMobile: true,
+                        startPointers: Array.from(window._sigPointerMap.entries()).slice(0,2).map(([id, p]) => ({ id, x: p.x, y: p.y }))
                     };
+                    try {
+                        boxMobile.setPointerCapture(event.pointerId);
+                    } catch (err) {
+                        try { overlayMobile.setPointerCapture && overlayMobile.setPointerCapture(event.pointerId); } catch (e) { /* no-op */ }
+                    }
+                    boxMobile.classList.add('dragging');
+                    return; // importante: no sobreescribir el estado de pinch
                 }
-                // No retornar: queremos capturar punteros para el gesto personalizado
             }
             event.preventDefault();
             const overlayRect = overlayMobile.getBoundingClientRect();
@@ -3488,13 +3519,23 @@
                 // Necesitamos al menos dos punteros registrados
                 const ptrs = window._sigPointerMap ? Array.from(window._sigPointerMap.values()) : [];
                 if (ptrs.length < 2) return;
-                const p0 = ptrs[0];
-                const p1 = ptrs[1];
+                const entries = window._sigPointerMap ? Array.from(window._sigPointerMap.entries()).slice(0,2) : [];
+                if (entries.length < 2) return;
+                const [e0, e1] = entries;
+                const p0 = { id: e0[0], x: e0[1].x, y: e0[1].y };
+                const p1 = { id: e1[0], x: e1[1].x, y: e1[1].y };
                 const dx = p1.x - p0.x;
                 const dy = p1.y - p0.y;
                 const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                const scale = dist / (signatureDragState.startPinchDistance || dist);
-                // Calcular nuevo tamaño manteniendo el centro del pinch
+                // Escala basada en cambio de distancia: separación -> zoom in, acercamiento -> zoom out
+                const startDist = signatureDragState.startPinchDistance || dist;
+                let scale = dist / startDist;
+                // Sensibilidad / límites
+                const MIN_SCALE = 0.35;
+                const MAX_SCALE = 3.0;
+                // Ligeramente suavizar cambios pequeñas
+                if (Math.abs(scale - 1) < 0.005) scale = 1;
+                scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
                 const newWidth = Math.max(signatureDragState.minWidth, Math.min(signatureDragState.overlayWidth, Math.round(signatureDragState.startWidth * scale)));
                 const newHeight = Math.max(signatureDragState.minHeight, Math.min(signatureDragState.overlayHeight, Math.round(newWidth / signatureDragState.aspectRatio)));
                 // Centro actual del pinch
@@ -5041,11 +5082,16 @@
                 zoomOutBtnMobile.addEventListener('click', () => {
                     adjustSignatureSize(0.9);
                 });
+                // Soporte táctil inmediato (evitar delay en algunos navegadores)
+                zoomOutBtnMobile.addEventListener('pointerdown', (e) => { e.preventDefault(); adjustSignatureSize(0.9); });
+                zoomOutBtnMobile.addEventListener('touchstart', (e) => { e.preventDefault(); adjustSignatureSize(0.9); });
             }
             if (zoomInBtnMobile) {
                 zoomInBtnMobile.addEventListener('click', () => {
                     adjustSignatureSize(1.1);
                 });
+                zoomInBtnMobile.addEventListener('pointerdown', (e) => { e.preventDefault(); adjustSignatureSize(1.1); });
+                zoomInBtnMobile.addEventListener('touchstart', (e) => { e.preventDefault(); adjustSignatureSize(1.1); });
             }
             
             // Helper: mostrar aviso de adjuntar PDF en Gmail
@@ -7531,13 +7577,121 @@
 
         // Crear modal de confirmación personalizado
     </script>
+    <script>
+    // Control del banner de mantenimiento: si el usuario está logueado, mostrar 60s/ocultar 30s en ciclo.
+    (function () {
+        const KEY = 'google_signed_in';
+        let banner = null; // se asignará en DOMContentLoaded o al mostrar/ocultar
+
+        let showTimer = null;
+        let hideTimer = null;
+        let running = false;
+
+        function clearTimers() {
+            if (showTimer) { clearTimeout(showTimer); showTimer = null; }
+            if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+        }
+
+        function isSignedIn() {
+            try {
+                if (window.__googleProfile) return true;
+                if (typeof gAccessToken !== 'undefined' && gAccessToken) return true;
+                return localStorage.getItem(KEY) === '1';
+            } catch (e) { return false; }
+        }
+
+        function showBanner(duration = 60000) {
+            if (!banner) banner = document.getElementById('maintenanceBanner');
+            if (!banner) return;
+            banner.classList.remove('hidden');
+            banner.style.display = '';
+            clearTimers();
+            showTimer = setTimeout(() => {
+                hideBanner();
+            }, duration);
+        }
+
+        function hideBanner(duration = 30000) {
+            if (!banner) banner = document.getElementById('maintenanceBanner');
+            if (!banner) return;
+            banner.classList.add('hidden');
+            banner.style.display = 'none';
+            clearTimers();
+            hideTimer = setTimeout(() => {
+                // solo continuar el ciclo si el usuario sigue logueado
+                if (isSignedIn()) {
+                    showBanner();
+                } else {
+                    // si ya no está logueado, dejar banner visible permanentemente
+                    if (!banner) banner = document.getElementById('maintenanceBanner');
+                    if (banner) { banner.classList.remove('hidden'); banner.style.display = ''; }
+                }
+            }, duration);
+        }
+
+        function startCycle() {
+            if (running) return;
+            running = true;
+            // comenzar mostrando 1 minuto
+            showBanner(60000);
+        }
+
+        function stopCycle() {
+            running = false;
+            clearTimers();
+            // dejar visible el banner si no está logueado
+            if (!banner) banner = document.getElementById('maintenanceBanner');
+            if (banner) { banner.classList.remove('hidden'); banner.style.display = ''; }
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            // Enlazar el botón de cerrar (si existe)
+            const closeBtn = document.getElementById('maintenanceCloseBtn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', (ev) => {
+                    ev.preventDefault();
+                    // ocultar ahora y programar re-aparición en 30s
+                    clearTimers();
+                    banner.classList.add('hidden');
+                    banner.style.display = 'none';
+                    showTimer = setTimeout(() => { showBanner(); }, 30000);
+                });
+            }
+
+            if (isSignedIn()) {
+                startCycle();
+            } else {
+                // usuario no logueado: dejar banner siempre visible
+                stopCycle();
+            }
+        });
+
+        // Escuchar cambios en localStorage (login/logout) desde otras pestañas
+        window.addEventListener('storage', (ev) => {
+            if (ev.key !== KEY) return;
+            if (ev.newValue === '1') {
+                startCycle();
+            } else {
+                stopCycle();
+            }
+        });
+
+        // Si la app actualiza la variable global __googleProfile, algunos flujos ya llaman a onProfileLoaded().
+        // Escuchar un evento personalizado por si otros puntos del app lo disparan.
+        window.addEventListener('profile:loaded', () => {
+            if (isSignedIn()) startCycle();
+        });
+    })();
+    </script>
 
     <!-- Banner de mantenimiento (aparece al final de la página) -->
     <div id="maintenanceBanner" class="maintenance-banner" role="status" aria-live="polite">
+        <button id="maintenanceCloseBtn" class="maintenance-close" aria-label="Cerrar mensaje">×</button>
         <div class="maintenance-inner">
             <strong>Estamos en mantenimiento:</strong>
             Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. Ten algunos casos puede ser
-      necesario iniciar sesión hasta 2–3 veces para guardar el horario correctamente.
+      necesario iniciar sesión hasta 2–3 veces para guardar el horario correctamente es cuando el se.
         </div>
     </div>
 
