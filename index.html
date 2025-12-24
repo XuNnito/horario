@@ -1014,8 +1014,21 @@
                                     <span style="display:flex; align-items:center; gap:6px; font-size:12px; color:#54617d; font-weight:400; white-space:nowrap;">¿Tu tutor es<strong style="color:#1a73e8; background:rgba(26,115,232,0.08); padding:1px 2px; border-radius:3px; font-size:11px;">JOSE OCTAVIO VAZQUEZ</strong>?</span>
                                 </label>
                             </div>
+                            <!-- Selector para otros tutores -->
+                            <div style="margin-top:8px; width:100%;">
+                                <label for="reinscriptionTutorSelect" style="display:block; font-size:13px; margin-bottom:4px; color:#3c4043;">Si tu tutor es otro, selecciónalo aquí:</label>
+                                <select id="reinscriptionTutorSelect" name="tutorSelect" style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(36, 48, 79, 0.25); font-size:14px;">
+                                    <option value="">Selecciona tu tutor</option>
+                                    <option value="vazquez">JOSE OCTAVIO VAZQUEZ BUENOS AIRES</option>
+                                    <option value="corzo">MARIA DE LOURDES CORZO CUESTA</option>
+                                    <option value="ibanez">CHRISTIAN ROBERTO IBÁÑEZ NANGÜELÚ</option>
+                                    <option value="martinez">DIANA PAULINA MARTINEZ CANCINO</option>
+                                    <option value="constantino">EGLAIN CONSTANTINO CORTES</option>
+                                    <option value="cazarin">ANA LAURA CAZARIN VAZQUEZ</option>
+                                </select>
+                            </div>
                             <input id="reinscriptionTutorName" name="tutorName" type="hidden">
-                            <small class="reinscription-hint">Si no, podrás buscarlo después en el redactor de Gmail.</small>
+                            <small class="reinscription-hint">Al seleccionar un tutor se rellenará el correo y, si hay firma guardada, se pegará en el PDF junto con su nombre.</small>
                         </div>
                         <div class="reinscription-field">
                             <label for="reinscriptionTutorMessage">Mensaje (opcional)</label>
@@ -1194,12 +1207,97 @@
         let reinscriptionSignatureDataUrl = null;
         // Firma y nombre del tutor (si se selecciona la opción)
         let reinscriptionTutorSignatureDataUrl = null;
-        const DEFAULT_TUTOR = {
-            name: 'JOSE OCTAVIO VAZQUEZ BUENOS AIRES',
-            email: 'vazquez@ib.upchiapas.edu.mx',
-            // Archivo PNG con la firma del tutor en el mismo directorio del proyecto
-            signaturePath: 'Firma_Tutor.png'
+        // Catálogo de tutores disponibles (nombre, correo y, si existe, ruta de la firma)
+        const REINSCRIPTION_TUTORS = [
+            {
+                id: 'vazquez',
+                name: 'JOSE OCTAVIO VAZQUEZ BUENOS AIRES',
+                email: 'vazquez@ib.upchiapas.edu.mx',
+                // Archivo PNG con la firma del tutor en el mismo directorio del proyecto
+                signaturePath: 'Firma_Tutor.png'
+            },
+            {
+                id: 'corzo',
+                name: 'MARIA DE LOURDES CORZO CUESTA',
+                email: 'mcorzo@ib.upchiapas.edu.mx',
+                // Ajusta el nombre del archivo cuando tengas la firma
+                signaturePath: 'Firma_Tutor_Corzo.png'
+            },
+            {
+                id: 'ibanez',
+                name: 'CHRISTIAN ROBERTO IBÁÑEZ NANGÜELÚ',
+                email: 'cribn@ib.upchiapas.edu.mx',
+                signaturePath: 'Firma_Tutor_Ibanez.png'
+            },
+            {
+                id: 'martinez',
+                name: 'DIANA PAULINA MARTINEZ CANCINO',
+                email: 'dmartinez@ib.upchiapas.edu.mx',
+                signaturePath: 'Firma_Tutor_Martinez.png'
+            },
+            {
+                id: 'constantino',
+                name: 'EGLAIN CONSTANTINO CORTES',
+                email: 'constantino@ib.upchiapas.edu.mx',
+                signaturePath: 'Firma_Tutor_Constantino.png'
+            },
+            {
+                id: 'cazarin',
+                name: 'ANA LAURA CAZARIN VAZQUEZ',
+                email: 'acazarin@im.upchiapas.edu.mx',
+                signaturePath: 'Firma_Tutor_Cazarin.png'
+            }
+        ];
+
+        const DEFAULT_TUTOR = REINSCRIPTION_TUTORS[0];
+
+        // Posiciones y tamaños específicos por tutor para firma y nombre en el PDF
+        // (puedes afinar xPct, yPct, widthPct, heightPct y fontSize por cada tutor)
+        const TUTOR_PDF_LAYOUT_OVERRIDES = {
+            vazquez: {
+                tutorSignature: { xPct: 0.1, yPct: 0.42, widthPct: 0.3, heightPct: 0.929 },
+                tutorName: { xPct: 0.082, yPct: 0.566, fontSize: 10.5 }
+            },
+            corzo: {
+                tutorSignature: {xPct: 0.1, yPct: 0.42, widthPct: 0.3, heightPct: 0.929 },
+                tutorName: { xPct: 0.095, yPct: 0.566, fontSize: 10.5 }
+            },
+            ibanez: {
+                tutorSignature: { xPct: 0.10, yPct: 0.42, widthPct: 0.30, heightPct: 0.929 },
+                tutorName: { xPct: 0.082, yPct: 0.566, fontSize: 10.5 }
+            },
+            martinez: {
+                tutorSignature: { xPct: 0.10, yPct: 0.42, widthPct: 0.30, heightPct: 0.929 },
+                tutorName: { xPct: 0.1, yPct: 0.566, fontSize: 10.5 }
+            },
+            constantino: {
+                tutorSignature: { xPct: 0.10, yPct: 0.42, widthPct: 0.30, heightPct: 0.929 },
+                tutorName: { xPct: 0.12, yPct: 0.566, fontSize: 10.5 }
+            },
+            cazarin: {
+                tutorSignature: { xPct: 0.10, yPct: 0.42, widthPct: 0.30, heightPct: 0.929 },
+                tutorName: { xPct: 0.12, yPct: 0.566, fontSize: 10.5 }
+            }
         };
+
+        function getTutorById(id) {
+            if (!id) return null;
+            return REINSCRIPTION_TUTORS.find(tutor => tutor && tutor.id === id) || null;
+        }
+
+        function getTutorByEmail(email) {
+            if (!email) return null;
+            const normalized = String(email).trim().toLowerCase();
+            if (!normalized) return null;
+            return REINSCRIPTION_TUTORS.find(tutor => tutor.email && tutor.email.toLowerCase() === normalized) || null;
+        }
+
+        function getTutorByName(name) {
+            if (!name) return null;
+            const normalized = String(name).trim().toLowerCase();
+            if (!normalized) return null;
+            return REINSCRIPTION_TUTORS.find(tutor => tutor.name && tutor.name.toLowerCase() === normalized) || null;
+        }
         let reinscriptionPdfTemplateBytes = null;
         let reinscriptionPreviewRenderTimer = null;
         let reinscriptionLastFormValues = null;
@@ -4172,6 +4270,7 @@
             const debtInput = document.getElementById('reinscriptionDebtSubject');
             const tutorEmailInput = document.getElementById('reinscriptionTutorEmail');
             const tutorMessageInput = document.getElementById('reinscriptionTutorMessage');
+            const tutorSelect = document.getElementById('reinscriptionTutorSelect');
             const data = {
                 fullName: nameInput.value.trim(),
                 matricula: matriculaInput ? matriculaInput.value.trim() : '',
@@ -4186,7 +4285,8 @@
                 tutorMessage: tutorMessageInput ? tutorMessageInput.value.trim() : '',
                 tutorName: (document.getElementById('reinscriptionTutorName') || {}).value || '',
                 tutorSignatureDataUrl: reinscriptionTutorSignatureDataUrl || null,
-                tutorIsDefault: !!(document.getElementById('reinscriptionTutorDefault') || {}).checked
+                tutorIsDefault: !!(document.getElementById('reinscriptionTutorDefault') || {}).checked,
+                tutorId: tutorSelect ? (tutorSelect.value || '') : ''
             };
             if (debtInput && debtInput.dataset && debtInput.dataset.autoValue) {
                 data.autoDebtSubject = debtInput.dataset.autoValue;
@@ -4256,12 +4356,18 @@
             });
         }
 
-        // Activa o desactiva la opción de tutor predeterminado
+        // Activa o desactiva la opción de tutor predeterminado (José)
         async function setDefaultTutor(enabled) {
             const tutorEmailInput = document.getElementById('reinscriptionTutorEmail');
             const tutorNameInput = document.getElementById('reinscriptionTutorName');
+            const tutorSelect = document.getElementById('reinscriptionTutorSelect');
             if (!tutorEmailInput || !tutorNameInput) return;
+
             if (enabled) {
+                // Forzar selección de José en el selector si existe
+                if (tutorSelect) {
+                    tutorSelect.value = 'vazquez';
+                }
                 tutorEmailInput.value = DEFAULT_TUTOR.email;
                 tutorNameInput.value = DEFAULT_TUTOR.name;
                 // Intentar cargar la firma desde la ruta indicada
@@ -4273,16 +4379,58 @@
                 }
             } else {
                 // Si desmarcó, limpiar los campos relacionados al tutor (no borrar mensaje)
+                if (tutorSelect && tutorSelect.value === 'vazquez') {
+                    tutorSelect.value = '';
+                }
                 tutorEmailInput.value = '';
                 tutorNameInput.value = '';
                 reinscriptionTutorSignatureDataUrl = null;
             }
 
-            // No mostrar vista previa inline de la firma del tutor (opción desactivada)
-
+            // Actualizar datos en memoria y vista previa
+            collectReinscriptionFormData();
             scheduleReinscriptionPreviewRender();
             const baseSnapshot = reinscriptionLastFormValues || {};
-            saveReinscriptionFormSnapshot({ ...baseSnapshot, tutorIsDefault: !!enabled, tutorSignatureDataUrl: reinscriptionTutorSignatureDataUrl });
+            saveReinscriptionFormSnapshot({
+                ...baseSnapshot,
+                tutorIsDefault: !!enabled,
+                tutorSignatureDataUrl: reinscriptionTutorSignatureDataUrl
+            });
+        }
+
+        // Al cambiar el tutor en el selector, actualizar correo, nombre y firma rápidamente
+        async function handleTutorSelectionChange() {
+            const tutorSelect = document.getElementById('reinscriptionTutorSelect');
+            const tutorEmailInput = document.getElementById('reinscriptionTutorEmail');
+            const tutorNameInput = document.getElementById('reinscriptionTutorName');
+            const tutorDefaultCheckbox = document.getElementById('reinscriptionTutorDefault');
+            if (!tutorSelect || !tutorEmailInput || !tutorNameInput) return;
+
+            const value = tutorSelect.value;
+            let selectedTutor = getTutorById(value);
+
+            // Si selecciona un tutor distinto de José, desmarcar el checkbox de predeterminado
+            if (tutorDefaultCheckbox && selectedTutor && selectedTutor.id !== 'vazquez') {
+                tutorDefaultCheckbox.checked = false;
+            }
+
+            if (!selectedTutor) {
+                // Sin selección: limpiar solo nombre/firma (el correo puede quedarse si el usuario lo escribió)
+                tutorNameInput.value = '';
+                reinscriptionTutorSignatureDataUrl = null;
+            } else {
+                tutorEmailInput.value = selectedTutor.email || '';
+                tutorNameInput.value = selectedTutor.name || '';
+                reinscriptionTutorSignatureDataUrl = null;
+                if (selectedTutor.signaturePath) {
+                    const dataUrl = await loadImageDataUrlFromPath(selectedTutor.signaturePath);
+                    reinscriptionTutorSignatureDataUrl = dataUrl || null;
+                }
+            }
+
+            // Guardar datos y refrescar vista previa / PDF
+            collectReinscriptionFormData();
+            scheduleReinscriptionPreviewRender();
         }
 
         function updateReinscriptionSignaturePreview() {
@@ -4470,6 +4618,19 @@
             const width = page.getWidth();
             const height = page.getHeight();
             const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+            // Resolver, si es posible, qué tutor se está usando para aplicar overrides
+            let resolvedTutorId = data.tutorId || '';
+            if (!resolvedTutorId && data.tutorEmail) {
+                const byEmail = getTutorByEmail(data.tutorEmail);
+                if (byEmail) resolvedTutorId = byEmail.id;
+            }
+            if (!resolvedTutorId && data.tutorName) {
+                const byName = getTutorByName(data.tutorName);
+                if (byName) resolvedTutorId = byName.id;
+            }
+            const tutorLayoutOverride = resolvedTutorId && TUTOR_PDF_LAYOUT_OVERRIDES[resolvedTutorId]
+                ? TUTOR_PDF_LAYOUT_OVERRIDES[resolvedTutorId]
+                : null;
             const drawText = (text, layout, options = {}) => {
                 if (text == null || text === '') return;
                 const rawValue = typeof text === 'string' ? text : String(text);
@@ -4700,8 +4861,11 @@
                     const responseT = await fetch(data.tutorSignatureDataUrl);
                     const signatureBufferT = await responseT.arrayBuffer();
                     const signatureImageT = await pdfDoc.embedPng(signatureBufferT);
-                    const layoutT = REINSCRIPTION_PDF_LAYOUT.tutorSignature || {};
+                    let layoutT = REINSCRIPTION_PDF_LAYOUT.tutorSignature || {};
                     const defaultT = REINSCRIPTION_PDF_LAYOUT_DEFAULTS.tutorSignature || {};
+                    if (tutorLayoutOverride && tutorLayoutOverride.tutorSignature) {
+                        layoutT = { ...layoutT, ...tutorLayoutOverride.tutorSignature };
+                    }
                     const imageRatioT = signatureImageT.width && signatureImageT.height ? signatureImageT.width / signatureImageT.height : null;
                     let tWidth;
                     let tHeight;
@@ -4751,9 +4915,16 @@
             // Dibujar nombre del tutor si se proporcionó
             if (data && data.tutorName) {
                 try {
-                    const layoutN = REINSCRIPTION_PDF_LAYOUT.tutorName || {};
+                    let layoutN = REINSCRIPTION_PDF_LAYOUT.tutorName || {};
+                    let fontSize = 10.5;
+                    if (tutorLayoutOverride && tutorLayoutOverride.tutorName) {
+                        layoutN = { ...layoutN, ...tutorLayoutOverride.tutorName };
+                        if (Number.isFinite(tutorLayoutOverride.tutorName.fontSize)) {
+                            fontSize = tutorLayoutOverride.tutorName.fontSize;
+                        }
+                    }
                     // Usar color azul puro: rgb(0,0,1)
-                    drawText(data.tutorName, layoutN, { size: 10, color: rgb(0, 0, 1) });
+                    drawText(data.tutorName, layoutN, { size: fontSize, color: rgb(0, 0, 1) });
                 } catch (errName) {
                     console.warn('No se pudo dibujar el nombre del tutor en el PDF', errName);
                 }
@@ -5026,6 +5197,12 @@
             const signatureInput = document.getElementById('reinscriptionSignature');
             if (signatureInput) {
                 signatureInput.addEventListener('change', handleReinscriptionSignatureChange);
+            }
+            const tutorSelect = document.getElementById('reinscriptionTutorSelect');
+            if (tutorSelect) {
+                tutorSelect.addEventListener('change', () => {
+                    handleTutorSelectionChange().catch(() => {});
+                });
             }
             const tutorDefaultCheckbox = document.getElementById('reinscriptionTutorDefault');
             if (tutorDefaultCheckbox) {
@@ -7691,7 +7868,7 @@
         <div class="maintenance-inner">
             <strong>Estamos en mantenimiento:</strong>
             Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. Ten algunos casos puede ser
-      necesario iniciar sesión hasta 2–3 veces para guardar el horario correctamente es cuando el se.
+      necesario iniciar sesión hasta 2–3 veces esto para guardar el horario correctamente .
         </div>
     </div>
 
