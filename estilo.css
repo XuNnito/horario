@@ -229,7 +229,7 @@ button:hover {
 }
 
 .warning {
-    background-color: rgba(243, 157, 18, 0.452);
+    background-color: rgba(243, 18, 18, 0.849);
     color: var(--warning-color);
     border: 1px solid var(--warning-color);
 }

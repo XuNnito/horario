@@ -373,6 +373,7 @@
             <button type="button" class="pm-close" id="pmClose" aria-label="Cerrar">&times;</button>
             <div class="pm-avatar" id="pmAvatar" aria-hidden="true"></div>
             <h3 id="pmName">Sin sesión</h3>
+            <div class="pm-email" id="pmEmail">-</div>
             <div class="pm-details">
                 <button id="pmCareerSelect" class="pm-career-select" type="button" aria-label="Seleccionar carrera">
                     <img id="pmCareerIcon" class="pm-career-select__icon" src="biomedica.png" alt="Carrera actual">
@@ -449,6 +450,13 @@
             background: #ddd center/cover no-repeat;
             border: 3px solid #fff;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .pm-email {
+            margin-top: 4px;
+            font-size: 13px;
+            color: #555;
+            word-break: break-all;
         }
 
         .pm-details {
@@ -540,6 +548,7 @@
             const pmCareerIcon = document.getElementById('pmCareerIcon');
             const pmCareerSelect = document.getElementById('pmCareerSelect');
             const pmDate = document.getElementById('pmDate');
+            const pmEmail = document.getElementById('pmEmail');
             const pmSignOut = document.getElementById('pmSignOut');
             const pmDeleteAccount = document.getElementById('pmDeleteAccount');
 
@@ -572,6 +581,16 @@
                     } else if (!selectedCareer) {
                         setImageSource(pmCareerIcon, DEFAULT_CAREER_ICON_SRC, DEFAULT_CAREER_ICON_SRC);
                     }
+                }
+                // correo del usuario (si existe)
+                if (pmEmail) {
+                    let email = '';
+                    try {
+                        if (typeof getCurrentUserEmail === 'function') {
+                            email = getCurrentUserEmail();
+                        }
+                    } catch (e) { /* silencioso */ }
+                    pmEmail.textContent = email || 'Sin correo';
                 }
                 pmDate.textContent = formatDate(new Date());
                 modal.classList.remove('hidden');
@@ -616,6 +635,10 @@
                         const url = 'url("' + opts.avatarUrl + '")';
                         profileCircle.style.backgroundImage = url;
                         pmAvatar.style.backgroundImage = url;
+                    }
+                    if (opts.email) {
+                        if (pmEmail) pmEmail.textContent = opts.email;
+                        if (profileCircle) profileCircle.title = opts.email;
                     }
                     if (opts.careerId && typeof applyCareerSelection === 'function') {
                         const option = getCareerById(opts.careerId) || getCareerByName(opts.career || '');
@@ -4171,10 +4194,10 @@
                         }
 
                         // Intentar sincronizar cambios en Drive sin solicitar nuevamente el acceso si no es necesario
-                        syncDriveAfterChange({ interactive: false, successMessage: 'Cambio sincronizado en Google Drive' })
+                        syncDriveAfterChange({ interactive: false, successMessage: 'Cambio correctamente' })
                             .then(ok => {
                                 if (!ok) {
-                                    console.warn('No se pudo sincronizar eliminación en Drive');
+                                    console.warn('No se pudo eliminar');
                                 }
                             });
 
@@ -5885,9 +5908,9 @@
 
             // Sincronizar en Drive sin volver a pedir autenticación si la sesión continúa válida.
             (async () => {
-                const ok = await syncDriveAfterChange({ interactive: false, successMessage: 'Horario sincronizado en Google Drive' });
+                const ok = await syncDriveAfterChange({ interactive: false, successMessage: 'Horario guardado' });
                 if (!ok) {
-                    console.warn('Error sincronizando tras añadir materia');
+                    console.warn('Error tras añadir materia');
                 }
             })();
 
@@ -6445,10 +6468,10 @@
             }
 
             // Intentar sincronizar cambios en Drive sin volver a pedir autenticación innecesariamente
-            syncDriveAfterChange({ interactive: false, successMessage: 'Materia sincronizada en Google Drive' })
+            syncDriveAfterChange({ interactive: false, successMessage: 'Materia guardada' })
                 .then(ok => {
                     if (!ok) {
-                        console.warn('No se pudo sincronizar nueva materia en Drive');
+                        console.warn('No se pudo guardar nueva materia');
                     }
                 });
 
@@ -6971,7 +6994,7 @@
             const {
                 interactive = false,
                 showSuccess = true,
-                successMessage = 'Horario sincronizado en Google Drive',
+                successMessage = 'Horario guardado',
                 silent = false
             } = options;
             try {
@@ -6983,7 +7006,7 @@
             } catch (err) {
                 if (isMissingTokenError(err)) {
                     if (!silent) {
-                        showMessage('Debes iniciar sesión con Google para sincronizar en Drive.', 'warning');
+                        showMessage('Debes iniciar sesión con Google para guardar su horario.', 'warning');
                     }
                     return false;
                 }
@@ -7000,7 +7023,7 @@
                 }
                 console.warn('syncDriveAfterChange error:', err);
                 if (!silent) {
-                    showMessage('No se pudo sincronizar en Drive', 'warning');
+                    showMessage('No se pudo guardar', 'warning');
                 }
                 return false;
             }
@@ -7011,7 +7034,7 @@
             const {
                 interactive = true,
                 showSuccess = false,
-                successMessage = 'Horario sincronizado en Google Drive',
+                successMessage = 'Horario guardado',
                 silent = false
             } = options;
             return syncDriveAfterChange({ interactive, showSuccess, successMessage, silent });
@@ -7149,16 +7172,16 @@
                     } catch (e) { /* ignore parse errors */ }
 
                     if (Array.isArray(localStored) && localStored.length > 0) {
-                        console.log('Datos locales detectados tras iniciar sesión — preservando y sincronizando en Drive.');
+                        console.log('Sesión iniciada.');
                         // aplicar local a memoria y sincronizar hacia Drive
                         selectedSubjects = localStored;
                         try { saveSelectedSubjects(); } catch (e) { }
                         try {
-                            await syncDriveAfterChange({ interactive: true, successMessage: 'Cambios locales sincronizados con Drive' });
-                            showMessage('Se preservaron tus cambios locales y se sincronizaron con Google Drive.', 'success');
+                            await syncDriveAfterChange({ interactive: true, successMessage: 'Cambios guardados' });
+                            showMessage('se conecto correctamente.', 'success');
                         } catch (e) {
-                            console.warn('No se pudo sincronizar cambios locales tras inicio de sesión', e);
-                            showMessage('No se pudo sincronizar tus cambios locales con Drive.', 'warning');
+                            console.warn('Tus horarios no se guardaron, error de inicio de sesión', e);
+                            showMessage('No se pudo guardar tus cambios.', 'warning');
                         }
                         // actualizar vistas con los datos locales
                         updateScheduleView();
@@ -7178,7 +7201,7 @@
                     showDriveQuotaModal('load');
                 } else if (isMissingTokenError(e)) {
                     console.warn('Sesión sin token válido al cargar automáticamente', e);
-                    showMessage('Inicia sesión nuevamente para sincronizar tus horarios.', 'warning');
+                    showMessage('Inicia sesión nuevamente para que se guarden tus horarios.', 'warning');
                 } else {
                     console.warn('No se pudo buscar/cargar archivo desde Drive al iniciar sesión', e);
                     handleAuthError(e);
@@ -7696,8 +7719,8 @@
                 // Mostrar mensaje que se requiere re-autenticación y solicitar login interactivo
                 try {
                     const msgText = willAutoRetry
-                        ? 'Se requiere renovar el acceso para sincronizar con Google. Abriendo la ventana de inicio de sesión...'
-                        : 'Se requiere renovar el acceso para sincronizar con Google. Haz clic en "Iniciar sesión" para continuar.';
+                        ? 'Se requiere inicio de sesión. Abriendo la ventana de inicio de sesión...'
+                        : 'Se requiere inicio de sesión para guardar su horario. Haz clic en "Iniciar sesión" para continuar.';
                     showMessage(msgText, 'warning');
                 } catch (e) { }
 
