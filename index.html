@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="ulVY2DL2lUQiNwNBmjq9b5M2EkY5vkLhYj7QC7cbdeQ" />
-    <meta property="og:title" content="Horarios Bio - Gestor de Horarios Académicos">
+    <meta property="og:title" content="Horarios Bio - Simulador de Horario">
     <meta property="og:description" content="Plataforma para estudiantes irregulares donde puedes crear y organizar tu horario académico mas facil, administrar materias, detectar choques de horas y generar solicitudes de reinscripción para tu tutor academico.">
     <meta property="og:image" content="https://xunnito.github.io/horario/biomedica.png">
     <meta property="og:url" content="https://xunnito.github.io/horario/">
@@ -2621,6 +2621,8 @@
                     group: "7A",
                     aula: "A210",
                     sessions: [
+                        { day: "jueves", startTime: "15:00", endTime: "16:45" },
+                        { day: "viernes", startTime: "15:00", endTime: "16:45"}
                     ]
                 },
 
@@ -3809,6 +3811,14 @@
             }
         }
 
+        // Materias que no deben contarse como "cargadas" ni "adeudadas" (por ejemplo, Tutorías)
+        function isNonAcademicSubject(subject) {
+            if (!subject) return false;
+            const sid = (typeof subject.id !== 'undefined' && subject.id !== null) ? String(subject.id) : '';
+            // Actualmente sólo Tutorías (id 69)
+            return sid === '69';
+        }
+
         function guessGroupFromSelectedSubjects() {
             if (!Array.isArray(selectedSubjects) || selectedSubjects.length === 0) {
                 return '';
@@ -3816,6 +3826,7 @@
             const counts = {};
             selectedSubjects.forEach(subject => {
                 if (!subject || !subject.group) return;
+                if (isNonAcademicSubject(subject)) return; // no usar Tutorías para inferir grupo
                 const key = String(subject.group).trim();
                 if (!key) return;
                 counts[key] = (counts[key] || 0) + 1;
@@ -3848,6 +3859,7 @@
             const selectedIds = new Set();
             selectedSubjects.forEach(subject => {
                 if (!subject) return;
+                if (isNonAcademicSubject(subject)) return; // no considerar Tutorías como materia normal
                 if (typeof subject.id === 'undefined' || subject.id === null) return;
                 selectedIds.add(String(subject.id));
             });
@@ -3856,6 +3868,7 @@
             const seen = {};
             referenceSubjects.forEach(subject => {
                 if (!subject) return;
+                if (isNonAcademicSubject(subject)) return; // no marcar Tutorías como "adeudada"
                 const subjectId = typeof subject.id !== 'undefined' && subject.id !== null ? String(subject.id) : null;
                 if (subjectId && selectedIds.has(subjectId)) {
                     return;
@@ -3879,7 +3892,10 @@
             try {
                 if (!Array.isArray(DEFAULT_BIOMEDICA_SUBJECT_IDS) || DEFAULT_BIOMEDICA_SUBJECT_IDS.length === 0) return '';
                 // Construir set de ids seleccionados (como strings) para comparaciones
-                const selectedIds = new Set((Array.isArray(selectedSubjects) ? selectedSubjects : []).map(s => (s && typeof s.id !== 'undefined' && s.id !== null) ? String(s.id) : null));
+                const selectedIds = new Set((Array.isArray(selectedSubjects) ? selectedSubjects : []).map(s => {
+                    if (!s || isNonAcademicSubject(s)) return null;
+                    return (typeof s.id !== 'undefined' && s.id !== null) ? String(s.id) : null;
+                }));
                 const names = [];
                 DEFAULT_BIOMEDICA_SUBJECT_IDS.forEach(defId => {
                     try {
@@ -3894,7 +3910,7 @@
                         if (!subj && Array.isArray(catalogSubjects) && catalogSubjects.length) {
                             subj = catalogSubjects.find(x => String(x.id) === sid) || null;
                         }
-                        if (subj && subj.name) {
+                        if (subj && !isNonAcademicSubject(subj) && subj.name) { // no incluir Tutorías como adeudada
                             const name = String(subj.name).trim();
                             if (name) names.push(name);
                         }
@@ -3914,6 +3930,7 @@
             const lines = ['\t '];
             selectedSubjects.forEach(subject => {
                 if (!subject) return;
+                if (isNonAcademicSubject(subject)) return; // no listar Tutorías como materia cargada
                 const name = subject.name ? String(subject.name).trim() : '';
                 const group = subject.group != null ? String(subject.group).trim() : '';
                 if (!name) {
@@ -3955,7 +3972,7 @@
             if (!container) {
                 return;
             }
-            const subjects = Array.isArray(selectedSubjects) ? selectedSubjects : [];
+            const subjects = (Array.isArray(selectedSubjects) ? selectedSubjects : []).filter(s => !isNonAcademicSubject(s));
             if (!subjects.length) {
                 container.innerHTML = '';
                 container.classList.add('hidden');
