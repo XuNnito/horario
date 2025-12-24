@@ -4305,6 +4305,19 @@
                 tutorIsDefault: !!(document.getElementById('reinscriptionTutorDefault') || {}).checked,
                 tutorId: tutorSelect ? (tutorSelect.value || '') : ''
             };
+
+            // Asegurar que la carrera siempre coincida con la carrera seleccionada actualmente
+            if (!data.career) {
+                try {
+                    const currentCareer = typeof getSelectedCareerOption === 'function' ? getSelectedCareerOption() : null;
+                    if (currentCareer && currentCareer.name) {
+                        data.career = currentCareer.name;
+                        if (careerInput) {
+                            careerInput.value = currentCareer.name;
+                        }
+                    }
+                } catch (e) { /* silencioso */ }
+            }
             if (debtInput && debtInput.dataset && debtInput.dataset.autoValue) {
                 data.autoDebtSubject = debtInput.dataset.autoValue;
             } else if (reinscriptionLastFormValues && reinscriptionLastFormValues.autoDebtSubject) {
@@ -5114,6 +5127,10 @@
             if (!modal) return;
             const defaults = buildReinscriptionDefaults();
             const values = reinscriptionLastFormValues ? { ...defaults, ...reinscriptionLastFormValues } : defaults;
+            // Forzar que la carrera venga siempre de la selección actual, no de valores viejos
+            if (defaults && defaults.career) {
+                values.career = defaults.career;
+            }
             if (!values.debtSubject && defaults.debtSubject) {
                 values.debtSubject = defaults.debtSubject;
             }
