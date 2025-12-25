@@ -2271,3 +2271,469 @@ a img{
 }
 
 .maintenance-close:focus { outline: 2px solid rgba(0,0,0,0.2); }
+
+
+
+
+    #mobileMessage {
+        display: none;
+        margin: 16px auto;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: rgba(26, 115, 232, 0.12);
+        color: #1b1f2e;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        max-width: 500px;
+        text-align: center;
+    }
+
+    @media (max-width: 768px) {
+        .row {
+            flex-direction: column;
+        }
+
+        .row .panel {
+            width: 100% !important;
+            min-width: 100% !important;
+        }
+
+        .catalog-panel {
+            order: 2;
+        }
+
+        #catalogSubjects {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        #mobileMessage {
+            display: block;
+        }
+    }
+
+    #globalLoader {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 15, 30, 0.65);
+        z-index: 2100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #globalLoader.hidden {
+        display: none;
+    }
+
+    .loader-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 22px 30px;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 12px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .loader-spinner {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        border: 5px solid rgba(255, 255, 255, 0.25);
+        border-top-color: #fff;
+        animation: spin 0.85s linear infinite;
+    }
+
+    .loader-text {
+        color: #fff;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    body.no-scroll {
+        overflow: hidden;
+    }
+
+    body.auth-gate-open {
+        overflow: hidden;
+    }
+
+    #authGate {
+        position: fixed;
+        inset: 0;
+        z-index: 2200;
+        background: rgba(9, 15, 26, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    #authGate.hidden {
+        display: none;
+    }
+
+    .auth-gate__box {
+        background: #0b0d14;
+        border-radius: 16px;
+        padding: 28px 30px;
+        max-width: 420px;
+        width: 100%;
+        color: #fff;
+        text-align: center;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+    }
+
+    .auth-gate__box p {
+        margin: 0 0 18px;
+        line-height: 1.4;
+        font-size: 1.05rem;
+    }
+
+    .auth-gate__note {
+        margin: -6px 0 20px;
+        color: #d93025;
+        font-size: 0.92rem;
+        font-weight: 600;
+    }
+
+    .auth-gate__logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 18px;
+    }
+
+    .auth-gate__logo img {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+    }
+
+    .auth-gate__actions {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .auth-gate__actions button {
+        flex: 1;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: none;
+        font-size: 0.95rem;
+        cursor: pointer;
+    }
+
+    #authGateSignIn {
+        background: #1a73e8;
+        color: #fff;
+    }
+
+    #authGateCancel {
+        background: #2c2f38;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    #driveQuotaModal {
+        position: fixed;
+        inset: 0;
+        z-index: 2300;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(9, 15, 26, 0.75);
+    }
+
+    #driveQuotaModal.hidden {
+        display: none;
+    }
+
+    #defaultSchedulePrompt {
+        position: fixed;
+        inset: 0;
+        z-index: 2250;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(9, 15, 26, 0.65);
+    }
+
+    #defaultSchedulePrompt.hidden {
+        display: none;
+    }
+
+    .default-schedule__panel {
+        background: #fff;
+        border-radius: 14px;
+        max-width: 360px;
+        width: 100%;
+        padding: 24px 26px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+        color: #1b1d24;
+        text-align: left;
+    }
+
+    .default-schedule__panel h3 {
+        margin: 0 0 12px;
+        font-size: 1.2rem;
+    }
+
+    .default-schedule__panel p {
+        margin: 0 0 18px;
+        line-height: 1.45;
+        font-size: 0.96rem;
+    }
+
+    .default-schedule__actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .default-schedule__actions button {
+        flex: 1;
+        min-width: 130px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: none;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: transform 0.12s ease, filter 0.12s ease;
+    }
+
+    .default-schedule__actions button:hover {
+        transform: translateY(-1px);
+        filter: brightness(0.97);
+    }
+
+    #defaultScheduleAccept {
+        background: #1a73e8;
+        color: #fff;
+    }
+
+    #defaultScheduleCancel {
+        background: #f1f3f4;
+        color: #1f1f1f;
+    }
+
+    .quota-modal__box {
+        background: #fff;
+        border-radius: 16px;
+        max-width: 420px;
+        width: 100%;
+        padding: 26px 28px;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+        color: #1b1d24;
+        text-align: left;
+    }
+
+    .quota-modal__box h3 {
+        margin: 0 0 12px;
+        font-size: 1.3rem;
+    }
+
+    .quota-modal__box p {
+        margin: 0 0 22px;
+        line-height: 1.5;
+        font-size: 0.98rem;
+    }
+
+    .quota-modal__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .quota-modal__actions button {
+        flex: 1;
+        min-width: 150px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: none;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: transform 0.12s ease, filter 0.12s ease;
+    }
+
+    .quota-modal__actions button:hover {
+        transform: translateY(-1px);
+        filter: brightness(0.97);
+    }
+
+    #driveQuotaOpenDrive {
+        background: #1a73e8;
+        color: #fff;
+    }
+
+    #driveQuotaSwitchAccount {
+        background: #34a853;
+        color: #fff;
+    }
+
+    #driveQuotaClose {
+        background: #f1f3f4;
+        color: #1b1d24;
+    }
+
+    #driveQuotaClose:focus,
+    #driveQuotaSwitchAccount:focus,
+    #driveQuotaOpenDrive:focus {
+        outline: 2px solid rgba(26, 115, 232, 0.4);
+        outline-offset: 2px;
+    }
+
+        /* Modal */
+        .profile-modal.hidden {
+            display: none;
+        }
+
+        .profile-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+        }
+
+        .profile-panel {
+            position: relative;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            padding: 20px;
+            width: 320px;
+            max-width: 90%;
+            text-align: center;
+            z-index: 1;
+        }
+
+        .pm-close {
+            position: absolute;
+            right: 8px;
+            top: 6px;
+            background: transparent;
+            border: 0;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            padding: 4px 8px;
+            border-radius: 6px;
+            color: #444;
+            background: #ffffff5b;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+            transition: background .12s ease, transform .08s ease;
+        }
+
+        .pm-avatar {
+            width: 96px;
+            height: 96px;
+            margin: 6px auto 10px;
+            border-radius: 50%;
+            background: #ddd center/cover no-repeat;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .pm-email {
+            margin-top: 4px;
+            font-size: 13px;
+            color: #555;
+            word-break: break-all;
+        }
+
+        .pm-details {
+            color: #444;
+            margin: 8px 0 14px;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: flex-start;
+        }
+
+        .pm-details div {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .pm-signout {
+            background: #d9534f;
+            color: #fff;
+            border: 0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .pm-signout:hover {
+            filter: brightness(0.95);
+        }
+
+        .pm-delete {
+            margin-top: 8px;
+            background: #bd2130;
+            box-shadow: none;
+        }
+
+        .pm-career-select {
+            margin: 8px 0 10px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 10px;
+            background: #f5f7fb;
+            cursor: pointer;
+            text-align: left;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .pm-career-select:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+        }
+
+        .pm-career-select__icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .pm-career-select__text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            color: #25304a;
+        }
+
+        .pm-career-select__hint {
+            font-size: 12px;
+            color: #54617d;
+        }
