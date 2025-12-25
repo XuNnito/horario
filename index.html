@@ -6,18 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="ulVY2DL2lUQiNwNBmjq9b5M2EkY5vkLhYj7QC7cbdeQ" />
     <meta property="og:title" content="Horarios Bio - Simulador de Horario">
-    <meta property="og:description" content="Plataforma para estudiantes irregulares donde puedes crear y organizar tu horario académico mas facil, administrar materias, detectar choques de horas y generar solicitudes de reinscripción para tu tutor academico.">
+    <meta property="og:description"
+        content="Plataforma para estudiantes irregulares donde puedes crear y organizar tu horario académico mas facil, administrar materias, detectar choques de horas y generar solicitudes de reinscripción para tu tutor academico.">
     <meta property="og:image" content="https://xunnito.github.io/horario/biomedica.png">
     <meta property="og:url" content="https://xunnito.github.io/horario/">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="es-MX">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Horarios Bio">
-    <meta name="twitter:description" content="Plataforma para personas irregulares donde puedes crear y organizar tu horario académico mas facil, administrar materias, detectar choques de horas y generar solicitudes de reinscripción para tu tutor academico.">
+    <meta name="twitter:description"
+        content="Plataforma para personas irregulares donde puedes crear y organizar tu horario académico mas facil, administrar materias, detectar choques de horas y generar solicitudes de reinscripción para tu tutor academico.">
     <meta name="twitter:image" content="https://xunnito.github.io/horario/biomedica.png">
-    <title> Horarios Bio</title>
-    <link rel="icon" type="image/png" sizes="512x512" href="https://xunnito.github.io/horario/biomedica.png">
-    <link rel="apple-touch-icon" sizes="512x512" href="https://xunnito.github.io/horario/biomedica.png">
+    <title> Horarios Bio | Simulador de Horarios</title>
+    <meta name="description"
+        content="Plataforma para estudiantes irregulares donde puedes crear y organizar tu horario académico mas facil, administrar materias, detectar choques de horas y generar solicitudes de reinscripción para tu tutor academico.">
+    <link rel="icon" href="/horario/favicon.ico">
+    <link rel="icon" type="image/png" sizes="48x48" href="/horario/icono.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/horario/apple-touch-icon.png">
     <link rel="stylesheet" href="estilo.css">
 
 
@@ -345,7 +350,8 @@
 </style>
 
 <div id="mobileMessage" role="status" aria-live="polite">
-    Desde tu móvil también puedes agregar o editar materias pero recomendamos que utilices un ordenador. Desliza la lista y el horario para ver toda la información.
+    Desde tu móvil también puedes agregar o editar materias pero recomendamos que utilices un ordenador. Desliza la
+    lista y el horario para ver toda la información.
 </div>
 
 
@@ -534,7 +540,6 @@
             font-size: 12px;
             color: #54617d;
         }
-
     </style>
 
     <script>
@@ -750,8 +755,8 @@
             </div>
         </div>
 
-        <div id="driveQuotaModal" class="hidden" aria-hidden="true" role="dialog"
-            aria-labelledby="driveQuotaTitle" aria-modal="true">
+        <div id="driveQuotaModal" class="hidden" aria-hidden="true" role="dialog" aria-labelledby="driveQuotaTitle"
+            aria-modal="true">
             <div class="quota-modal__box">
                 <h3 id="driveQuotaTitle">Tu Google Drive está lleno</h3>
                 <p id="driveQuotaDescription">Tu almacenamiento de Google Drive está lleno. Libera espacio e
@@ -767,7 +772,8 @@
         <div id="careerModal" class="career-modal hidden" aria-hidden="true" role="dialog"
             aria-labelledby="careerModalTitle" aria-modal="true">
             <div class="career-modal__panel" role="document">
-                <button id="careerModalClose" class="career-modal__close" type="button" aria-label="Cerrar">&times;</button>
+                <button id="careerModalClose" class="career-modal__close" type="button"
+                    aria-label="Cerrar">&times;</button>
                 <h3 id="careerModalTitle">Selecciona tu carrera</h3>
                 <p class="career-modal__subtitle">Elige una carrera para personalizar los iconos y fondo.</p>
                 <div id="careerOptionsGrid" class="career-modal__grid" role="listbox" aria-label="Listado de carreras">
@@ -778,19 +784,23 @@
         <div id="careerCreateModal" class="career-create hidden" aria-hidden="true" role="dialog"
             aria-labelledby="careerCreateTitle" aria-modal="true">
             <div class="career-create__panel" role="document">
-                <button id="careerCreateClose" class="career-create__close" type="button" aria-label="Cerrar">&times;</button>
+                <button id="careerCreateClose" class="career-create__close" type="button"
+                    aria-label="Cerrar">&times;</button>
                 <h3 id="careerCreateTitle">Crear nueva carrera</h3>
                 <p class="career-create__subtitle">Asigna un nombre y sube un imagen en PNG o JPG.</p>
                 <form id="careerCreateForm">
                     <label class="career-create__label" for="careerCreateName">Nombre de la carrera</label>
-                    <input id="careerCreateName" type="text" name="careerName" maxlength="80" required placeholder="Ingresa el nombre de la carrera">
+                    <input id="careerCreateName" type="text" name="careerName" maxlength="80" required
+                        placeholder="Ingresa el nombre de la carrera">
 
                     <label class="career-create__label" for="careerCreateLogo">Logo de la carrera</label>
                     <div class="career-create__upload">
                         <input id="careerCreateLogo" type="file" accept="image/png,image/jpeg">
-                        <div id="careerCreatePreview" class="career-create__preview career-create__preview--empty" aria-hidden="true"></div>
+                        <div id="careerCreatePreview" class="career-create__preview career-create__preview--empty"
+                            aria-hidden="true"></div>
                     </div>
-                    <p class="career-create__hint">El logo se usará como icono principal, fondo y marca de impresión del horario pdf.</p>
+                    <p class="career-create__hint">El logo se usará como icono principal, fondo y marca de impresión del
+                        horario pdf.</p>
                     <div class="career-create__actions">
                         <button id="careerCreateCancel" type="button">Cancelar</button>
                         <button id="careerCreateSubmit" type="submit">Crear carrera</button>
@@ -802,12 +812,14 @@
         <div id="careerRenameModal" class="career-create hidden" aria-hidden="true" role="dialog"
             aria-labelledby="careerRenameTitle" aria-modal="true">
             <div class="career-create__panel" role="document">
-                <button id="careerRenameClose" class="career-create__close" type="button" aria-label="Cerrar">&times;</button>
+                <button id="careerRenameClose" class="career-create__close" type="button"
+                    aria-label="Cerrar">&times;</button>
                 <h3 id="careerRenameTitle">Editar nombre de la carrera</h3>
                 <p class="career-create__subtitle">Actualiza el nombre de tu carrera personalizada.</p>
                 <form id="careerRenameForm">
                     <label class="career-create__label" for="careerRenameName">Nombre de la carrera</label>
-                    <input id="careerRenameName" type="text" name="careerRename" maxlength="80" required placeholder="Ingresa el nuevo nombre">
+                    <input id="careerRenameName" type="text" name="careerRename" maxlength="80" required
+                        placeholder="Ingresa el nuevo nombre">
                     <div class="career-create__actions">
                         <button id="careerRenameCancel" type="button">Cancelar</button>
                         <button id="careerRenameSubmit" type="submit">Guardar</button>
@@ -816,17 +828,17 @@
             </div>
         </div>
 
-                <div id="defaultSchedulePrompt" class="hidden" aria-hidden="true" role="dialog"
-                    aria-modal="true" aria-labelledby="defaultScheduleTitle">
-                    <div class="default-schedule__panel" role="document">
-                        <h3 id="defaultScheduleTitle">Cargar horario de Biomédica</h3>
-                        <p>Se cargara automaticamente el  horario de 7to A y podras quitar despues</p>
-                        <div class="default-schedule__actions">
-                            <button id="defaultScheduleCancel" type="button">Cancelar</button>
-                            <button id="defaultScheduleAccept" type="button">Aceptar</button>
-                        </div>
-                    </div>
+        <div id="defaultSchedulePrompt" class="hidden" aria-hidden="true" role="dialog" aria-modal="true"
+            aria-labelledby="defaultScheduleTitle">
+            <div class="default-schedule__panel" role="document">
+                <h3 id="defaultScheduleTitle">Cargar horario de Biomédica</h3>
+                <p>Se cargara automaticamente el horario de 7to A y podras quitar despues</p>
+                <div class="default-schedule__actions">
+                    <button id="defaultScheduleCancel" type="button">Cancelar</button>
+                    <button id="defaultScheduleAccept" type="button">Aceptar</button>
                 </div>
+            </div>
+        </div>
 
         <div id="authGate" class="auth-gate" aria-hidden="false" role="dialog" aria-label="Inicio de sesión requerido">
             <div class="auth-gate__box">
@@ -867,7 +879,8 @@
                 <h2>Horario Semanal</h2>
                 <div class="schedule-actions">
                     <button type="button" onclick="printSchedule()">Imprimir Horario</button>
-                    <button id="openReinscriptionModal" type="button" class="btn-secondary">Solicitud de reinscripción</button>
+                    <button id="openReinscriptionModal" type="button" class="btn-secondary">Solicitud de
+                        reinscripción</button>
                 </div>
                 <div class="legend" style="display:flex;gap:10px;align-items:center;margin:10px 0;">
                     <span style="display:inline-flex;align-items:center;gap:6px;">
@@ -887,7 +900,8 @@
                     </span>
                 </div>
                 <div id="printMessage" class="modal">
-                    Opcion: Antes de imprimir, desactiva "Imprimir gráficos de fondo y encabezados y pies de la pagina" <br>1. Mas configuraciones y busca
+                    Opcion: Antes de imprimir, desactiva "Imprimir gráficos de fondo y encabezados y pies de la pagina"
+                    <br>1. Mas configuraciones y busca
                     opciones "Graficos de fondo" <br>
                     <button onclick="closeMessageAndPrint()" class="print-button">¡Listo, Imprimir!</button>
                 </div>
@@ -915,7 +929,7 @@
                     <div id="selectedSubjectsList"></div>
                 </div>
 
-                
+
             </div>
         </div>
     </div>
@@ -978,153 +992,203 @@
             </div>
         </div>
     </div>
-        <div id="reinscriptionModal" class="reinscription-modal hidden" aria-hidden="true" role="dialog"
-            aria-labelledby="reinscriptionTitle" aria-modal="true">
-            <div class="reinscription-modal__panel" role="document">
-                <button id="reinscriptionClose" class="reinscription-modal__close" type="button" aria-label="Cerrar">&times;</button>
-                <h3 id="reinscriptionTitle">Solicitud de reinscripción</h3>
-                <p class="reinscription-modal__subtitle">Completa o ajusta tus datos antes de generar el formato oficial.</p>
-                <div class="reinscription-modal__body">
-                    <form id="reinscriptionForm" class="reinscription-modal__form">
+    <div id="reinscriptionModal" class="reinscription-modal hidden" aria-hidden="true" role="dialog"
+        aria-labelledby="reinscriptionTitle" aria-modal="true">
+        <div class="reinscription-modal__panel" role="document">
+            <button id="reinscriptionClose" class="reinscription-modal__close" type="button"
+                aria-label="Cerrar">&times;</button>
+            <h3 id="reinscriptionTitle">Solicitud de reinscripción</h3>
+            <p class="reinscription-modal__subtitle">Completa o ajusta tus datos antes de generar el formato oficial.
+            </p>
+            <div class="reinscription-modal__body">
+                <form id="reinscriptionForm" class="reinscription-modal__form">
+                    <div class="reinscription-field">
+                        <label for="reinscriptionFullName">Nombre completo</label>
+                        <input id="reinscriptionFullName" name="fullName" type="text" maxlength="120"
+                            placeholder="Nombre(s) y apellidos" required>
+                    </div>
+                    <div class="reinscription-grid">
                         <div class="reinscription-field">
-                            <label for="reinscriptionFullName">Nombre completo</label>
-                            <input id="reinscriptionFullName" name="fullName" type="text" maxlength="120" placeholder="Nombre(s) y apellidos" required>
-                        </div>
-                        <div class="reinscription-grid">
-                            <div class="reinscription-field">
-                                <label for="reinscriptionMatricula">Matrícula</label>
-                                <input id="reinscriptionMatricula" name="matricula" type="text" maxlength="30" placeholder="Ej. 241104" required>
-                            </div>
-                            <div class="reinscription-field">
-                                <label for="reinscriptionCareer">Carrera</label>
-                                <input id="reinscriptionCareer" name="career" type="text" maxlength="80" required>
-                            </div>
-                        </div>
-                        <div class="reinscription-grid">
-                            <div class="reinscription-field">
-                                <label for="reinscriptionQuarter">Cuatrimestre</label>
-                                <input id="reinscriptionQuarter" name="quarter" type="text" maxlength="20" placeholder="Ej. 7">
-                            </div>
-                            <div class="reinscription-field">
-                                <label for="reinscriptionGroup">Grupo</label>
-                                <input id="reinscriptionGroup" name="group" type="text" maxlength="20" placeholder="Ej. A">
-                            </div>
+                            <label for="reinscriptionMatricula">Matrícula</label>
+                            <input id="reinscriptionMatricula" name="matricula" type="text" maxlength="30"
+                                placeholder="Ej. 241104" required>
                         </div>
                         <div class="reinscription-field">
-                            <label for="reinscriptionDebtSubject">Materia que adeuda</label>
-                            <input id="reinscriptionDebtSubject" name="debtSubject" type="text" maxlength="120" placeholder="Materia pendiente">
-                            <small class="reinscription-hint">Se rellena automáticamente con la materia ordinaria no cargada, puedes editarla.</small>
+                            <label for="reinscriptionCareer">Carrera</label>
+                            <input id="reinscriptionCareer" name="career" type="text" maxlength="80" required>
+                        </div>
+                    </div>
+                    <div class="reinscription-grid">
+                        <div class="reinscription-field">
+                            <label for="reinscriptionQuarter">Cuatrimestre</label>
+                            <input id="reinscriptionQuarter" name="quarter" type="text" maxlength="20"
+                                placeholder="Ej. 7">
                         </div>
                         <div class="reinscription-field">
-                            <label for="reinscriptionSignature">Firma (PNG sin fondo) <span style="color: #d32f2f; font-weight: bold;">*</span></label>
-                            <div class="signature-required-warning" style="color: #d32f2f; margin-bottom: 12px; padding: 10px 12px; background-color: #ffebee; border-left: 4px solid #d32f2f; border-radius: 4px; font-size: 16px; font-weight: 500; display: block;">La firma es obligatoria para enviar la solicitud al tutor.</div>
-                            <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
-                                <input id="reinscriptionSignature" name="signature" type="file" accept="image/png" style="flex: 1; min-width: 200px;">
-                                <button id="openDrawSignatureModal" type="button" style="padding: 8px 16px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Dibujar firma</button>
-                            </div>
-                            <div id="reinscriptionSignaturePreviewWrapper" class="reinscription-signature hidden">
-                                <img id="reinscriptionSignaturePreview" alt="Vista previa de la firma">
-                                <button id="reinscriptionSignatureClear" type="button" class="btn-link">Quitar firma</button>
-                            </div>
-                            <div id="reinscriptionLoadedSubjectsList" class="reinscription-loaded-subjects hidden" aria-live="polite"></div>
+                            <label for="reinscriptionGroup">Grupo</label>
+                            <input id="reinscriptionGroup" name="group" type="text" maxlength="20" placeholder="Ej. A">
                         </div>
-                        <div class="reinscription-field reinscription-email-field">
-                            <label for="reinscriptionTutorEmail">Correo del tutor (opcional)</label>
-                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap; ">
-                                <input id="reinscriptionTutorEmail" name="tutorEmail" type="email" maxlength="80" placeholder="Ej: vazquez@ib.upchiapas.edu.mx" autocomplete="email" style="flex: 1; min-width: 250px; padding: 10px 12px; font-size: 15px; border: 1px solid rgba(36, 48, 79, 0.25); border-radius: 8px;">
-                                <label for="reinscriptionTutorDefault" style="display:flex;">
-                                    <input id="reinscriptionTutorDefault" type="checkbox" aria-label="Seleccionar como tutor predeterminado">
-                                    <span style="display:flex; align-items:center; gap:6px; font-size:12px; color:#54617d; font-weight:400; white-space:nowrap;">¿Tu tutor es<strong style="color:#1a73e8; background:rgba(26,115,232,0.08); padding:1px 2px; border-radius:3px; font-size:11px;">JOSE OCTAVIO VAZQUEZ</strong>?</span>
-                                </label>
-                            </div>
-                            <!-- Selector para otros tutores -->
-                            <div style="margin-top:8px; width:100%;">
-                                <label for="reinscriptionTutorSelect" style="display:block; font-size:13px; margin-bottom:4px; color:#3c4043;">Si tu tutor es otro, selecciónalo aquí:</label>
-                                <select id="reinscriptionTutorSelect" name="tutorSelect" style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(36, 48, 79, 0.25); font-size:14px;">
-                                    <option value="">Selecciona tu tutor</option>
-                                    <option value="vazquez">JOSE OCTAVIO VAZQUEZ BUENOS AIRES</option>
-                                    <option value="corzo">MARIA DE LOURDES CORZO CUESTA</option>
-                                    <option value="ibanez">CHRISTIAN ROBERTO IBÁÑEZ NANGÜELÚ</option>
-                                    <option value="martinez">DIANA PAULINA MARTINEZ CANCINO</option>
-                                    <option value="constantino">EGLAIN CONSTANTINO CORTES</option>
-                                    <option value="cazarin">ANA LAURA CAZARIN VAZQUEZ</option>
-                                </select>
-                            </div>
-                            <input id="reinscriptionTutorName" name="tutorName" type="hidden">
-                            <small class="reinscription-hint">Al seleccionar un tutor se rellenará el correo y, si hay firma guardada, se pegará en el PDF junto con su nombre.</small>
+                    </div>
+                    <div class="reinscription-field">
+                        <label for="reinscriptionDebtSubject">Materia que adeuda</label>
+                        <input id="reinscriptionDebtSubject" name="debtSubject" type="text" maxlength="120"
+                            placeholder="Materia pendiente">
+                        <small class="reinscription-hint">Se rellena automáticamente con la materia ordinaria no
+                            cargada, puedes editarla.</small>
+                    </div>
+                    <div class="reinscription-field">
+                        <label for="reinscriptionSignature">Firma (PNG sin fondo) <span
+                                style="color: #d32f2f; font-weight: bold;">*</span></label>
+                        <div class="signature-required-warning"
+                            style="color: #d32f2f; margin-bottom: 12px; padding: 10px 12px; background-color: #ffebee; border-left: 4px solid #d32f2f; border-radius: 4px; font-size: 16px; font-weight: 500; display: block;">
+                            La firma es obligatoria para enviar la solicitud al tutor.</div>
+                        <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+                            <input id="reinscriptionSignature" name="signature" type="file" accept="image/png"
+                                style="flex: 1; min-width: 200px;">
+                            <button id="openDrawSignatureModal" type="button"
+                                style="padding: 8px 16px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Dibujar
+                                firma</button>
                         </div>
-                        <div class="reinscription-field">
-                            <label for="reinscriptionTutorMessage">Mensaje (opcional)</label>
-                            <textarea id="reinscriptionTutorMessage" name="tutorMessage" rows="3" maxlength="500" placeholder="Escribe un mensaje adicional para el tutor (opcional)"></textarea>
+                        <div id="reinscriptionSignaturePreviewWrapper" class="reinscription-signature hidden">
+                            <img id="reinscriptionSignaturePreview" alt="Vista previa de la firma">
+                            <button id="reinscriptionSignatureClear" type="button" class="btn-link">Quitar
+                                firma</button>
                         </div>
-                        <!-- Vista previa integrada en móvil -->
-                        <!-- Vista previa integrada en móvil -->
-                        <div class="reinscription-modal__preview reinscription-modal__preview--mobile-integrated" id="mobilePreviewSection">
-                            <label style="font-weight: 600; color: var(--secondary-color); display: block; margin-bottom: 12px;">Vista previa</label>
-                            <div id="reinscriptionPreviewStageMobile" class="reinscription-preview">
-                                <canvas id="reinscriptionPreviewCanvasMobile" class="reinscription-preview__canvas" aria-hidden="true"></canvas>
-                                <div id="reinscriptionSignatureOverlayMobile" class="reinscription-signature-overlay hidden" aria-hidden="true">
-                                    <div id="reinscriptionSignatureBoxMobile" class="reinscription-signature-box">
-                                        <button id="removeSignatureButtonMobile" type="button" class="reinscription-signature-remove" title="Quitar firma" aria-label="Quitar firma">×</button>
-                                        <img id="reinscriptionSignatureOverlayImageMobile" alt="Firma posicionable" draggable="false">
-                                        <div id="reinscriptionSignatureResizeMobile" class="reinscription-signature-handle"></div>
+                        <div id="reinscriptionLoadedSubjectsList" class="reinscription-loaded-subjects hidden"
+                            aria-live="polite"></div>
+                    </div>
+                    <div class="reinscription-field reinscription-email-field">
+                        <label for="reinscriptionTutorEmail">Correo del tutor (opcional)</label>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap; ">
+                            <input id="reinscriptionTutorEmail" name="tutorEmail" type="email" maxlength="80"
+                                placeholder="Ej: vazquez@ib.upchiapas.edu.mx" autocomplete="email"
+                                style="flex: 1; min-width: 250px; padding: 10px 12px; font-size: 15px; border: 1px solid rgba(36, 48, 79, 0.25); border-radius: 8px;">
+                            <label for="reinscriptionTutorDefault" style="display:flex;">
+                                <input id="reinscriptionTutorDefault" type="checkbox"
+                                    aria-label="Seleccionar como tutor predeterminado">
+                                <span
+                                    style="display:flex; align-items:center; gap:6px; font-size:12px; color:#54617d; font-weight:400; white-space:nowrap;">¿Tu
+                                    tutor es<strong
+                                        style="color:#1a73e8; background:rgba(26,115,232,0.08); padding:1px 2px; border-radius:3px; font-size:11px;">JOSE
+                                        OCTAVIO VAZQUEZ</strong>?</span>
+                            </label>
+                        </div>
+                        <!-- Selector para otros tutores -->
+                        <div style="margin-top:8px; width:100%;">
+                            <label for="reinscriptionTutorSelect"
+                                style="display:block; font-size:13px; margin-bottom:4px; color:#3c4043;">Si tu tutor es
+                                otro, selecciónalo aquí:</label>
+                            <select id="reinscriptionTutorSelect" name="tutorSelect"
+                                style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(36, 48, 79, 0.25); font-size:14px;">
+                                <option value="">Selecciona tu tutor</option>
+                                <option value="vazquez">JOSE OCTAVIO VAZQUEZ BUENOS AIRES</option>
+                                <option value="corzo">MARIA DE LOURDES CORZO CUESTA</option>
+                                <option value="ibanez">CHRISTIAN ROBERTO IBÁÑEZ NANGÜELÚ</option>
+                                <option value="martinez">DIANA PAULINA MARTINEZ CANCINO</option>
+                                <option value="constantino">EGLAIN CONSTANTINO CORTES</option>
+                                <option value="cazarin">ANA LAURA CAZARIN VAZQUEZ</option>
+                            </select>
+                        </div>
+                        <input id="reinscriptionTutorName" name="tutorName" type="hidden">
+                        <small class="reinscription-hint">Al seleccionar un tutor se rellenará el correo y, si hay firma
+                            guardada, se pegará en el PDF junto con su nombre.</small>
+                    </div>
+                    <div class="reinscription-field">
+                        <label for="reinscriptionTutorMessage">Mensaje (opcional)</label>
+                        <textarea id="reinscriptionTutorMessage" name="tutorMessage" rows="3" maxlength="500"
+                            placeholder="Escribe un mensaje adicional para el tutor (opcional)"></textarea>
+                    </div>
+                    <!-- Vista previa integrada en móvil -->
+                    <!-- Vista previa integrada en móvil -->
+                    <div class="reinscription-modal__preview reinscription-modal__preview--mobile-integrated"
+                        id="mobilePreviewSection">
+                        <label
+                            style="font-weight: 600; color: var(--secondary-color); display: block; margin-bottom: 12px;">Vista
+                            previa</label>
+                        <div id="reinscriptionPreviewStageMobile" class="reinscription-preview">
+                            <canvas id="reinscriptionPreviewCanvasMobile" class="reinscription-preview__canvas"
+                                aria-hidden="true"></canvas>
+                            <div id="reinscriptionSignatureOverlayMobile" class="reinscription-signature-overlay hidden"
+                                aria-hidden="true">
+                                <div id="reinscriptionSignatureBoxMobile" class="reinscription-signature-box">
+                                    <button id="removeSignatureButtonMobile" type="button"
+                                        class="reinscription-signature-remove" title="Quitar firma"
+                                        aria-label="Quitar firma">×</button>
+                                    <img id="reinscriptionSignatureOverlayImageMobile" alt="Firma posicionable"
+                                        draggable="false">
+                                    <div id="reinscriptionSignatureResizeMobile" class="reinscription-signature-handle">
                                     </div>
-                                </div>
-                            </div>
-                            <div class="reinscription-signature-zoom-controls">
-                                <button id="reinscriptionSignatureZoomOutMobile" type="button" title="Reducir tamaño" aria-label="Reducir tamaño">−</button>
-                                <button id="reinscriptionSignatureZoomInMobile" type="button" title="Aumentar tamaño" aria-label="Aumentar tamaño">+</button>
-                            </div>
-                        </div>
-                    </form>
-                    <div class="reinscription-modal__preview">
-                        <div id="reinscriptionPreviewStage" class="reinscription-preview">
-                            <canvas id="reinscriptionPreviewCanvas" class="reinscription-preview__canvas" aria-hidden="true"></canvas>
-                            <div id="reinscriptionSignatureOverlay" class="reinscription-signature-overlay hidden" aria-hidden="true">
-                                <div id="reinscriptionSignatureBox" class="reinscription-signature-box">
-                                    <button id="removeSignatureButton" type="button" class="reinscription-signature-remove" title="Quitar firma" aria-label="Quitar firma">×</button>
-                                    <img id="reinscriptionSignatureOverlayImage" alt="Firma posicionable" draggable="false">
-                                    <div id="reinscriptionSignatureResize" class="reinscription-signature-handle" role="presentation"></div>
                                 </div>
                             </div>
                         </div>
                         <div class="reinscription-signature-zoom-controls">
-                            <button id="reinscriptionSignatureZoomOut" type="button" title="Reducir tamaño" aria-label="Reducir tamaño">−</button>
-                            <button id="reinscriptionSignatureZoomIn" type="button" title="Aumentar tamaño" aria-label="Aumentar tamaño">+</button>
+                            <button id="reinscriptionSignatureZoomOutMobile" type="button" title="Reducir tamaño"
+                                aria-label="Reducir tamaño">−</button>
+                            <button id="reinscriptionSignatureZoomInMobile" type="button" title="Aumentar tamaño"
+                                aria-label="Aumentar tamaño">+</button>
                         </div>
-                        <p id="reinscriptionPreviewFallback" class="reinscription-modal__preview-hint">Completa los datos para generar la vista previa.</p>
                     </div>
-                </div>
-                <div id="reinscriptionAttachWarning" class="reinscription-attach-warning hidden" role="alert" aria-live="polite">
-                    <strong>IMPORTANTE:</strong> Debes adjuntar manualmente el PDF descargado al borrador en Gmail antes de enviar. Gmail también mostrará su propio aviso.
-                </div>
-                <div class="reinscription-modal__actions">
-                    <button id="reinscriptionOpenDraft" type="button" class="btn-link hidden">Abrir borrador en Gmail</button>
-                    <button id="reinscriptionSendEmail" type="button" class="btn-primary">Enviar al tutor</button>
-                    <button id="reinscriptionDownload" type="button" class="btn-secondary">Descargar formato</button>
+                </form>
+                <div class="reinscription-modal__preview">
+                    <div id="reinscriptionPreviewStage" class="reinscription-preview">
+                        <canvas id="reinscriptionPreviewCanvas" class="reinscription-preview__canvas"
+                            aria-hidden="true"></canvas>
+                        <div id="reinscriptionSignatureOverlay" class="reinscription-signature-overlay hidden"
+                            aria-hidden="true">
+                            <div id="reinscriptionSignatureBox" class="reinscription-signature-box">
+                                <button id="removeSignatureButton" type="button" class="reinscription-signature-remove"
+                                    title="Quitar firma" aria-label="Quitar firma">×</button>
+                                <img id="reinscriptionSignatureOverlayImage" alt="Firma posicionable" draggable="false">
+                                <div id="reinscriptionSignatureResize" class="reinscription-signature-handle"
+                                    role="presentation"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="reinscription-signature-zoom-controls">
+                        <button id="reinscriptionSignatureZoomOut" type="button" title="Reducir tamaño"
+                            aria-label="Reducir tamaño">−</button>
+                        <button id="reinscriptionSignatureZoomIn" type="button" title="Aumentar tamaño"
+                            aria-label="Aumentar tamaño">+</button>
+                    </div>
+                    <p id="reinscriptionPreviewFallback" class="reinscription-modal__preview-hint">Completa los datos
+                        para generar la vista previa.</p>
                 </div>
             </div>
+            <div id="reinscriptionAttachWarning" class="reinscription-attach-warning hidden" role="alert"
+                aria-live="polite">
+                <strong>IMPORTANTE:</strong> Debes adjuntar manualmente el PDF descargado al borrador en Gmail antes de
+                enviar. Gmail también mostrará su propio aviso.
+            </div>
+            <div class="reinscription-modal__actions">
+                <button id="reinscriptionOpenDraft" type="button" class="btn-link hidden">Abrir borrador en
+                    Gmail</button>
+                <button id="reinscriptionSendEmail" type="button" class="btn-primary">Enviar al tutor</button>
+                <button id="reinscriptionDownload" type="button" class="btn-secondary">Descargar formato</button>
+            </div>
         </div>
+    </div>
 
-        <!-- Modal para dibujar firma -->
-        <div id="drawSignatureModal" class="draw-signature-modal hidden" aria-hidden="true" role="dialog">
-            <div class="draw-signature-modal__overlay"></div>
-            <div class="draw-signature-modal__content">
-                <div class="draw-signature-modal__header">
-                    <h2>Dibujar Firma</h2>
-                    <button id="closeDrawSignatureModal" type="button" class="draw-signature-modal__close" aria-label="Cerrar">&times;</button>
-                </div>
-                <div class="draw-signature-modal__body">
-                    <canvas id="signatureCanvas" class="signature-canvas" width="800" height="300" style="border: 2px solid #ccc; background: white; cursor: crosshair; display: block; margin: 0 auto;"></canvas>
-                    <p style="text-align: center; color: #666; margin-top: 10px; font-size: 14px;">Dibuja tu firma</p>
-                </div>
-                <div class="draw-signature-modal__actions">
-                    <button id="resetSignatureCanvas" type="button" class="btn-secondary">Reiniciar</button>
-                    <button id="cancelDrawSignature" type="button" class="btn-secondary">Cancelar</button>
-                    <button id="saveDrawnSignature" type="button" class="btn-primary">Firmar</button>
-                </div>
+    <!-- Modal para dibujar firma -->
+    <div id="drawSignatureModal" class="draw-signature-modal hidden" aria-hidden="true" role="dialog">
+        <div class="draw-signature-modal__overlay"></div>
+        <div class="draw-signature-modal__content">
+            <div class="draw-signature-modal__header">
+                <h2>Dibujar Firma</h2>
+                <button id="closeDrawSignatureModal" type="button" class="draw-signature-modal__close"
+                    aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="draw-signature-modal__body">
+                <canvas id="signatureCanvas" class="signature-canvas" width="800" height="300"
+                    style="border: 2px solid #ccc; background: white; cursor: crosshair; display: block; margin: 0 auto;"></canvas>
+                <p style="text-align: center; color: #666; margin-top: 10px; font-size: 14px;">Dibuja tu firma</p>
+            </div>
+            <div class="draw-signature-modal__actions">
+                <button id="resetSignatureCanvas" type="button" class="btn-secondary">Reiniciar</button>
+                <button id="cancelDrawSignature" type="button" class="btn-secondary">Cancelar</button>
+                <button id="saveDrawnSignature" type="button" class="btn-primary">Firmar</button>
             </div>
         </div>
+    </div>
 
     <!-- Elemento para previsualización flotante -->
     <div id="floatingPreview" class="floating-preview hidden"></div>
@@ -1211,7 +1275,7 @@
             debtSubject: { xPct: 0.1, yPct: 0.805, maxWidthPct: 0.78, lineHeightPct: 0.02, maxLines: 2 },
             loadedSubjects: { xPct: 0.23, yPct: 0.753, maxWidthPct: 0.78, lineHeightPct: 0.018, maxLines: 10, tabStopPct: 0.8 },
             signature: { xPct: 0.08, yPct: 4.53, widthPct: 0.16, heightPct: 0.07 },
-          
+
             tutorSignature: { xPct: 0.1, yPct: 0.42, widthPct: 0.3, heightPct: 0.929 },
             tutorName: { xPct: 0.082, yPct: 0.566 }
         };
@@ -1282,7 +1346,7 @@
                 tutorName: { xPct: 0.082, yPct: 0.566, fontSize: 10.5 }
             },
             corzo: {
-                tutorSignature: {xPct: 0.1, yPct: 0.42, widthPct: 0.3, heightPct: 0.929 },
+                tutorSignature: { xPct: 0.1, yPct: 0.42, widthPct: 0.3, heightPct: 0.929 },
                 tutorName: { xPct: 0.095, yPct: 0.566, fontSize: 10.5 }
             },
             ibanez: {
@@ -2459,7 +2523,7 @@
                         console.warn('requestGoogleSignIn fallo al preparar Drive', err);
                     }
                 }
-                
+
                 tokenAvailable = await hasValidAccessToken();
                 if (!tokenAvailable) {
                     throw new Error('Por favor, autoriza el acceso a Google y vuelve a intentar.');
@@ -2645,7 +2709,7 @@
                     aula: "A210",
                     sessions: [
                         { day: "jueves", startTime: "15:00", endTime: "16:45" },
-                        { day: "viernes", startTime: "15:00", endTime: "16:45"}
+                        { day: "viernes", startTime: "15:00", endTime: "16:45" }
                     ]
                 },
 
@@ -3328,12 +3392,12 @@
                     }
                 });
             }
-            
+
             // Configurar overlay móvil
             const overlayMobile = document.getElementById('reinscriptionSignatureOverlayMobile');
             const boxMobile = document.getElementById('reinscriptionSignatureBoxMobile');
             const imageMobile = document.getElementById('reinscriptionSignatureOverlayImageMobile');
-            
+
             if (overlayMobile && boxMobile) {
                 // Igual que en escritorio: atachar los eventos sobre la caja móvil
                 boxMobile.addEventListener('pointerdown', handleSignaturePointerDownMobile);
@@ -3365,7 +3429,7 @@
                     });
                 }
             }
-            
+
             // Inicializar mapa de punteros si no existe (se usa para gestos multi-táctiles)
             if (!window._sigPointerMap) window._sigPointerMap = new Map();
             signatureOverlayElements.initialized = true;
@@ -3533,7 +3597,7 @@
             const overlayMobile = document.getElementById('reinscriptionSignatureOverlayMobile');
             const boxMobile = document.getElementById('reinscriptionSignatureBoxMobile');
             const handleMobile = document.getElementById('reinscriptionSignatureResizeMobile');
-            
+
             if (!overlayMobile || !boxMobile) {
                 return;
             }
@@ -3582,7 +3646,7 @@
                             height: boxRect.height
                         },
                         isMobile: true,
-                        startPointers: Array.from(window._sigPointerMap.entries()).slice(0,2).map(([id, p]) => ({ id, x: p.x, y: p.y }))
+                        startPointers: Array.from(window._sigPointerMap.entries()).slice(0, 2).map(([id, p]) => ({ id, x: p.x, y: p.y }))
                     };
                     try {
                         boxMobile.setPointerCapture(event.pointerId);
@@ -3642,7 +3706,7 @@
                 // Necesitamos al menos dos punteros registrados
                 const ptrs = window._sigPointerMap ? Array.from(window._sigPointerMap.values()) : [];
                 if (ptrs.length < 2) return;
-                const entries = window._sigPointerMap ? Array.from(window._sigPointerMap.entries()).slice(0,2) : [];
+                const entries = window._sigPointerMap ? Array.from(window._sigPointerMap.entries()).slice(0, 2) : [];
                 if (entries.length < 2) return;
                 const [e0, e1] = entries;
                 const p0 = { id: e0[0], x: e0[1].x, y: e0[1].y };
@@ -3926,7 +3990,7 @@
                         if (!sid) return;
                         if (selectedIds.has(sid)) return; // ya está en horario
                         // Buscar en predefinedSubjects primero, luego en catalogSubjects
-                        let subj = null;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+                        let subj = null;
                         if (Array.isArray(predefinedSubjects) && predefinedSubjects.length) {
                             subj = predefinedSubjects.find(x => String(x.id) === sid) || null;
                         }
@@ -3944,7 +4008,7 @@
                 console.warn('computeAutoDebtSubject error', e);
                 return '';
             }
-        }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+        }
 
         function buildLoadedSubjectsSummary() {
             if (!Array.isArray(selectedSubjects) || selectedSubjects.length === 0) {
@@ -4493,7 +4557,7 @@
             setupReinscriptionSignatureOverlay();
             const overlayImage = signatureOverlayElements.image;
             const overlay = signatureOverlayElements.overlay;
-            
+
             // Elementos móviles
             const overlayImageMobile = document.getElementById('reinscriptionSignatureOverlayImageMobile');
             const overlayMobile = document.getElementById('reinscriptionSignatureOverlayMobile');
@@ -4596,7 +4660,7 @@
                 return;
             }
             const layout = REINSCRIPTION_PDF_LAYOUT.signature || {};
-            
+
             // Ajustar tamaño en porcentaje
             if (Number.isFinite(layout.widthPct)) {
                 layout.widthPct = Math.max(0.05, Math.min(0.6, layout.widthPct * factor));
@@ -4604,7 +4668,7 @@
             if (Number.isFinite(layout.heightPct)) {
                 layout.heightPct = Math.max(0.03, Math.min(0.3, layout.heightPct * factor));
             }
-            
+
             // Ajustar tamaño absoluto si existe
             if (Number.isFinite(layout.widthAbs)) {
                 layout.widthAbs = Math.max(20, layout.widthAbs * factor);
@@ -4612,7 +4676,7 @@
             if (Number.isFinite(layout.heightAbs)) {
                 layout.heightAbs = Math.max(15, layout.heightAbs * factor);
             }
-            
+
             saveSignaturePlacement(layout);
             updateSignatureOverlayPosition();
         }
@@ -5183,7 +5247,7 @@
             // Asegurarse de cargar la firma del tutor si la casilla estaba marcada
             const tutorDefaultCheckbox = document.getElementById('reinscriptionTutorDefault');
             if (tutorDefaultCheckbox && tutorDefaultCheckbox.checked) {
-                setDefaultTutor(true).catch(() => {});
+                setDefaultTutor(true).catch(() => { });
             }
             scheduleReinscriptionPreviewRender();
         }
@@ -5258,13 +5322,13 @@
             const tutorSelect = document.getElementById('reinscriptionTutorSelect');
             if (tutorSelect) {
                 tutorSelect.addEventListener('change', () => {
-                    handleTutorSelectionChange().catch(() => {});
+                    handleTutorSelectionChange().catch(() => { });
                 });
             }
             const tutorDefaultCheckbox = document.getElementById('reinscriptionTutorDefault');
             if (tutorDefaultCheckbox) {
                 tutorDefaultCheckbox.addEventListener('change', (e) => {
-                    setDefaultTutor(!!e.target.checked).catch(() => {});
+                    setDefaultTutor(!!e.target.checked).catch(() => { });
                 });
             }
             const clearSignatureBtn = document.getElementById('reinscriptionSignatureClear');
@@ -5292,11 +5356,11 @@
                     clearReinscriptionSignature();
                 });
             }
-            
+
             // Botones de zoom para firma (escritorio)
             const zoomOutBtn = document.getElementById('reinscriptionSignatureZoomOut');
             const zoomInBtn = document.getElementById('reinscriptionSignatureZoomIn');
-            
+
             if (zoomOutBtn) {
                 zoomOutBtn.addEventListener('click', () => {
                     adjustSignatureSize(0.9);
@@ -5307,11 +5371,11 @@
                     adjustSignatureSize(1.1);
                 });
             }
-            
+
             // Botones de zoom para firma (móvil)
             const zoomOutBtnMobile = document.getElementById('reinscriptionSignatureZoomOutMobile');
             const zoomInBtnMobile = document.getElementById('reinscriptionSignatureZoomInMobile');
-            
+
             if (zoomOutBtnMobile) {
                 zoomOutBtnMobile.addEventListener('click', () => {
                     adjustSignatureSize(0.9);
@@ -5327,7 +5391,7 @@
                 zoomInBtnMobile.addEventListener('pointerdown', (e) => { e.preventDefault(); adjustSignatureSize(1.1); });
                 zoomInBtnMobile.addEventListener('touchstart', (e) => { e.preventDefault(); adjustSignatureSize(1.1); });
             }
-            
+
             // Helper: mostrar aviso de adjuntar PDF en Gmail
             const attachWarningEl = document.getElementById('reinscriptionAttachWarning');
             function showAttachWarning() {
@@ -5395,7 +5459,7 @@
                         link.click();
                         document.body.removeChild(link);
                         setTimeout(() => URL.revokeObjectURL(url), 4000);
-                        
+
                         // Mostrar modal de confirmación
                         hideLoader();
                         const confirmModal = document.createElement('div');
@@ -5418,66 +5482,66 @@
                             </div>
                         `;
                         document.body.appendChild(confirmModal);
-                        
-                            document.getElementById('confirmOpenGmail').addEventListener('click', () => {
-                                confirmModal.remove();
-                                const subject = encodeURIComponent(REINSCRIPTION_EMAIL_SUBJECT);
-                                const body = buildReinscriptionEmailBody(data);
-                                const bodyEncoded = encodeURIComponent(body);
 
-                                // En dispositivos móviles: intentar abrir la app de Gmail, si falla usar mailto, y al final usar Gmail web
-                                if (isMobileDevice()) {
-                                    const gmailAppUrl = `googlegmail://co?to=${encodeURIComponent(tutorEmail)}&su=${subject}&body=${bodyEncoded}`;
-                                    const mailtoUrl = `mailto:${encodeURIComponent(tutorEmail)}?subject=${subject}&body=${bodyEncoded}`;
-                                    // Intentar abrir la app de Gmail mediante scheme. Si el navegador no la abre, haremos fallback.
-                                    try {
-                                        // Esto normalmente lanzará el selector de apps en Android / iOS si la app está instalada
-                                        window.location.href = gmailAppUrl;
-                                    } catch (e) {
-                                        // Si falla al asignar, seguiremos con el fallback
-                                    }
+                        document.getElementById('confirmOpenGmail').addEventListener('click', () => {
+                            confirmModal.remove();
+                            const subject = encodeURIComponent(REINSCRIPTION_EMAIL_SUBJECT);
+                            const body = buildReinscriptionEmailBody(data);
+                            const bodyEncoded = encodeURIComponent(body);
 
-                                    // Fallback programado: si la app no se abrió (o el navegador no la soporta), abrir mailto
-                                    setTimeout(() => {
-                                        const openedMailto = (() => {
+                            // En dispositivos móviles: intentar abrir la app de Gmail, si falla usar mailto, y al final usar Gmail web
+                            if (isMobileDevice()) {
+                                const gmailAppUrl = `googlegmail://co?to=${encodeURIComponent(tutorEmail)}&su=${subject}&body=${bodyEncoded}`;
+                                const mailtoUrl = `mailto:${encodeURIComponent(tutorEmail)}?subject=${subject}&body=${bodyEncoded}`;
+                                // Intentar abrir la app de Gmail mediante scheme. Si el navegador no la abre, haremos fallback.
+                                try {
+                                    // Esto normalmente lanzará el selector de apps en Android / iOS si la app está instalada
+                                    window.location.href = gmailAppUrl;
+                                } catch (e) {
+                                    // Si falla al asignar, seguiremos con el fallback
+                                }
+
+                                // Fallback programado: si la app no se abrió (o el navegador no la soporta), abrir mailto
+                                setTimeout(() => {
+                                    const openedMailto = (() => {
+                                        try {
+                                            return !!window.open(mailtoUrl, '_blank');
+                                        } catch (e) {
+                                            return false;
+                                        }
+                                    })();
+                                    if (!openedMailto) {
+                                        // Último recurso: abrir Gmail web
+                                        const webGmail = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(tutorEmail)}&su=${subject}&body=${bodyEncoded}`;
+                                        const openedWeb = (() => {
                                             try {
-                                                return !!window.open(mailtoUrl, '_blank');
+                                                return !!window.open(webGmail, '_blank');
                                             } catch (e) {
                                                 return false;
                                             }
                                         })();
-                                        if (!openedMailto) {
-                                            // Último recurso: abrir Gmail web
-                                            const webGmail = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(tutorEmail)}&su=${subject}&body=${bodyEncoded}`;
-                                            const openedWeb = (() => {
-                                                try {
-                                                    return !!window.open(webGmail, '_blank');
-                                                } catch (e) {
-                                                    return false;
-                                                }
-                                            })();
-                                            if (!openedWeb) {
-                                                showMessage('Gmail no se pudo abrir. Abrelo manualmente e ingresa el email del tutor.', 'warning');
-                                            } else {
-                                                try { showAttachWarning(); } catch (e) { /* ignore */ }
-                                                showMessage('✓ Gmail abierto. Adjunta el PDF descargado y envía el correo.', 'success');
-                                            }
+                                        if (!openedWeb) {
+                                            showMessage('Gmail no se pudo abrir. Abrelo manualmente e ingresa el email del tutor.', 'warning');
                                         } else {
                                             try { showAttachWarning(); } catch (e) { /* ignore */ }
-                                            showMessage('✓ Cliente de correo abierto. Adjunta el PDF descargado y envía el correo.', 'success');
+                                            showMessage('✓ Gmail abierto. Adjunta el PDF descargado y envía el correo.', 'success');
                                         }
-                                    }, 700);
-                                } else {
-                                    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(tutorEmail)}&su=${subject}&body=${bodyEncoded}`;
-                                    const opened = window.open(gmailUrl, '_blank');
-                                    if (!opened) {
-                                        showMessage('Gmail no se pudo abrir. Abrelo manualmente e ingresa el email del tutor.', 'warning');
                                     } else {
-                                        try { showAttachWarning(); } catch (e) { /* ignore if helper not present */ }
-                                        showMessage('✓ Gmail abierto. Adjunta el PDF descargado y envía el correo.', 'success');
+                                        try { showAttachWarning(); } catch (e) { /* ignore */ }
+                                        showMessage('✓ Cliente de correo abierto. Adjunta el PDF descargado y envía el correo.', 'success');
                                     }
+                                }, 700);
+                            } else {
+                                const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(tutorEmail)}&su=${subject}&body=${bodyEncoded}`;
+                                const opened = window.open(gmailUrl, '_blank');
+                                if (!opened) {
+                                    showMessage('Gmail no se pudo abrir. Abrelo manualmente e ingresa el email del tutor.', 'warning');
+                                } else {
+                                    try { showAttachWarning(); } catch (e) { /* ignore if helper not present */ }
+                                    showMessage('✓ Gmail abierto. Adjunta el PDF descargado y envía el correo.', 'success');
                                 }
-                            });
+                            }
+                        });
                         reinscriptionEmailSending = false;
                         sendEmailBtn.disabled = false;
                         sendEmailBtn.textContent = originalText;
@@ -5733,7 +5797,7 @@
                 velocityY = 0;
                 lastWidth = 5;
                 canvas.style.cursor = 'none';
-                
+
                 // Dibujar punto inicial
                 const ctx = canvas.getContext('2d');
                 if (ctx) {
@@ -5749,14 +5813,14 @@
                 const coords = getCoordinates(e);
                 const dx = coords.x - lastX;
                 const dy = coords.y - lastY;
-                
+
                 if (dx === 0 && dy === 0) return;
 
                 const velocity = getVelocity(dx, dy);
                 const newWidth = getLineWidth(velocity);
-                
+
                 drawLineWithPressure(lastX, lastY, coords.x, coords.y, lastWidth, newWidth);
-                
+
                 lastX = coords.x;
                 lastY = coords.y;
                 lastWidth = newWidth;
@@ -5806,17 +5870,17 @@
                 const scaleY = canvas.height / rect.height;
                 const x = (touch.clientX - rect.left) * scaleX;
                 const y = (touch.clientY - rect.top) * scaleY;
-                
+
                 const dx = x - lastX;
                 const dy = y - lastY;
-                
+
                 if (dx === 0 && dy === 0) return;
 
                 const velocity = getVelocity(dx, dy);
                 const newWidth = getLineWidth(velocity);
-                
+
                 drawLineWithPressure(lastX, lastY, x, y, lastWidth, newWidth);
-                
+
                 lastX = x;
                 lastY = y;
                 lastWidth = newWidth;
@@ -5962,39 +6026,39 @@
                 saveSelectedSubjects();
 
                 // Intentar sincronizar en Drive (no bloqueante)
-             //   syncDriveAfterChange({ interactive: false, successMessage: 'Cambio guardado en Google Drive' })
-                 //   .then(ok => {
-                     //   if (!ok) {
-                      //      console.warn('Error sincronizando tras quitar materia');
-                  //      }
-                   // });
+                //   syncDriveAfterChange({ interactive: false, successMessage: 'Cambio guardado en Google Drive' })
+                //   .then(ok => {
+                //   if (!ok) {
+                //      console.warn('Error sincronizando tras quitar materia');
+                //      }
+                // });
 
                 // Actualizar vistas
                 updateScheduleView();
                 updateSelectedSubjectsList();
 
                 showMessage(`Materia "${subject.name}" quitada del horario`, 'success');
-                    refreshReinscriptionDefaultsAfterScheduleChange();
-                    updateReinscriptionLoadedSubjectsList();
-                    // Actualizar en memoria y en el input si está abierto y no fue editado por el usuario
-                    try {
-                        const newDebt = (typeof computeAutoDebtSubject === 'function' ? computeAutoDebtSubject() : '') || '';
-                        if (!reinscriptionLastFormValues) reinscriptionLastFormValues = buildReinscriptionDefaults();
-                        reinscriptionLastFormValues.autoDebtSubject = newDebt;
-                        saveReinscriptionFormSnapshot(reinscriptionLastFormValues);
-                        const modal = document.getElementById('reinscriptionModal');
-                        const debtInput = document.getElementById('reinscriptionDebtSubject');
-                        const isOpen = modal && !modal.classList.contains('hidden');
-                        if (isOpen && debtInput) {
-                            const userEdited = debtInput.dataset && debtInput.dataset.userEdited === 'true';
-                            if (!userEdited) {
-                                debtInput.value = newDebt;
-                                if (newDebt) debtInput.dataset.autoValue = newDebt; else if (debtInput.dataset) delete debtInput.dataset.autoValue;
-                                debtInput.dataset.userEdited = 'false';
-                                scheduleReinscriptionPreviewRender();
-                            }
+                refreshReinscriptionDefaultsAfterScheduleChange();
+                updateReinscriptionLoadedSubjectsList();
+                // Actualizar en memoria y en el input si está abierto y no fue editado por el usuario
+                try {
+                    const newDebt = (typeof computeAutoDebtSubject === 'function' ? computeAutoDebtSubject() : '') || '';
+                    if (!reinscriptionLastFormValues) reinscriptionLastFormValues = buildReinscriptionDefaults();
+                    reinscriptionLastFormValues.autoDebtSubject = newDebt;
+                    saveReinscriptionFormSnapshot(reinscriptionLastFormValues);
+                    const modal = document.getElementById('reinscriptionModal');
+                    const debtInput = document.getElementById('reinscriptionDebtSubject');
+                    const isOpen = modal && !modal.classList.contains('hidden');
+                    if (isOpen && debtInput) {
+                        const userEdited = debtInput.dataset && debtInput.dataset.userEdited === 'true';
+                        if (!userEdited) {
+                            debtInput.value = newDebt;
+                            if (newDebt) debtInput.dataset.autoValue = newDebt; else if (debtInput.dataset) delete debtInput.dataset.autoValue;
+                            debtInput.dataset.userEdited = 'false';
+                            scheduleReinscriptionPreviewRender();
                         }
-                    } catch (e) { console.warn('No se pudo actualizar deuda tras quitar materia', e); }
+                    }
+                } catch (e) { console.warn('No se pudo actualizar deuda tras quitar materia', e); }
 
                 if (selectedSubjects.length === 0) {
                     defaultSchedulePromptDismissed = false;
@@ -6559,8 +6623,8 @@
                     try {
                         ensureDriveApiInitialized().then(() => {
                             try { gapi.client.setToken({ access_token: gAccessToken }); } catch (e) { console.warn('setToken fallo', e); }
-                                    try { console.log('gapi.client.setToken llamado desde initGoogleAuth callback. token length:', gAccessToken ? gAccessToken.length : 0); } catch (e) { }
-                                    onSignedIn();
+                            try { console.log('gapi.client.setToken llamado desde initGoogleAuth callback. token length:', gAccessToken ? gAccessToken.length : 0); } catch (e) { }
+                            onSignedIn();
                             return fetchGoogleProfile();
                         }).then(() => {
                             showMessage('Conectado a Google', 'success');
@@ -7467,12 +7531,12 @@
 
         async function signOutGoogle(options = {}) {
             const { skipLoader = false, loaderMessage = 'Cerrando sesión...' } = options;
-                unlockInterface();
-                driveAuthRetryPending = false;
-                gmailApiReady = false;
-                gmailApiInitPromise = null;
-                localStorage.removeItem(DRIVE_SCOPE_FLAG);
-                localStorage.removeItem(GMAIL_SCOPE_FLAG);
+            unlockInterface();
+            driveAuthRetryPending = false;
+            gmailApiReady = false;
+            gmailApiInitPromise = null;
+            localStorage.removeItem(DRIVE_SCOPE_FLAG);
+            localStorage.removeItem(GMAIL_SCOPE_FLAG);
             if (!skipLoader) {
                 showLoader(loaderMessage);
             }
@@ -7812,111 +7876,111 @@
         // Crear modal de confirmación personalizado
     </script>
     <script>
-    // Control del banner de mantenimiento: si el usuario está logueado, mostrar 60s/ocultar 30s en ciclo.
-    (function () {
-        const KEY = 'google_signed_in';
-        let banner = null; // se asignará en DOMContentLoaded o al mostrar/ocultar
+        // Control del banner de mantenimiento: si el usuario está logueado, mostrar 60s/ocultar 30s en ciclo.
+        (function () {
+            const KEY = 'google_signed_in';
+            let banner = null; // se asignará en DOMContentLoaded o al mostrar/ocultar
 
-        let showTimer = null;
-        let hideTimer = null;
-        let running = false;
+            let showTimer = null;
+            let hideTimer = null;
+            let running = false;
 
-        function clearTimers() {
-            if (showTimer) { clearTimeout(showTimer); showTimer = null; }
-            if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-        }
+            function clearTimers() {
+                if (showTimer) { clearTimeout(showTimer); showTimer = null; }
+                if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+            }
 
-        function isSignedIn() {
-            try {
-                if (window.__googleProfile) return true;
-                if (typeof gAccessToken !== 'undefined' && gAccessToken) return true;
-                return localStorage.getItem(KEY) === '1';
-            } catch (e) { return false; }
-        }
+            function isSignedIn() {
+                try {
+                    if (window.__googleProfile) return true;
+                    if (typeof gAccessToken !== 'undefined' && gAccessToken) return true;
+                    return localStorage.getItem(KEY) === '1';
+                } catch (e) { return false; }
+            }
 
-        function showBanner(duration = 60000) {
-            if (!banner) banner = document.getElementById('maintenanceBanner');
-            if (!banner) return;
-            banner.classList.remove('hidden');
-            banner.style.display = '';
-            clearTimers();
-            showTimer = setTimeout(() => {
-                hideBanner();
-            }, duration);
-        }
+            function showBanner(duration = 60000) {
+                if (!banner) banner = document.getElementById('maintenanceBanner');
+                if (!banner) return;
+                banner.classList.remove('hidden');
+                banner.style.display = '';
+                clearTimers();
+                showTimer = setTimeout(() => {
+                    hideBanner();
+                }, duration);
+            }
 
-        function hideBanner(duration = 30000) {
-            if (!banner) banner = document.getElementById('maintenanceBanner');
-            if (!banner) return;
-            banner.classList.add('hidden');
-            banner.style.display = 'none';
-            clearTimers();
-            hideTimer = setTimeout(() => {
-                // solo continuar el ciclo si el usuario sigue logueado
-                if (isSignedIn()) {
-                    showBanner();
-                } else {
-                    // si ya no está logueado, dejar banner visible permanentemente
-                    if (!banner) banner = document.getElementById('maintenanceBanner');
-                    if (banner) { banner.classList.remove('hidden'); banner.style.display = ''; }
+            function hideBanner(duration = 30000) {
+                if (!banner) banner = document.getElementById('maintenanceBanner');
+                if (!banner) return;
+                banner.classList.add('hidden');
+                banner.style.display = 'none';
+                clearTimers();
+                hideTimer = setTimeout(() => {
+                    // solo continuar el ciclo si el usuario sigue logueado
+                    if (isSignedIn()) {
+                        showBanner();
+                    } else {
+                        // si ya no está logueado, dejar banner visible permanentemente
+                        if (!banner) banner = document.getElementById('maintenanceBanner');
+                        if (banner) { banner.classList.remove('hidden'); banner.style.display = ''; }
+                    }
+                }, duration);
+            }
+
+            function startCycle() {
+                if (running) return;
+                running = true;
+                // comenzar mostrando 1 minuto
+                showBanner(60000);
+            }
+
+            function stopCycle() {
+                running = false;
+                clearTimers();
+                // dejar visible el banner si no está logueado
+                if (!banner) banner = document.getElementById('maintenanceBanner');
+                if (banner) { banner.classList.remove('hidden'); banner.style.display = ''; }
+            }
+
+            // Inicialización
+            document.addEventListener('DOMContentLoaded', () => {
+                // Enlazar el botón de cerrar (si existe)
+                const closeBtn = document.getElementById('maintenanceCloseBtn');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', (ev) => {
+                        ev.preventDefault();
+                        // ocultar ahora y programar re-aparición en 30s
+                        clearTimers();
+                        banner.classList.add('hidden');
+                        banner.style.display = 'none';
+                        showTimer = setTimeout(() => { showBanner(); }, 30000);
+                    });
                 }
-            }, duration);
-        }
 
-        function startCycle() {
-            if (running) return;
-            running = true;
-            // comenzar mostrando 1 minuto
-            showBanner(60000);
-        }
+                if (isSignedIn()) {
+                    startCycle();
+                } else {
+                    // usuario no logueado: dejar banner siempre visible
+                    stopCycle();
+                }
+            });
 
-        function stopCycle() {
-            running = false;
-            clearTimers();
-            // dejar visible el banner si no está logueado
-            if (!banner) banner = document.getElementById('maintenanceBanner');
-            if (banner) { banner.classList.remove('hidden'); banner.style.display = ''; }
-        }
+            // Escuchar cambios en localStorage (login/logout) desde otras pestañas
+            window.addEventListener('storage', (ev) => {
+                if (ev.key !== KEY) return;
+                if (ev.newValue === '1') {
+                    startCycle();
+                } else {
+                    stopCycle();
+                }
+            });
 
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', () => {
-            // Enlazar el botón de cerrar (si existe)
-            const closeBtn = document.getElementById('maintenanceCloseBtn');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', (ev) => {
-                    ev.preventDefault();
-                    // ocultar ahora y programar re-aparición en 30s
-                    clearTimers();
-                    banner.classList.add('hidden');
-                    banner.style.display = 'none';
-                    showTimer = setTimeout(() => { showBanner(); }, 30000);
-                });
-            }
-
-            if (isSignedIn()) {
-                startCycle();
-            } else {
-                // usuario no logueado: dejar banner siempre visible
-                stopCycle();
-            }
-        });
-
-        // Escuchar cambios en localStorage (login/logout) desde otras pestañas
-        window.addEventListener('storage', (ev) => {
-            if (ev.key !== KEY) return;
-            if (ev.newValue === '1') {
-                startCycle();
-            } else {
-                stopCycle();
-            }
-        });
-
-        // Si la app actualiza la variable global __googleProfile, algunos flujos ya llaman a onProfileLoaded().
-        // Escuchar un evento personalizado por si otros puntos del app lo disparan.
-        window.addEventListener('profile:loaded', () => {
-            if (isSignedIn()) startCycle();
-        });
-    })();
+            // Si la app actualiza la variable global __googleProfile, algunos flujos ya llaman a onProfileLoaded().
+            // Escuchar un evento personalizado por si otros puntos del app lo disparan.
+            window.addEventListener('profile:loaded', () => {
+                if (isSignedIn()) startCycle();
+            });
+        })();
     </script>
 
     <!-- Banner de mantenimiento (aparece al final de la página) -->
@@ -7924,8 +7988,9 @@
         <button id="maintenanceCloseBtn" class="maintenance-close" aria-label="Cerrar mensaje">×</button>
         <div class="maintenance-inner">
             <strong>Estamos en mantenimiento:</strong>
-            Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. Ten algunos casos puede ser
-      necesario iniciar sesión hasta 2–3 veces esto para guardar el horario correctamente .
+            Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. Ten algunos casos
+            puede ser
+            necesario iniciar sesión hasta 2–3 veces esto para guardar el horario correctamente .
         </div>
     </div>
 
