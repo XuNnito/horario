@@ -23,8 +23,9 @@
     <link rel="icon" href="/horario/favicon.ico">
     <link rel="icon" type="image/png" sizes="48x48" href="/horario/icono.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/horario/apple-touch-icon.png">
-    <link rel="stylesheet" href="css/styles.css">
-    <script src="/src/app.js" defer></script>
+    <link rel="stylesheet" href="css/app.min.css">
+     <script src="/js/app.min.js" defer></script>
+   <!-- <script src="/src/app.js" defer></script>-->
 
 
 </head>
@@ -275,6 +276,24 @@
     </div>
 
     <!-- Modal: Añadir datos iniciales -->
+    
+    <!-- Modal: Cuenta suspendida -->
+    <div id="accountSuspendedModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="panel-modal" style="max-width:420px;text-align:center;">
+            <h3>Cuenta suspendida</h3>
+            <p style="margin:10px 0 6px;">
+                Tu cuenta ha sido suspendida por el administrador.
+            </p>
+            <p style="font-size:13px;color:#555;">
+                Por seguridad cerraremos tu sesión en
+                <span id="suspensionCountdown">8</span> segundos.
+            </p>
+            <div class="modal-actions" style="justify-content:center;margin-top:14px;">
+                <button id="suspensionSignOutNow" type="button">Cerrar sesión ahora</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modalAdd" class="modal-add" aria-hidden="true">
         <div class="panel-modal">
             <h3>Agregar materia</h3>

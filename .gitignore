@@ -25,3 +25,5 @@ carpeta_que_no_deben_subir/
 *.txt
 src/app.js
 css/styles.css
+css/styles copy.css
+src/app copy.js
