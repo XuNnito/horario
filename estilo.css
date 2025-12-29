@@ -6,8 +6,8 @@
     --warning-color: #f39c12;
     --bg-color: #f5f7fa;
     --border-color: #ddd;
-    --career-watermark-image: url("biomedica.png");
-    --career-background-image: url("biomedica.png");
+    --career-watermark-image: url("../biomedica.png");
+    --career-background-image: url("../biomedica.png");
 }
 
 body {
@@ -16,7 +16,7 @@ body {
     margin: 0;
     padding: 10px;
     background-color: var(--bg-color);
-    background-image: linear-gradient(rgba(245, 247, 250, 0.85), rgba(245, 247, 250, 0.85)), var(--career-background-image);
+    background-image: linear-gradient(rgba(245, 247, 250, 0.808), rgba(255, 255, 255, 0.979)), var(--career-background-image);
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
@@ -44,10 +44,10 @@ h3 {
 }
 
 .panel {
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.185);
     padding: 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.349);
     margin-bottom: 20px;
     height: auto;
 }
@@ -291,6 +291,19 @@ button:hover {
 .search-container {
     margin-bottom: 20px;
     position: relative;
+}
+
+.group-load-buttons {
+    margin-top:-14px;      /* más cerca del buscador */
+    margin-bottom: 8px;   /* separarlo del catálogo de materias */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.group-load-buttons button {
+    font-size: 13px;
+    padding: 6px 10px;
 }
 
 #searchInput {
