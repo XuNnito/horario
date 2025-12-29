@@ -2,6 +2,4 @@
 
 function noviando() {
     //estamos noviado
-
-
 }
