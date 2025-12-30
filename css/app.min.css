@@ -6,8 +6,8 @@
     --warning-color: #f39c12;
     --bg-color: #f5f7fa;
     --border-color: #ddd;
-    --career-watermark-image: url("https://xunnito.github.io/horario/biomedica.png");
-    --career-background-image: url("https://xunnito.github.io/horario/biomedica.png");
+    --career-watermark-image: url("../image/biomedica.png");
+    --career-background-image: url("../image/biomedica.png");
 }
 
 body {
