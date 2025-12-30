@@ -214,6 +214,9 @@
                 </div>
                 <div class="group-load-buttons">
                     <button id="btnLoad7A" type="button">7A</button>
+                    <button id="btnLoad8B" type="button">8B</button>
+                    <button id="btnLoad8C" type="button">8C</button>
+                    <button id="btnLoad9A" type="button">9A</button>
                     <!-- Más botones de grupos se pueden agregar aquí en el futuro -->
                 </div>
                 <div id="catalogSubjects" class="catalog-subjects"></div>
@@ -293,6 +296,19 @@
             </p>
             <div class="modal-actions" style="justify-content:center;margin-top:14px;">
                 <button id="suspensionSignOutNow" type="button">Cerrar sesión ahora</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Grupo no disponible -->
+    <div id="groupNotAvailableModal" class="modal hidden" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="" style="max-width:420px;text-align:center;">
+            <h3>Grupo no disponible</h3>
+            <p id="groupNotAvailableMessage">
+                Por el momento este grupo no está disponible para cargar en tu horario.
+            </p>
+            <div class="modal-actions" style="justify-content:center;margin-top:14px;">
+                <button id="groupNotAvailableClose" type="button">Cerrar</button>
             </div>
         </div>
     </div>
