@@ -1,5 +1,0 @@
-
-
-function noviando() {
-    //estamos noviado
-}

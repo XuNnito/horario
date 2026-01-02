@@ -24,8 +24,10 @@
     <link rel="icon" type="image/png" sizes="48x48" href="/horario/icono.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/horario/apple-touch-icon.png">
     <link rel="stylesheet" href="css/app.min.css">
+
     <script src="js/app.min.js" defer></script>
-        <!--<script src="src/app.js" defer></script>-->
+    <script src="js/funcion.js" defer></script>
+    <!--<script src="src/app.js" defer></script>-->
 
 </head>
 
@@ -46,6 +48,16 @@
         </div>
         <span id="googleUserName" class="user-name"></span>
         <div class="google-btns">
+            <button
+                id="shareScheduleBtn"
+                type="button"
+                class="share-btn"
+                aria-label="Compartir esta página con tus amigos">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.02-4.11A3.003 3.003 0 0 0 18 7.91a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.07 9.72A3.003 3.003 0 0 0 6 9a3 3 0 1 0 0 6c.79 0 1.5-.31 2.03-.82l7.04 4.12c-.05.21-.07.43-.07.65a3 3 0 1 0 3-3z" />
+                </svg>
+                <span class="share-btn__label">Compartir</span>
+            </button>
             <button id="googleSignIn" type="button" aria-label="Iniciar sesión con Google">Iniciar con Google</button>
             <button id="googleSignOut" class="hidden" style="pointer-events: auto;">Cerrar sesión</button>
         </div>
@@ -66,6 +78,13 @@
                     <div class="pm-career-select__text">
                         <strong id="pmCareer">Biomédica</strong>
                         <span class="pm-career-select__hint">Toca para cambiar tu carrera</span>
+                    </div>
+                </button>
+                <!-- Opción adicional: código de invitación -->
+                <button id="pmInviteCodeToggle" class="pm-career-select" type="button" aria-label="Ingresar código de invitación">
+                    <div class="pm-career-select__text">
+                        <strong>Código de invitación</strong>
+                        <span class="pm-career-select__hint">Toca para ingresar un código</span>
                     </div>
                 </button>
                 <div><strong>Fecha:</strong> <span id="pmDate">-</span></div>
@@ -132,7 +151,6 @@
                     <label class="career-create__label" for="careerCreateName">Nombre de la carrera</label>
                     <input id="careerCreateName" type="text" name="careerName" maxlength="80" required
                         placeholder="Ingresa el nombre de la carrera">
-
                     <label class="career-create__label" for="careerCreateLogo">Logo de la carrera</label>
                     <div class="career-create__upload">
                         <input id="careerCreateLogo" type="file" accept="image/png,image/jpeg">
@@ -576,11 +594,18 @@
     <!-- Elemento para previsualización flotante -->
     <div id="floatingPreview" class="floating-preview hidden"></div>
 
-    <script src="https://accounts.google.com/gsi/client" defer></script>
-    <script src="https://apis.google.com/js/api.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
-    <script src="funcion.js" defer></script>
- 
+    <!-- Modal centrado para ingresar el código de invitación -->
+    <div id="inviteCodeModal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-container" role="document">
+            <button id="inviteCodeModalClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
+            <h3 style="margin-top:0;">Código de invitación</h3>
+            <label for="pmInviteCodeInput" style="display:block;margin-bottom:8px;"><strong>Ingresa tu código de invitación</strong></label>
+            <input id="pmInviteCodeInput" type="text" maxlength="50" placeholder="Ejemplo: XuNnito" style="width:90%;padding:8px 10px;margin-bottom:10px;">
+            <button id="pmInviteCodeSubmit" type="button" class="modal-button confirm" style="margin-bottom:10px;">Usar código</button>
+            <div id="pmInviteCodeMessage" class="modal-message" aria-live="polite"></div>
+        </div>
+    </div>
+
 
 
     <!-- Banner de mantenimiento (aparece al final de la página) -->
@@ -598,12 +623,6 @@
 <footer class="footer">
     <p>&copy; 2025 XuNnito</p>
 
-    <nav class="footer-links" aria-label="Enlaces legales">
-        <a href="politica.html">Política de Privacidad</a>
-        <span>•</span>
-        <a href="terminos.html">Términos y Condiciones</a>
-    </nav>
-
     <a href="https://www.facebook.com/XuNnitohz" target="_blank" rel="noopener noreferrer" aria-label="Facebook"
         class="icon fb">
         <svg viewBox="0 0 24 24">
@@ -613,11 +632,20 @@
         Facebook
     </a>
 
-    <a href="https://wa.me/5219601151824" aria-label="WhatsApp">
-        <img src="https://www.google.com/s2/favicons?domain=whatsapp.com" width="12"> Reportar problema
+    <a id="whatsappSupportLink"
+       href="#"
+       aria-label="WhatsApp"
+       target="_blank"
+       rel="noopener noreferrer">
+        <img src="https://www.google.com/s2/favicons?domain=whatsapp.com" width="12" alt="WhatsApp">
+        Reportar problema
     </a>
-
-
+    
 </footer>
+<script src="https://accounts.google.com/gsi/client" defer></script>
+    <script src="https://apis.google.com/js/api.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
+    <script src="funcion.js" defer>
+</script>
 
 </html>
