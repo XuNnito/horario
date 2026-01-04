@@ -2886,3 +2886,30 @@ a img{
             }
         }
    
+        .google-btns {
+            position: relative;
+        }
+
+        #shareBanner {
+            position: absolute;
+            top: 115%;
+            left: 0;
+            background: #323232;
+            color: #ffffff;
+            padding: 8px 14px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            font-size: 13px;
+            z-index: 9999;
+            white-space: nowrap;
+        }
+
+        #shareBanner::after {
+            content: "";
+            position: absolute;
+            top: -6px;
+            left: 24px; /* apúntalo hacia el icono de compartir */
+            border-width: 0 6px 6px 6px;
+            border-style: solid;
+            border-color: transparent transparent #323232 transparent;
+        }
