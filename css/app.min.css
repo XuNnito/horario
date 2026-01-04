@@ -1619,6 +1619,14 @@ button:hover {
     font-size: 14px;
 }
 
+/* Ajuste responsivo: en pantallas pequeñas, hacer más pequeño el botón Cerrar sesión */
+@media (max-width: 600px) {
+    #googleSignOut {
+        padding: 4px 8px;
+        font-size: 8px;
+    }
+}
+
 .drive-btn {
     background-color: #0f62fe;
     color: #fff;
