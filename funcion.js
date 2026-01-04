@@ -1,0 +1,3 @@
+function noviando() {
+    //estamos noviado
+}
