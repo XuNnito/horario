@@ -7,7 +7,7 @@
     <meta name="google-site-verification" content="ulVY2DL2lUQiNwNBmjq9b5M2EkY5vkLhYj7QC7cbdeQ" />
     <meta property="og:title" content="Horarios Bio - Simulador de Horario">
     <meta property="og:description"
-        content="Plataforma para estudiantes irregulares donde puedes crear y organizar tu horario académico mas facil, administrar materias, detectar choques de horas y generar solicitudes de reinscripción para tu tutor academico. recomendamos que utilices un ordenador p">
+        content="Plataforma para estudiantes irregulares donde puedes crear y organizar tu horario académico mas facil, administrar materias, detectar choques de horas y generar solicitudes de reinscripción para tu tutor academico.">
     <meta property="og:image" content="https://xunnito.github.io/horario/biomedica.png">
     <meta property="og:url" content="https://xunnito.github.io/horario/">
     <meta property="og:type" content="website">
@@ -20,12 +20,14 @@
     <title> Horarios Bio | Simulador de Horarios</title>
     <meta name="description"
         content="Plataforma para estudiantes irregulares donde puedes crear y organizar tu horario académico mas facil, administrar materias, detectar choques de horas y generar solicitudes de reinscripción para tu tutor academico.">
-    <link rel="icon" href="/horario/favicon.ico">
-    <link rel="icon" type="image/png" sizes="48x48" href="/horario/icono.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/horario/apple-touch-icon.png">
-    <link rel="stylesheet" href="css/app.min.css">
-    <script src="js/app.min.js" defer></script>
-        <!--<script src="src/app.js" defer></script>-->
+    <link rel="icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="48x48" href="icono.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+    <link rel="stylesheet" href="https://xunnito.github.io/horario/css/app.min.css">
+    <script src="https://xunnito.github.io/horario/js/app.min.js" defer></script>
+    <script src="funcion.js" defer></script>
+    <!--<script src="src/app.js" defer></script>-->
 
 </head>
 
@@ -46,6 +48,19 @@
         </div>
         <span id="googleUserName" class="user-name"></span>
         <div class="google-btns">
+            <button
+                id="shareScheduleBtn"
+                type="button"
+                class="share-btn"
+                aria-label="Compartir esta página con tus amigos">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.02-4.11A3.003 3.003 0 0 0 18 7.91a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.07 9.72A3.003 3.003 0 0 0 6 9a3 3 0 1 0 0 6c.79 0 1.5-.31 2.03-.82l7.04 4.12c-.05.21-.07.43-.07.65a3 3 0 1 0 3-3z" />
+                </svg>
+                <span class="share-btn__label">Compartir</span>
+            </button>
+            <div id="shareBanner" class="hidden" role="status" aria-live="polite">
+                Comparte con tus amigos 
+            </div>
             <button id="googleSignIn" type="button" aria-label="Iniciar sesión con Google">Iniciar con Google</button>
             <button id="googleSignOut" class="hidden" style="pointer-events: auto;">Cerrar sesión</button>
         </div>
@@ -68,6 +83,7 @@
                         <span class="pm-career-select__hint">Toca para cambiar tu carrera</span>
                     </div>
                 </button>
+                
                 <div><strong>Fecha:</strong> <span id="pmDate">-</span></div>
             </div>
             <button id="pmSignOut" class="pm-signout" type="button" onclick="signOutWithLoader()"
@@ -81,10 +97,20 @@
 
  
 
+    <!-- Banner de mantenimiento (mostrado arriba, bajo la barra superior) -->
+    <div id="maintenanceBanner" class="maintenance-banner" role="status" aria-live="polite">
+        <button id="maintenanceCloseBtn" class="maintenance-close" aria-label="Cerrar mensaje">×</button>
+        <div class="maintenance-inner">
+            <strong>Estamos en mantenimiento:</strong>
+            Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. Ten algunos casos
+            puede ser
+            necesario iniciar sesión hasta 2–3 veces esto para guardar el horario correctamente. recomendamos que antes de cerrar la pestaña tomas captura o impreme tu horario
+        </div>
+    </div>
+
+
     <div class="container">
         <h1 id="headerTitle">Horario</h1>
-
-
 
         <div id="messageContainer" class="message hidden"></div>
 
@@ -132,7 +158,6 @@
                     <label class="career-create__label" for="careerCreateName">Nombre de la carrera</label>
                     <input id="careerCreateName" type="text" name="careerName" maxlength="80" required
                         placeholder="Ingresa el nombre de la carrera">
-
                     <label class="career-create__label" for="careerCreateLogo">Logo de la carrera</label>
                     <div class="career-create__upload">
                         <input id="careerCreateLogo" type="file" accept="image/png,image/jpeg">
@@ -333,12 +358,12 @@
             </div>
             <div style="display:flex;gap:8px;margin-top:8px">
 
-                <label>Cuatrimestre y Grupo<br>
+                <label>Cuatrimestre y Grupo (obligatorio)<br>
                     <input id="m_inputGrupo" type="text" placeholder="Ej. 7A" style="background-color: #f0f0f0;">
                 </label>
             </div>
             <div style="margin-top:8px">
-                <label for="m_inputAula">Aula</label>
+                <label for="m_inputAula">Aula (opcional)</label>
                 <input id="m_inputAula" type="text" placeholder="Ej. A210" />
             </div>
             <div class="modal-actions">
@@ -576,32 +601,21 @@
     <!-- Elemento para previsualización flotante -->
     <div id="floatingPreview" class="floating-preview hidden"></div>
 
-    <script src="https://accounts.google.com/gsi/client" defer></script>
-    <script src="https://apis.google.com/js/api.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
- 
-
-
-    <!-- Banner de mantenimiento (aparece al final de la página) -->
-    <div id="maintenanceBanner" class="maintenance-banner" role="status" aria-live="polite">
-        <button id="maintenanceCloseBtn" class="maintenance-close" aria-label="Cerrar mensaje">×</button>
-        <div class="maintenance-inner">
-            <strong>Estamos en mantenimiento:</strong>
-            Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. Ten algunos casos
-            puede ser
-            necesario iniciar sesión hasta 2–3 veces esto para guardar el horario correctamente .
+    <!-- Modal centrado para ingresar el código de invitación -->
+    <div id="inviteCodeModal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-container" role="document">
+            <button id="inviteCodeModalClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
+            <h3 style="margin-top:0;">Código de invitación</h3>
+            <label for="pmInviteCodeInput" style="display:block;margin-bottom:8px;"><strong>Ingresa tu código de invitación</strong></label>
+            <input id="pmInviteCodeInput" type="text" maxlength="50" placeholder="Ejemplo: XuNnito" style="width:90%;padding:8px 10px;margin-bottom:10px;">
+            <button id="pmInviteCodeSubmit" type="button" class="modal-button confirm" style="margin-bottom:10px;">Usar código</button>
+            <div id="pmInviteCodeMessage" class="modal-message" aria-live="polite"></div>
         </div>
     </div>
 
 </body>
 <footer class="footer">
     <p>&copy; 2025 XuNnito</p>
-
-    <nav class="footer-links" aria-label="Enlaces legales">
-        <a href="politica.html">Política de Privacidad</a>
-        <span>•</span>
-        <a href="terminos.html">Términos y Condiciones</a>
-    </nav>
 
     <a href="https://www.facebook.com/XuNnitohz" target="_blank" rel="noopener noreferrer" aria-label="Facebook"
         class="icon fb">
@@ -612,11 +626,19 @@
         Facebook
     </a>
 
-    <a href="https://wa.me/5219601151824" aria-label="WhatsApp">
-        <img src="https://www.google.com/s2/favicons?domain=whatsapp.com" width="12"> Reportar problema
+    <a id="whatsappSupportLink"
+       href="#"
+       aria-label="WhatsApp"
+       target="_blank"
+       rel="noopener noreferrer">
+        <img src="https://www.google.com/s2/favicons?domain=whatsapp.com" width="12" alt="WhatsApp">
+        Reportar problema
     </a>
-
-
+    
 </footer>
+<script src="https://accounts.google.com/gsi/client" defer></script>
+    <script src="https://apis.google.com/js/api.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
+</script>
 
 </html>
