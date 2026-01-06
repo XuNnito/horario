@@ -2275,17 +2275,16 @@ a img{
   }
 }
 
-/* Banner de mantenimiento cerca del footer */
+/* Banner de mantenimiento como capa superior, cubriendo la zona del nombre */
 .maintenance-banner {
-    position: relative; /* no fijado, en flujo del documento */
-    left: auto;
-    right: auto;
-    bottom: auto;
-    display: block;
+    position: relative;
+    top: 0px;
+    left: 0;
+    right: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 30;
+    z-index: 3000;
     pointer-events: auto;
     padding: 8px 0;
 }
@@ -2304,7 +2303,7 @@ a img{
 }
 
 @media (max-width: 600px) {
-    .maintenance-banner { bottom: 30px; padding: 6px; }
+    .maintenance-banner { top: 0; padding: 6px; }
     .maintenance-inner { font-size: 0.9rem; padding: 10px 12px; }
 }
 

@@ -103,10 +103,20 @@
 
  
 
+    <!-- Banner de mantenimiento (mostrado arriba, bajo la barra superior) -->
+    <div id="maintenanceBanner" class="maintenance-banner" role="status" aria-live="polite">
+        <button id="maintenanceCloseBtn" class="maintenance-close" aria-label="Cerrar mensaje">×</button>
+        <div class="maintenance-inner">
+            <strong>Estamos en mantenimiento:</strong>
+            Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. Ten algunos casos
+            puede ser
+            necesario iniciar sesión hasta 2–3 veces esto para guardar el horario correctamente. recomendamos que antes de cerrar la pestaña tomas captura o impreme tu horario
+        </div>
+    </div>
+
+
     <div class="container">
         <h1 id="headerTitle">Horario</h1>
-
-
 
         <div id="messageContainer" class="message hidden"></div>
 
@@ -606,19 +616,6 @@
             <input id="pmInviteCodeInput" type="text" maxlength="50" placeholder="Ejemplo: XuNnito" style="width:90%;padding:8px 10px;margin-bottom:10px;">
             <button id="pmInviteCodeSubmit" type="button" class="modal-button confirm" style="margin-bottom:10px;">Usar código</button>
             <div id="pmInviteCodeMessage" class="modal-message" aria-live="polite"></div>
-        </div>
-    </div>
-
-
-
-    <!-- Banner de mantenimiento (aparece al final de la página) -->
-    <div id="maintenanceBanner" class="maintenance-banner" role="status" aria-live="polite">
-        <button id="maintenanceCloseBtn" class="maintenance-close" aria-label="Cerrar mensaje">×</button>
-        <div class="maintenance-inner">
-            <strong>Estamos en mantenimiento:</strong>
-            Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. Ten algunos casos
-            puede ser
-            necesario iniciar sesión hasta 2–3 veces esto para guardar el horario correctamente. recomendamos que antes de cerrar la pestaña tomas captura o impreme tu horario
         </div>
     </div>
 
