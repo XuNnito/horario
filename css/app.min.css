@@ -9,7 +9,10 @@
     --career-watermark-image: url("../image/biomedica.png");
     --career-background-image: url("../image/biomedica.png");
 }
-
+::selection {
+  background-color: var(--success-color); 
+  color: #ffffff;           
+}
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--bg-color);
@@ -207,9 +210,9 @@ button:hover {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 9999;
+    z-index: 8888;
     position: fixed;
-    top: 50%;
+    top: 10%;
     left: 50%;
     transform: translateX(-50%);
     width: 80%;
@@ -2958,6 +2961,7 @@ a img{
     max-width: 1200px;
     max-height: 70vh;
     overflow-y: auto;
+     border-radius: 18px;
    
 }
 
@@ -2968,7 +2972,23 @@ a img{
         overflow-y: visible;
     }
 }
+@media (max-width: 650px) {
+    .modal-container.plans-modal {
+        width: 50vw;
+        max-width: 100%;
+        height: auto;
+        max-height: 80vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;       /* Firefox */
+        -ms-overflow-style: none;    /* IE/Edge */
+        overscroll-behavior: contain; /* Evita que se mueva el contenido de atrás al hacer scroll en el modal */
+    }
 
+    .modal-container.plans-modal::-webkit-scrollbar {
+        display: none;               /* Chrome/Safari */
+    }
+}
 .plans-grid {
     display: flex;
     gap: 16px;
