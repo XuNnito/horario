@@ -2743,6 +2743,33 @@ a img{
             justify-content: space-between;
         }
 
+        /* Fila de plan actual en el perfil */
+        .pm-plan-row {
+            align-self: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(26, 115, 232, 0.08);
+            color: #1a3a6b;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid rgba(26, 115, 232, 0.25);
+            margin-top: 6px;
+        }
+
+        .pm-plan-label {
+            font-weight: 500;
+            opacity: 0.85;
+        }
+
+        .pm-plan-value {
+            font-weight: 600;
+            color: #1a73e8;
+        }
+
         .pm-signout {
             background: #d9534f;
             color: #fff;
@@ -2920,3 +2947,127 @@ a img{
             border-style: solid;
             border-color: transparent transparent #323232 transparent;
         }
+
+/* Modal de planes: tarjetas horizontales y botón X */
+.modal-container.plans-modal {
+    width: 50%;
+    max-width: 1200px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+@media (min-width: 1024px) {
+    .modal-container.plans-modal {
+        max-height: none;
+        height: auto;
+        overflow-y: visible;
+    }
+}
+
+.plans-grid {
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    align-items: stretch;
+    flex-wrap: wrap;
+}
+
+.plan-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 16px 18px 18px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    width: 100%;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+}
+
+.plan-card h4 {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+}
+
+.plan-price {
+    margin: 0 0 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.plan-price-note {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.plan-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    color: #4b5563;
+}
+
+.plan-features li {
+    margin-bottom: 4px;
+    padding-left: 16px;
+    position: relative;
+}
+
+.plan-features li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #1a73e8;
+}
+
+.plan-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #e5e7eb;
+    color: #111827;
+    margin-bottom: 6px;
+}
+
+.plan-badge--highlight {
+    background: rgba(52, 211, 153, 0.16);
+    color: #065f46;
+}
+
+.plan-cta-btn {
+    margin-top: auto;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: none;
+    background: #1a73e8;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.plan-cta-btn:hover {
+    background: #1558b4;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+    transform: translateY(-1px);
+}
+
+.plan-disclaimer {
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin-top: 6px;
+}
+
+@media (max-width: 640px) {
+    .plan-card {
+        max-width: 100%;
+    }
+}
