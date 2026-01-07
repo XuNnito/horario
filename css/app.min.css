@@ -19,7 +19,7 @@ body {
     margin: 0;
     padding: 10px;
     background-color: var(--bg-color);
-    background-image: linear-gradient(rgba(245, 247, 250, 0.808), rgba(255, 255, 255, 0.979)), var(--career-background-image);
+    background-image: linear-gradient(rgba(245, 247, 250, 0.719), rgba(255, 255, 255, 0.979)), var(--career-background-image);
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
@@ -886,21 +886,6 @@ button:hover {
     padding: 6px 10px;
     font-weight: 600;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /* Estilo para impresión */
