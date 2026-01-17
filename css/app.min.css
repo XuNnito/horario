@@ -212,7 +212,7 @@ button:hover {
     align-items: center;
     z-index: 8888;
     position: fixed;
-    top: 10%;
+    top: 1%;
     left: 50%;
     transform: translateX(-50%);
     width: 80%;

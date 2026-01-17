@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>404</title>
+    
+    <link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&amp;display=swap'>
+    <link rel="stylesheet" href="https://xunito.netlify.app/ERROR/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+      <link rel="stylesheet" href="https://xunito.netlify.app/css/anuncio.css">
+  <link rel="stylesheet" href="https://xunito.netlify.app/css/arriba.css">
+  <link rel="stylesheet" href="https://xunito.netlify.app/css/body.css">
+  <link rel="stylesheet" href="https://xunito.netlify.app/css/carousel.css">
+  <link rel="stylesheet" href="https://xunito.netlify.app/css/footer.css">
+  <link rel="stylesheet" href="https://xunito.netlify.app/css/loader.css">
+  <link rel="stylesheet" href="https://xunito.netlify.app/css/navbar.css">
+  <link rel="stylesheet" href="https://xunito.netlify.app/css/servicio.css">
+  <link rel="stylesheet" href="https://xunito.netlify.app/css/slider.css">
+  <link rel="stylesheet" href="https://xunito.netlify.app/css/style.css">
+  <link rel="stylesheet" href="https://xunito.netlify.app/css/xunu.css">
+
+<style>
+  /* Estilos específicos para la página 404 - Footer más abajo */
+  body {
+    overflow-y: auto; /* Permitir scroll vertical */
+    height: auto; /* Altura automática en lugar de 100vh */
+    min-height: 100vh; /* Altura mínima de pantalla completa */
+  }
+  
+  .container {
+    position: relative;
+    margin-top: 85vh; 
+    margin-left: 4%;
+    width: 50%;
+    z-index: 20;
+  }
+  
+  footer {
+    margin-top: 0; /* Espacio adicional arriba del footer */
+    position: relative;
+    z-index: 20;
+    animation: footerAnim calc(var(--anime-speed) * 22) linear forwards;
+    opacity: 0;
+    transform: translateY(50px) scale(0.8);
+  }
+  
+  /* Animación para el footer similar al botón */
+  @keyframes footerAnim {
+    0%, 60% {
+      opacity: 0;
+      transform: translateY(50px) scale(0.8);
+    }
+    70%, 100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  /* Estilos responsivos para dispositivos móviles */
+  @media (max-width: 768px) {
+    .container {
+      margin-left: 2%;
+      width: 96%;
+      margin-top: 75vh;
+    }
+    
+    footer {
+      padding: 15px 10px;
+      text-align: center;
+    }
+    
+    footer p {
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    
+    .social-links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .social-links > div {
+      margin: 0;
+    }
+    
+    .social-links a {
+      font-size: 14px;
+      display: inline-block;
+      padding: 8px 12px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    
+    .social-links a:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+    
+    footer > div:last-child {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .footer-links {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    footer > div:last-child a,
+    .footer-links a {
+      font-size: 12px;
+      padding: 5px 8px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    
+    footer > div:last-child a:hover,
+    .footer-links a:hover {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .container {
+      margin-left: 1%;
+      width: 98%;
+      margin-top: 70vh;
+    }
+    
+    footer {
+      padding: 10px 5px;
+    }
+    
+    footer p {
+      font-size: 12px;
+    }
+    
+    .social-links a {
+      font-size: 12px;
+      padding: 6px 10px;
+    }
+    
+    footer > div:last-child a,
+    .footer-links a {
+      font-size: 11px;
+      padding: 4px 6px;
+    }
+  }
+
+.home-btn{
+  display:block;
+  margin:20px auto 0 auto;
+}
+
+::selection{
+  background:#ffb3b3;
+  color:#000;
+}
+
+
+
+</style>
+</head>
+<body>
+
+<!-- Animación de la vaca cayendo -->
+<div class="cow">
+  <div class="head">
+    <div class="face"></div>
+  </div>
+  <div class="leg b l"></div>
+  <div class="leg b r"></div>
+  <div class="leg f l"></div>
+  <div class="leg f r"></div>
+  <div class="tail"></div>
+</div>
+<div class="well">
+ 
+</div>
+
+<a class="home-btn" href="./">Ir al Inicio</a>
+
+<div class="text-box">
+  <h1>404</h1>
+  <p>Lo sentimos, esta página cambiamos de url o hubo problemas, conectate con XuNnito para reportar el problema...</p>
+</div>
+
+<div class="container">
+     <footer>
+    <p>&copy; 2025 XuNnito</p>
+    <div class="social-links">
+      <div class="social-links-instagram">
+        <a href="https://www.instagram.com/xunnitohz/" target="_blank" rel="noopener"><i
+            class="fa-brands fa-instagram"></i> Instagram</a> |
+      </div>
+      <div class="social-links-facebook">
+        <a href="https://www.facebook.com/XuNnitohz/" target="_blank" rel="noopener"><i class="fa-brands fa-facebook"></i>
+          Facebook</a> |
+      </div>
+      <div class="social-links-whatsapp">
+        <a href="https://whatsapp.com/channel/0029Vb7OPEWKGGGE7bMk792r" target="_blank" rel="noopener"><i
+            class="fa-brands fa-whatsapp"></i> WhatsApp</a> |
+      </div>
+      <div class="social-links-telegram">
+        <a href="https://t.me/xunitou" target="_blank" rel="noopener"><i 
+           class="fa-brands fa-telegram"></i> Telegram</a> |
+      </div>
+      <div></div>
+    </div>
+    
+    <div>
+      <a href="https://https://xunito.netlify.app/privacidad" target="_blank" rel="noopener">Política de Privacidad</a> |
+      <a href="https://xunito.netlify.app/terminos" target="_blank" rel="noopener">Términos y Condiciones</a> |
+      <a href="https://xunito.netlify.app/cookies" target="_blank" rel="noopener">Cookies</a> |
+      <a href="https://xunito.netlify.app/mantenimiento" target="_blank" rel="noopener">Aviso</a> |
+      <a href="https://xunito.netlify.app/XuNu_IA" target="_blank" rel="noopener">Proyecto IA Tsotsil</a>
+    </div>
+  </footer>
+    </div>
+</body>
+</html>
