@@ -268,6 +268,7 @@
                         <button id="openReinscriptionModal" type="button" class="btn-secondary">Solicitud de
                             reinscripción</button>
                         <button id="pmOpenPlans" type="button" class="btn-secondary">Ver planes</button>
+                        <button id="planStatusButton" type="button" class="btn-secondary hidden">Plan</button>
                     </div>
                 <div class="legend" style="display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap;">
                     <span style="display:inline-flex;align-items:center;gap:4px;">
@@ -675,6 +676,7 @@
                 </div>
                 <div class="plan-card plan-card--pro">
                     <div class="plan-badge plan-badge--highlight">Recomendado</div>
+					<h4>Plan 49 MXN</h4>
                     <p class="plan-price">$49 MXN</p>
                     <ul class="plan-features">
 						<li>Crea 10 materias en el catálogo</li>
@@ -682,10 +684,79 @@
                         <li>Acceso completo a todas las funciones</li>
                         <li>Sin renovación automática</li>
                     </ul>
-                    <button id="planProCheckout" type="button" class="plan-cta-btn">Activar plan 5 días</button>
+					<button id="planProCheckout" type="button" class="plan-cta-btn">Activar plan de 49 MXN</button>
                     <p class="plan-disclaimer">El pago se realiza con Stripe de forma segura. No se renovará automáticamente.</p>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal de estado del plan y usos -->
+    <div id="planStatusModal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-container" role="document">
+            <button id="planStatusClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
+            <h3 style="margin-top:0; text-align:center;">Tu plan</h3>
+            <p style="font-size:14px;color:#4b5563;margin-bottom:12px; text-align:center;">
+                Plan actual: <strong id="planUsageTitleLabel">Gratis</strong>
+            </p>
+
+            <div style="overflow-x:auto; margin-bottom:8px;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f3f4f6; color:#374151;">
+                            <th style="text-align:left; padding:6px 8px; border-bottom:1px solid #e5e7eb;">Función</th>
+                            <th style="text-align:right; padding:6px 8px; border-bottom:1px solid #e5e7eb;">Usados</th>
+                            <th style="text-align:right; padding:6px 8px; border-bottom:1px solid #e5e7eb;">Restantes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding:6px 8px; border-bottom:1px solid #f3f4f6;">Crear materias en el catálogo</td>
+                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span id="planUsageCatalogUsed">-</span></td>
+                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span id="planUsageCatalogRemaining">-</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 8px; border-bottom:1px solid #f3f4f6;">Imprimir horario</td>
+                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span id="planUsagePrintUsed">-</span></td>
+                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span id="planUsagePrintRemaining">-</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 8px;">Descargas / envíos al tutor</td>
+                            <td style="padding:6px 8px; text-align:right;"><span id="planUsageDownloadUsed">-</span></td>
+                            <td style="padding:6px 8px; text-align:right;"><span id="planUsageDownloadRemaining">-</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p style="font-size:12px;color:#6b7280;margin-bottom:12px; text-align:left;">
+                Los usos se cuentan aunque borres materias o archivos. Cada nuevo pago del plan 49 MXN vuelve a dejarte con 10 usos en cada apartado.
+            </p>
+            <button id="upgradePlanButton" type="button" class="plan-cta-btn hidden" style="width:100%;margin-top:4px;" onclick="(function(){ var btn=document.getElementById('planProCheckout'); if(btn){ btn.click(); } })();">
+                Mejorar plan
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal para capturar datos de la persona que realiza el pago -->
+    <div id="payerInfoModal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-container payer-modal" role="document">
+            <button id="payerInfoClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
+            <h3 style="margin-top:0; text-align:center;">Datos de la persona que paga</h3>
+            <p style="font-size:14px;color:#6b7280;margin-bottom:12px; text-align:center;">
+                Usaremos estos datos para asociar el plan y poder identificar tu compra.
+            </p>
+            <label for="payerNameInput" style="display:block;margin-bottom:6px;text-align:left;font-weight:600;font-size:14px;">Nombre completo</label>
+            <input id="payerNameInput" type="text" placeholder="Nombre de la persona que realiza el pago" style="width:100%;padding:8px 10px;margin-bottom:10px;border-radius:6px;border:1px solid #d1d5db;">
+            <label for="payerEmailInput" style="display:block;margin-bottom:6px;text-align:left;font-weight:600;font-size:14px;">Correo electrónico</label>
+            <input id="payerEmailInput" type="email" placeholder="correo@ejemplo.com" style="width:100%;padding:8px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #d1d5db;">
+            <p style="font-size:12px;color:#6b7280;margin-bottom:12px; text-align:left;">
+                Este correo se usará para activar el plan y consultar tu estado más adelante.
+            </p>
+            <div id="payerInfoError" style="min-height:18px;font-size:13px;color:#b91c1c;margin-bottom:8px;"></div>
+            <button id="payerInfoContinue" type="button" class="plan-cta-btn" style="width:100%;">
+                Continuar con el pago
+            </button>
         </div>
     </div>
 

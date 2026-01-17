@@ -1722,8 +1722,13 @@ button:hover {
 }
 
 .modal-container.payment-modal {
-	width: 380px;
-	max-width: 90vw;
+    width: 560px;
+    max-width: 95vw;
+}
+
+.modal-container.payer-modal {
+    width: 420px;
+    max-width: 95vw;
 }
 
 .modal-close {
