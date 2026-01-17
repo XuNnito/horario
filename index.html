@@ -269,21 +269,50 @@
                             reinscripción</button>
                         <button id="pmOpenPlans" type="button" class="btn-secondary">Ver planes</button>
                     </div>
-                <div class="legend" style="display:flex;gap:10px;align-items:center;margin:10px 0;">
-                    <span style="display:inline-flex;align-items:center;gap:6px;">
+                <div class="legend" style="display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap;">
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
                         <span
-                            style="width:14px;height:14px;border-radius:50%;background:#28a745;display:inline-block;"></span>
-                        <span style="font-size:13px;">Verde: Ordinario</span>
+                            style="width:12px;height:12px;border-radius:50%;background:#28a745;display:inline-block;"></span>
+                        <span style="font-size:11px;">Ordinario</span>
                     </span>
-                    <span style="display:inline-flex;align-items:center;gap:6px;">
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
                         <span
-                            style="width:14px;height:14px;border-radius:50%;background:#d9534f;display:inline-block;"></span>
-                        <span style="font-size:13px;">Rojo: choque de horas</span>
+                            style="width:12px;height:12px;border-radius:50%;background:#d9534f;display:inline-block;"></span>
+                        <span style="font-size:11px;">Choque</span>
                     </span>
-                    <span style="display:inline-flex;align-items:center;gap:6px;">
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
+                        <span style="width:12px;height:12px;border-radius:50%;  color: #ffffff;
+                        background-color: #111827;
+                        background-image:
+                            radial-gradient(circle at 10% 20%, #00ac42da 0, #00ac42da 18%, transparent 40%),
+                            radial-gradient(circle at 80% 15%, #f7f7f7 0, #feca57 20%, transparent 42%),
+                            radial-gradient(circle at 20% 80%, #000000 0, #8d8f91 22%, transparent 45%),
+                            radial-gradient(circle at 75% 75%, #5f27cd 0, #5f27cd 20%, transparent 40%),
+                            radial-gradient(circle at 50% 45%, #1dd1a1 0, #1dd1a1 18%, transparent 38%),
+                            radial-gradient(circle at 35% 30%, #383838 0, #ff9ff3 16%, transparent 36%),
+                            radial-gradient(circle at 60% 60%, #48dbfb 0, #48dbfb 18%, transparent 40%),
+                            radial-gradient(circle at 90% 55%, #fffefe 0, #ff9f43 16%, transparent 38%),
+                            radial-gradient(circle at 15% 50%, #ff4757 0, #ff4757 12%, transparent 30%),
+                            radial-gradient(circle at 40% 15%, #ff7070 0, #323232 14%, transparent 34%),
+                            radial-gradient(circle at 82% 40%, #ffb142 0, #ffb142 12%, transparent 30%),
+                            radial-gradient(circle at 55% 85%, #ffffff 0, #2ed573 14%, transparent 34%),
+                            radial-gradient(circle at 30% 65%, #eccc68 0, #eccc68 10%, transparent 28%),
+                            radial-gradient(circle at 68% 32%, #ff6b81 0, #ff6b81 11%, transparent 30%),
+                            radial-gradient(circle at 50% 12%, #a29bfe 0, #a29bfe 10%, transparent 28%),
+                            radial-gradient(circle at 5% 90%, #1e90ff 0, #1e90ff 12%, transparent 32%);
+                        background-size: 160% 160%;
+                        background-repeat: no-repeat;display:inline-block;"></span>
+                        <span style="font-size:11px;">Grupo especial</span>
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
                         <span
-                            style="width:14px;height:14px;border-radius:50%;background:#2196f3;display:inline-block;"></span>
-                        <span style="font-size:13px;">Azul: Materia de otro grupo o carrera</span>
+                            style="width:12px;height:12px;border-radius:50%;background:#9b59b6;display:inline-block;"></span>
+                        <span style="font-size:11px;">Convalidación</span>
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
+                        <span
+                            style="width:12px;height:12px;border-radius:50%;background:#2196f3;display:inline-block;"></span>
+                        <span style="font-size:11px;">Otro grupo/carrera</span>
                     </span>
                 </div>
                 <div id="printMessage" class="modal">
@@ -356,13 +385,11 @@
         </div>
     </div>
 
-    
-
     <div id="modalAdd" class="modal-add" aria-hidden="true">
         <div class="panel-modal">
             <h3>Agregar materia</h3>
             <div style="margin-top:8px">
-                <label>Materia (obligatorio)<br>
+                <label>Materia  <span style="color:#f20505bb;border-radius:6px;font-size:9px;">(obligatorio)</span><br>
                     <input id="m_inputMateria" type="text" style="width:100%" />
                 </label>
             </div>
@@ -371,10 +398,10 @@
                     <input id="m_inputProfesor" type="text" style="width:100%" />
                 </label>
             </div>
-            <div style="display:flex;gap:8px;margin-top:8px">
+            <div style="margin-top:8px">
 
-                <label>Cuatrimestre y Grupo (obligatorio)<br>
-                    <input id="m_inputGrupo" type="text" placeholder="Ej. 7A" style="background-color: #f0f0f0;">
+                <label>Cuatrimestre y Grupo <span style="color:#f20505bb;border-radius:6px;font-size:9px;">(obligatorio)</span><br>
+                    <input id="m_inputGrupo" type="text" placeholder="Ej. 7A | Especial | Convalidación" style="width:50%;">
                 </label>
             </div>
             <div style="margin-top:8px">
@@ -388,12 +415,13 @@
         </div>
     </div>
 
+
     <!-- Modal: Selector de horarios (cuadricula para seleccionar slots) -->
     <div id="modalSlots" class="modal-slots" aria-hidden="true">
         <div class="panel-modal">
             <h3>Seleccionar horarios (clic para seleccionar horas)</h3>
             <div class="small">Selecciona los cuadros correspondientes a Lunes-Viernes y horas.</div>
-            <div style="margin-top:8px; overflow:auto; max-height:50vh">
+            <div style="margin-top:8px; overflow:auto; max-height:80vh">
                 <table class="slots-table" id="slotsTable">
                     <thead>
                         <tr>
@@ -663,6 +691,22 @@
         </div>
     </div>
 
+    <!-- Modal de pago Stripe embebido -->
+    <div id="paymentModal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-container payment-modal" role="document">
+            <button id="paymentModalClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
+            <h3 style="margin-top:0; text-align:center;">Activar Plan 5 días</h3>
+            <p style="font-size:14px;color:#6b7280;margin-bottom:12px; text-align:center;">
+                Ingresa los datos de tu tarjeta para pagar MXN 49.00.
+            </p>
+            <div id="payment-element" style="margin:10px 0 16px;"></div>
+            <div id="paymentError" style="min-height:18px;font-size:13px;color:#b91c1c;margin-bottom:8px;"></div>
+            <button id="paymentConfirmButton" type="button" class="plan-cta-btn" style="width:100%;">
+                Pagar MXN 49.00
+            </button>
+        </div>
+    </div>
+
 </body>
 <footer class="footer">
     <p>&copy; 2025 XuNnito</p>
@@ -690,7 +734,7 @@
     <script src="https://apis.google.com/js/api.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
     <script>
-    window.BACKEND_BASE_URL = "http://127.0.0.1:5500";
+     window.BACKEND_BASE_URL = "http://127.0.0.1:5500";
     </script>
 </script>
 

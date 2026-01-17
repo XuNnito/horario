@@ -24,9 +24,8 @@
     <link rel="icon" type="image/png" sizes="48x48" href="icono.png">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 
-    <link rel="stylesheet" href="https://xunnito.github.io/horario/css/app.min.css">
-    <script src="https://xunnito.github.io/horario/xunito/app.min.js" defer></script>
-    <script src="funcion.js" defer></script>
+    <link rel="stylesheet" href="/css/app.min.css">
+    <script src="../xunito/app.min.js" defer></script>
     <!--<script src="src/app.js" defer></script>-->
 
 </head>
@@ -48,18 +47,16 @@
         </div>
         <span id="googleUserName" class="user-name"></span>
         <div class="google-btns">
-            <button
-                id="shareScheduleBtn"
-                type="button"
-                class="share-btn"
+            <button id="shareScheduleBtn" type="button" class="share-btn"
                 aria-label="Compartir esta página con tus amigos">
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.02-4.11A3.003 3.003 0 0 0 18 7.91a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.07 9.72A3.003 3.003 0 0 0 6 9a3 3 0 1 0 0 6c.79 0 1.5-.31 2.03-.82l7.04 4.12c-.05.21-.07.43-.07.65a3 3 0 1 0 3-3z" />
+                    <path
+                        d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.02-4.11A3.003 3.003 0 0 0 18 7.91a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.07 9.72A3.003 3.003 0 0 0 6 9a3 3 0 1 0 0 6c.79 0 1.5-.31 2.03-.82l7.04 4.12c-.05.21-.07.43-.07.65a3 3 0 1 0 3-3z" />
                 </svg>
                 <span class="share-btn__label">Compartir</span>
             </button>
             <div id="shareBanner" class="hidden" role="status" aria-live="polite">
-                Comparte con tus amigos 
+                Comparte con tus amigos
             </div>
             <button id="googleSignIn" type="button" aria-label="Iniciar sesión con Google">Iniciar con Google</button>
             <button id="googleSignOut" class="hidden" style="pointer-events: auto;">Cerrar sesión</button>
@@ -83,7 +80,7 @@
                         <span class="pm-career-select__hint">Toca para cambiar tu carrera</span>
                     </div>
                 </button>
-                
+
                 <div><strong>Fecha:</strong> <span id="pmDate">-</span></div>
             </div>
             <button id="pmSignOut" class="pm-signout" type="button" onclick="signOutWithLoader()"
@@ -95,7 +92,7 @@
 
 
 
- 
+
 
     <!-- Banner de mantenimiento (mostrado arriba, bajo la barra superior) -->
     <div id="maintenanceBanner" class="maintenance-banner" role="status" aria-live="polite">
@@ -104,7 +101,8 @@
             <strong>Estamos en mantenimiento:</strong>
             Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. Ten algunos casos
             puede ser
-            necesario iniciar sesión hasta 2–3 veces esto para guardar el horario correctamente. recomendamos que antes de cerrar la pestaña tomas captura o impreme tu horario
+            necesario iniciar sesión hasta 2–3 veces esto para guardar el horario correctamente. recomendamos que antes
+            de cerrar la pestaña tomas captura o impreme tu horario
         </div>
     </div>
 
@@ -254,21 +252,50 @@
                     <button id="openReinscriptionModal" type="button" class="btn-secondary">Solicitud de
                         reinscripción</button>
                 </div>
-                <div class="legend" style="display:flex;gap:10px;align-items:center;margin:10px 0;">
-                    <span style="display:inline-flex;align-items:center;gap:6px;">
+                <div class="legend" style="display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap;">
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
                         <span
-                            style="width:14px;height:14px;border-radius:50%;background:#28a745;display:inline-block;"></span>
-                        <span style="font-size:13px;">Verde: Ordinario</span>
+                            style="width:12px;height:12px;border-radius:50%;background:#28a745;display:inline-block;"></span>
+                        <span style="font-size:11px;">Ordinario</span>
                     </span>
-                    <span style="display:inline-flex;align-items:center;gap:6px;">
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
                         <span
-                            style="width:14px;height:14px;border-radius:50%;background:#d9534f;display:inline-block;"></span>
-                        <span style="font-size:13px;">Rojo: choque de horas</span>
+                            style="width:12px;height:12px;border-radius:50%;background:#d9534f;display:inline-block;"></span>
+                        <span style="font-size:11px;">Choque</span>
                     </span>
-                    <span style="display:inline-flex;align-items:center;gap:6px;">
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
+                        <span style="width:12px;height:12px;border-radius:50%;  color: #ffffff;
+                            background-color: #111827;
+                            background-image:
+                                radial-gradient(circle at 10% 20%, #00ac42da 0, #00ac42da 18%, transparent 40%),
+                                radial-gradient(circle at 80% 15%, #f7f7f7 0, #feca57 20%, transparent 42%),
+                                radial-gradient(circle at 20% 80%, #000000 0, #8d8f91 22%, transparent 45%),
+                                radial-gradient(circle at 75% 75%, #5f27cd 0, #5f27cd 20%, transparent 40%),
+                                radial-gradient(circle at 50% 45%, #1dd1a1 0, #1dd1a1 18%, transparent 38%),
+                                radial-gradient(circle at 35% 30%, #383838 0, #ff9ff3 16%, transparent 36%),
+                                radial-gradient(circle at 60% 60%, #48dbfb 0, #48dbfb 18%, transparent 40%),
+                                radial-gradient(circle at 90% 55%, #fffefe 0, #ff9f43 16%, transparent 38%),
+                                radial-gradient(circle at 15% 50%, #ff4757 0, #ff4757 12%, transparent 30%),
+                                radial-gradient(circle at 40% 15%, #ff7070 0, #323232 14%, transparent 34%),
+                                radial-gradient(circle at 82% 40%, #ffb142 0, #ffb142 12%, transparent 30%),
+                                radial-gradient(circle at 55% 85%, #ffffff 0, #2ed573 14%, transparent 34%),
+                                radial-gradient(circle at 30% 65%, #eccc68 0, #eccc68 10%, transparent 28%),
+                                radial-gradient(circle at 68% 32%, #ff6b81 0, #ff6b81 11%, transparent 30%),
+                                radial-gradient(circle at 50% 12%, #a29bfe 0, #a29bfe 10%, transparent 28%),
+                                radial-gradient(circle at 5% 90%, #1e90ff 0, #1e90ff 12%, transparent 32%);
+                            background-size: 160% 160%;
+                            background-repeat: no-repeat;display:inline-block;"></span>
+                        <span style="font-size:11px;">Grupo especial</span>
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
                         <span
-                            style="width:14px;height:14px;border-radius:50%;background:#2196f3;display:inline-block;"></span>
-                        <span style="font-size:13px;">Azul: Materia de otro grupo o carrera</span>
+                            style="width:12px;height:12px;border-radius:50%;background:#9b59b6;display:inline-block;"></span>
+                        <span style="font-size:11px;">Convalidación</span>
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
+                        <span
+                            style="width:12px;height:12px;border-radius:50%;background:#2196f3;display:inline-block;"></span>
+                        <span style="font-size:11px;">Otro grupo/carrera</span>
                     </span>
                 </div>
                 <div id="printMessage" class="modal">
@@ -307,7 +334,7 @@
     </div>
 
     <!-- Modal: Añadir datos iniciales -->
-    
+
     <!-- Modal: Cuenta suspendida -->
     <div id="accountSuspendedModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
         <div class="panel-modal" style="max-width:420px;text-align:center;">
@@ -341,13 +368,13 @@
         </div>
     </div>
 
-    
+
 
     <div id="modalAdd" class="modal-add" aria-hidden="true">
         <div class="panel-modal">
             <h3>Agregar materia</h3>
             <div style="margin-top:8px">
-                <label>Materia (obligatorio)<br>
+                <label>Materia  <span style="color:#f20505bb;border-radius:6px;font-size:9px;">(obligatorio)</span><br>
                     <input id="m_inputMateria" type="text" style="width:100%" />
                 </label>
             </div>
@@ -356,10 +383,10 @@
                     <input id="m_inputProfesor" type="text" style="width:100%" />
                 </label>
             </div>
-            <div style="display:flex;gap:8px;margin-top:8px">
+            <div style="margin-top:8px">
 
-                <label>Cuatrimestre y Grupo (obligatorio)<br>
-                    <input id="m_inputGrupo" type="text" placeholder="Ej. 7A" style="background-color: #f0f0f0;">
+                <label>Cuatrimestre y Grupo <span style="color:#f20505bb;border-radius:6px;font-size:9px;">(obligatorio)</span><br>
+                    <input id="m_inputGrupo" type="text" placeholder="Ej. 7A | Especial | Convalidación" style="width:50%;">
                 </label>
             </div>
             <div style="margin-top:8px">
@@ -606,9 +633,12 @@
         <div class="modal-container" role="document">
             <button id="inviteCodeModalClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
             <h3 style="margin-top:0;">Código de invitación</h3>
-            <label for="pmInviteCodeInput" style="display:block;margin-bottom:8px;"><strong>Ingresa tu código de invitación</strong></label>
-            <input id="pmInviteCodeInput" type="text" maxlength="50" placeholder="Ejemplo: XuNnito" style="width:90%;padding:8px 10px;margin-bottom:10px;">
-            <button id="pmInviteCodeSubmit" type="button" class="modal-button confirm" style="margin-bottom:10px;">Usar código</button>
+            <label for="pmInviteCodeInput" style="display:block;margin-bottom:8px;"><strong>Ingresa tu código de
+                    invitación</strong></label>
+            <input id="pmInviteCodeInput" type="text" maxlength="50" placeholder="Ejemplo: XuNnito"
+                style="width:90%;padding:8px 10px;margin-bottom:10px;">
+            <button id="pmInviteCodeSubmit" type="button" class="modal-button confirm" style="margin-bottom:10px;">Usar
+                código</button>
             <div id="pmInviteCodeMessage" class="modal-message" aria-live="polite"></div>
         </div>
     </div>
@@ -626,19 +656,15 @@
         Facebook
     </a>
 
-    <a id="whatsappSupportLink"
-       href="#"
-       aria-label="WhatsApp"
-       target="_blank"
-       rel="noopener noreferrer">
+    <a id="whatsappSupportLink" href="#" aria-label="WhatsApp" target="_blank" rel="noopener noreferrer">
         <img src="https://www.google.com/s2/favicons?domain=whatsapp.com" width="12" alt="WhatsApp">
         Reportar problema
     </a>
-    
+
 </footer>
 <script src="https://accounts.google.com/gsi/client" defer></script>
-    <script src="https://apis.google.com/js/api.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
+<script src="https://apis.google.com/js/api.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
 </script>
 
 </html>
