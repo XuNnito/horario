@@ -477,29 +477,30 @@ button:hover {
 
 /* Más pequeño en PC */
 /* Más pequeño en PC */
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
 
     .slots-table th,
     .slots-table td {
-        padding: 5px 10px;
-        font-size: 14px;
+        padding: 1px 10px;
+        font-size: 10px;
     }
 
     .slots-table td.slot {
-        height: 30px;
+        height: 20px;
     }
 }
 
 /* Mejor visualización en dispositivos móviles */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
 
     .slots-table {
-        font-size: 12px;
+        font-size: 10px;
     }
 
     .slots-table th,
     .slots-table td {
-        padding: 1px 4px;
+        padding: 1px 1px;
+        max-height: 50%;
     }
 
     .slots-table td.slot {
@@ -510,7 +511,7 @@ button:hover {
         width: 100%;
         max-width: 80%;
         max-height: 80%;
-        margin: 0 8px;
+        margin: 0 2px;
     }
 }
 
