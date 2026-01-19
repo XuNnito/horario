@@ -52,18 +52,16 @@
         </div>
         <span id="googleUserName" class="user-name"></span>
         <div class="google-btns">
-            <button
-                id="shareScheduleBtn"
-                type="button"
-                class="share-btn"
+            <button id="shareScheduleBtn" type="button" class="share-btn"
                 aria-label="Compartir esta página con tus amigos">
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.02-4.11A3.003 3.003 0 0 0 18 7.91a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.07 9.72A3.003 3.003 0 0 0 6 9a3 3 0 1 0 0 6c.79 0 1.5-.31 2.03-.82l7.04 4.12c-.05.21-.07.43-.07.65a3 3 0 1 0 3-3z" />
+                    <path
+                        d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.02-4.11A3.003 3.003 0 0 0 18 7.91a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.07 9.72A3.003 3.003 0 0 0 6 9a3 3 0 1 0 0 6c.79 0 1.5-.31 2.03-.82l7.04 4.12c-.05.21-.07.43-.07.65a3 3 0 1 0 3-3z" />
                 </svg>
                 <span class="share-btn__label">Compartir</span>
             </button>
             <div id="shareBanner" class="hidden" role="status" aria-live="polite">
-                Comparte con tus amigos 
+                Comparte con tus amigos
             </div>
             <button id="googleSignIn" type="button" aria-label="Iniciar sesión con Google">Iniciar con Google</button>
             <button id="googleSignOut" class="hidden" style="pointer-events: auto;">Cerrar sesión</button>
@@ -92,7 +90,8 @@
                     </div>
                 </button>
                 <!-- Opción adicional: código de invitación -->
-                <button id="pmInviteCodeToggle" class="pm-career-select" type="button" aria-label="Ingresar código de invitación">
+                <button id="pmInviteCodeToggle" class="pm-career-select" type="button"
+                    aria-label="Ingresar código de invitación">
                     <div class="pm-career-select__text">
                         <strong>Código de invitación</strong>
                         <span class="pm-career-select__hint">Toca para ingresar un código</span>
@@ -109,7 +108,7 @@
 
 
 
- 
+
 
     <!-- Banner de mantenimiento (mostrado arriba, bajo la barra superior) -->
     <div id="maintenanceBanner" class="maintenance-banner" role="status" aria-live="polite">
@@ -118,7 +117,8 @@
             <strong>Estamos en mantenimiento:</strong>
             Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. Ten algunos casos
             puede ser
-            necesario iniciar sesión hasta 2–3 veces esto para guardar el horario correctamente. recomendamos que antes de cerrar la pestaña tomas captura o impreme tu horario
+            necesario iniciar sesión hasta 2–3 veces esto para guardar el horario correctamente. recomendamos que antes
+            de cerrar la pestaña tomas captura o impreme tu horario
         </div>
     </div>
 
@@ -262,14 +262,14 @@
             </div>
 
             <div class="panel" style="flex: 2; min-width: 600px;">
-                    <h2>Horario Semanal</h2>
-                    <div class="schedule-actions">
-                        <button type="button" onclick="printSchedule()">Imprimir Horario</button>
-                        <button id="openReinscriptionModal" type="button" class="btn-secondary">Solicitud de
-                            reinscripción</button>
-                        <button id="pmOpenPlans" type="button" class="btn-secondary">Ver planes</button>
-                        <button id="planStatusButton" type="button" class="btn-secondary hidden">Plan</button>
-                    </div>
+                <h2>Horario Semanal</h2>
+                <div class="schedule-actions">
+                    <button type="button" onclick="printSchedule()">Imprimir Horario</button>
+                    <button id="openReinscriptionModal" type="button" class="btn-secondary">Solicitud de
+                        reinscripción</button>
+                    <button id="pmOpenPlans" type="button" class="btn-secondary">Ver planes</button>
+                    <button id="planStatusButton" type="button" class="btn-secondary hidden">Plan</button>
+                </div>
                 <div class="legend" style="display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap;">
                     <span style="display:inline-flex;align-items:center;gap:4px;">
                         <span
@@ -352,7 +352,7 @@
     </div>
 
     <!-- Modal: Añadir datos iniciales -->
-    
+
     <!-- Modal: Cuenta suspendida -->
     <div id="accountSuspendedModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
         <div class="panel-modal" style="max-width:420px;text-align:center;">
@@ -390,7 +390,7 @@
         <div class="panel-modal">
             <h3>Agregar materia</h3>
             <div style="margin-top:8px">
-                <label>Materia  <span style="color:#f20505bb;border-radius:6px;font-size:9px;">(obligatorio)</span><br>
+                <label>Materia <span style="color:#f20505bb;border-radius:6px;font-size:9px;">(obligatorio)</span><br>
                     <input id="m_inputMateria" type="text" style="width:100%" />
                 </label>
             </div>
@@ -401,8 +401,10 @@
             </div>
             <div style="margin-top:8px">
 
-                <label>Cuatrimestre y Grupo <span style="color:#f20505bb;border-radius:6px;font-size:9px;">(obligatorio)</span><br>
-                    <input id="m_inputGrupo" type="text" placeholder="Ej. 7A | Especial | Convalidación" style="width:50%;">
+                <label>Cuatrimestre y Grupo <span
+                        style="color:#f20505bb;border-radius:6px;font-size:9px;">(obligatorio)</span><br>
+                    <input id="m_inputGrupo" type="text" placeholder="Ej. 7A | Especial | Convalidación"
+                        style="width:50%;">
                 </label>
             </div>
             <div style="margin-top:8px">
@@ -422,7 +424,7 @@
         <div class="panel-modal">
             <h3>Seleccionar horarios (clic para seleccionar horas)</h3>
             <div class="small">Selecciona los cuadros correspondientes a Lunes-Viernes y horas.</div>
-            <div style="margin-top:8px; overflow:auto; max-height:50vh">
+            <div style="margin-top:8px; overflow:auto; ">
                 <table class="slots-table" id="slotsTable">
                     <thead>
                         <tr>
@@ -650,9 +652,12 @@
         <div class="modal-container" role="document">
             <button id="inviteCodeModalClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
             <h3 style="margin-top:0;">Código de invitación</h3>
-            <label for="pmInviteCodeInput" style="display:block;margin-bottom:8px;"><strong>Ingresa tu código de invitación</strong></label>
-            <input id="pmInviteCodeInput" type="text" maxlength="50" placeholder="Ejemplo: XuNnito" style="width:90%;padding:8px 10px;margin-bottom:10px;">
-            <button id="pmInviteCodeSubmit" type="button" class="modal-button confirm" style="margin-bottom:10px;">Usar código</button>
+            <label for="pmInviteCodeInput" style="display:block;margin-bottom:8px;"><strong>Ingresa tu código de
+                    invitación</strong></label>
+            <input id="pmInviteCodeInput" type="text" maxlength="50" placeholder="Ejemplo: XuNnito"
+                style="width:90%;padding:8px 10px;margin-bottom:10px;">
+            <button id="pmInviteCodeSubmit" type="button" class="modal-button confirm" style="margin-bottom:10px;">Usar
+                código</button>
             <div id="pmInviteCodeMessage" class="modal-message" aria-live="polite"></div>
         </div>
     </div>
@@ -676,16 +681,17 @@
                 </div>
                 <div class="plan-card plan-card--pro">
                     <div class="plan-badge plan-badge--highlight">Recomendado</div>
-					<h4>Plan 49 MXN</h4>
+                    <h4>Plan 49 MXN</h4>
                     <p class="plan-price">$49 MXN</p>
                     <ul class="plan-features">
-						<li>Crea 10 materias en el catálogo</li>
-						<li>10 impresiones y 10 descargas/envíos al tutor</li>
+                        <li>Crea 10 materias en el catálogo</li>
+                        <li>10 impresiones y 10 descargas/envíos al tutor</li>
                         <li>Acceso completo a todas las funciones</li>
                         <li>Sin renovación automática</li>
                     </ul>
-					<button id="planProCheckout" type="button" class="plan-cta-btn">Activar plan de 49 MXN</button>
-                    <p class="plan-disclaimer">El pago se realiza con Stripe de forma segura. No se renovará automáticamente.</p>
+                    <button id="planProCheckout" type="button" class="plan-cta-btn">Activar plan de 49 MXN</button>
+                    <p class="plan-disclaimer">El pago se realiza con Stripe de forma segura. No se renovará
+                        automáticamente.</p>
                 </div>
             </div>
         </div>
@@ -706,33 +712,43 @@
                         <tr style="background:#f3f4f6; color:#374151;">
                             <th style="text-align:left; padding:6px 8px; border-bottom:1px solid #e5e7eb;">Función</th>
                             <th style="text-align:right; padding:6px 8px; border-bottom:1px solid #e5e7eb;">Usados</th>
-                            <th style="text-align:right; padding:6px 8px; border-bottom:1px solid #e5e7eb;">Restantes</th>
+                            <th style="text-align:right; padding:6px 8px; border-bottom:1px solid #e5e7eb;">Restantes
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td style="padding:6px 8px; border-bottom:1px solid #f3f4f6;">Crear materias en el catálogo</td>
-                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span id="planUsageCatalogUsed">-</span></td>
-                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span id="planUsageCatalogRemaining">-</span></td>
+                            <td style="padding:6px 8px; border-bottom:1px solid #f3f4f6;">Crear materias en el catálogo
+                            </td>
+                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span
+                                    id="planUsageCatalogUsed">-</span></td>
+                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span
+                                    id="planUsageCatalogRemaining">-</span></td>
                         </tr>
                         <tr>
                             <td style="padding:6px 8px; border-bottom:1px solid #f3f4f6;">Imprimir horario</td>
-                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span id="planUsagePrintUsed">-</span></td>
-                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span id="planUsagePrintRemaining">-</span></td>
+                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span
+                                    id="planUsagePrintUsed">-</span></td>
+                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span
+                                    id="planUsagePrintRemaining">-</span></td>
                         </tr>
                         <tr>
                             <td style="padding:6px 8px;">Descargas / envíos al tutor</td>
-                            <td style="padding:6px 8px; text-align:right;"><span id="planUsageDownloadUsed">-</span></td>
-                            <td style="padding:6px 8px; text-align:right;"><span id="planUsageDownloadRemaining">-</span></td>
+                            <td style="padding:6px 8px; text-align:right;"><span id="planUsageDownloadUsed">-</span>
+                            </td>
+                            <td style="padding:6px 8px; text-align:right;"><span
+                                    id="planUsageDownloadRemaining">-</span></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
             <p style="font-size:12px;color:#6b7280;margin-bottom:12px; text-align:left;">
-                Los usos se cuentan aunque borres materias o archivos. Cada nuevo pago del plan 49 MXN vuelve a dejarte con 10 usos en cada apartado.
+                Los usos se cuentan aunque borres materias o archivos. Cada nuevo pago del plan 49 MXN vuelve a dejarte
+                con 10 usos en cada apartado.
             </p>
-            <button id="upgradePlanButton" type="button" class="plan-cta-btn hidden" style="width:100%;margin-top:4px;" onclick="(function(){ var btn=document.getElementById('planProCheckout'); if(btn){ btn.click(); } })();">
+            <button id="upgradePlanButton" type="button" class="plan-cta-btn hidden" style="width:100%;margin-top:4px;"
+                onclick="(function(){ var btn=document.getElementById('planProCheckout'); if(btn){ btn.click(); } })();">
                 Mejorar plan
             </button>
         </div>
@@ -746,10 +762,16 @@
             <p style="font-size:14px;color:#6b7280;margin-bottom:12px; text-align:center;">
                 Usaremos estos datos para asociar el plan y poder identificar tu compra.
             </p>
-            <label for="payerNameInput" style="display:block;margin-bottom:6px;text-align:left;font-weight:600;font-size:14px;">Nombre completo</label>
-            <input id="payerNameInput" type="text" placeholder="Nombre de la persona que realiza el pago" style="width:100%;padding:8px 10px;margin-bottom:10px;border-radius:6px;border:1px solid #d1d5db;">
-            <label for="payerEmailInput" style="display:block;margin-bottom:6px;text-align:left;font-weight:600;font-size:14px;">Correo electrónico</label>
-            <input id="payerEmailInput" type="email" placeholder="correo@ejemplo.com" style="width:100%;padding:8px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #d1d5db;">
+            <label for="payerNameInput"
+                style="display:block;margin-bottom:6px;text-align:left;font-weight:600;font-size:14px;">Nombre
+                completo</label>
+            <input id="payerNameInput" type="text" placeholder="Nombre de la persona que realiza el pago"
+                style="width:100%;padding:8px 10px;margin-bottom:10px;border-radius:6px;border:1px solid #d1d5db;">
+            <label for="payerEmailInput"
+                style="display:block;margin-bottom:6px;text-align:left;font-weight:600;font-size:14px;">Correo
+                electrónico</label>
+            <input id="payerEmailInput" type="email" placeholder="correo@ejemplo.com"
+                style="width:100%;padding:8px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #d1d5db;">
             <p style="font-size:12px;color:#6b7280;margin-bottom:12px; text-align:left;">
                 Este correo se usará para activar el plan y consultar tu estado más adelante.
             </p>
@@ -788,22 +810,18 @@
         Facebook
     </a>
 
-    <a id="whatsappSupportLink"
-       href="#"
-       aria-label="WhatsApp"
-       target="_blank"
-       rel="noopener noreferrer">
+    <a id="whatsappSupportLink" href="#" aria-label="WhatsApp" target="_blank" rel="noopener noreferrer">
         <img src="https://www.google.com/s2/favicons?domain=whatsapp.com" width="12" alt="WhatsApp">
         Reportar problema
     </a>
-    
+
 </footer>
 <script src="https://accounts.google.com/gsi/client" defer></script>
-    <script src="https://apis.google.com/js/api.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
-    <script>
-     window.BACKEND_BASE_URL = "http://127.0.0.1:5500";
-    </script>
+<script src="https://apis.google.com/js/api.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
+<script>
+    window.BACKEND_BASE_URL = "http://127.0.0.1:5500";
+</script>
 </script>
 
 </html>
