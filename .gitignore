@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # .gitignore - agregar aquí las carpetas/archivos que no deben subirse
 # Ejemplos comunes:
 node_modules/
@@ -20,7 +20,6 @@ uploads/
 *.sql
 # Carpeta personalizada (cambie el nombre por la que necesita ignorar)
 carpeta_que_no_deben_subir/
-*.txt
 src/app.js
 css/styles.css
 css/styles copy.css
