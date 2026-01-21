@@ -17,7 +17,6 @@ Thumbs.db
 coverage/
 tmp/
 uploads/
-app.py
 *.py
 *.sql
 # Carpeta personalizada (cambie el nombre por la que necesita ignorar)
