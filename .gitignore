@@ -17,7 +17,6 @@ Thumbs.db
 coverage/
 tmp/
 uploads/
-*.py
 *.sql
 # Carpeta personalizada (cambie el nombre por la que necesita ignorar)
 carpeta_que_no_deben_subir/
