@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Panel de control - Horarios Bio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg-main: #020617;
+      --bg-card: #020617;
+      --bg-card-soft: #030712;
+      --border-subtle: #1f2937;
+      --accent: #22c55e;
+      --accent-soft: #22c55e22;
+      --accent-2: #3b82f6;
+      --accent-2-soft: #3b82f622;
+      --text-main: #e5e7eb;
+      --text-soft: #9ca3af;
+      --danger: #ef4444;
+      --danger-soft: #ef444422;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #020617 0, #020617 40%, #000 100%);
+      color: var(--text-main);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 1120px;
+      background: radial-gradient(circle at top left, #020617, #020617);
+      border-radius: 18px;
+      border: 1px solid rgba(148,163,184,0.25);
+      box-shadow:
+        0 22px 60px rgba(15,23,42,0.85);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: minmax(0, 3.2fr) minmax(0, 2fr);
+      backdrop-filter: blur(14px);
+    }
+
+    @media (max-width: 840px) {
+      .shell { grid-template-columns: minmax(0, 1fr); }
+      .side { border-left: none; border-top: 1px solid var(--border-subtle); }
+    }
+
+    .main {
+      padding: 20px 22px 20px 22px;
+      background: radial-gradient(circle at top left, #1e293b33, transparent 55%),
+                  radial-gradient(circle at bottom right, #020617, transparent 60%);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .title-block h1 {
+      font-size: 1.45rem;
+      letter-spacing: -0.03em;
+      margin: 0 0 4px 0;
+    }
+    .title-block p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--text-soft);
+    }
+
+    .pill {
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      color: var(--text-soft);
+      background: rgba(15,23,42,0.8);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      position: relative;
+      border-radius: 14px;
+      background: radial-gradient(circle at top, #020617, #020617);
+      border: 1px solid rgba(31,41,55,0.9);
+      padding: 14px 14px 14px 14px;
+      overflow: hidden;
+      transition: transform .18s ease-out, box-shadow .18s ease-out, border-color .18s ease-out;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 0 0, rgba(34,197,94,0.11), transparent 55%),
+        radial-gradient(circle at 100% 0, rgba(59,130,246,0.1), transparent 55%);
+      opacity: 0;
+      transition: opacity .25s ease-out;
+      pointer-events: none;
+    }
+
+    .card:hover::before { opacity: 1; }
+
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(59,130,246,0.8);
+      box-shadow: 0 18px 40px rgba(15,23,42,0.75);
+    }
+
+    .card-inner {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .card-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #6b7280;
+    }
+
+    .card-title {
+      font-size: 0.98rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: #4ade80;
+      border: 1px solid rgba(34,197,94,0.6);
+      font-weight: 500;
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 0.86rem;
+      color: var(--text-soft);
+    }
+
+    .card a {
+      margin-top: 6px;
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.86rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.35);
+      color: #e5e7eb;
+      text-decoration: none;
+      background: rgba(15,23,42,0.8);
+      transition: background .2s ease, border-color .2s ease, transform .2s ease;
+    }
+
+    .card a span.icon {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .card a:hover {
+      background: rgba(30,64,175,0.85);
+      border-color: rgba(59,130,246,0.8);
+      transform: translateY(-1px);
+    }
+
+    .card--danger { border-color: rgba(248,113,113,0.45); }
+    .card--danger .badge {
+      background: var(--danger-soft);
+      color: #fecaca;
+      border-color: rgba(248,113,113,0.7);
+    }
+    .card--danger a:hover {
+      background: rgba(185,28,28,0.85);
+      border-color: rgba(248,113,113,0.9);
+    }
+
+    .side {
+      border-left: 1px solid var(--border-subtle);
+      padding: 18px 18px 18px 18px;
+      background: radial-gradient(circle at top right, #020617, #020617 55%);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .side-heading {
+      font-size: 0.86rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #6b7280;
+    }
+
+    .side-block {
+      border-radius: 14px;
+      background: radial-gradient(circle at top left, #0f172a, #020617 70%);
+      border: 1px solid rgba(31,41,55,0.95);
+      padding: 12px 13px;
+      font-size: 0.82rem;
+      color: var(--text-soft);
+    }
+
+    .side-block strong { color: var(--text-main); }
+
+    .dot-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34,197,94,0.12);
+    }
+
+    ul.hints {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    ul.hints li::before {
+      content: "•";
+      margin-right: 6px;
+      color: #4b5563;
+    }
+
+    .mini-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.95);
+      border: 1px solid rgba(55,65,81,0.9);
+      font-size: 0.72rem;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    .mini-tag span {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #facc15;
+      box-shadow: 0 0 0 3px rgba(250,204,21,0.18);
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      text-decoration: none;
+      margin-bottom: 10px;
+    }
+
+    .back-link:hover { color: #e5e7eb; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="main">
+      <a href="/" class="back-link">
+        <span>←</span>
+        <span>Volver al simulador de horarios</span>
+      </a>
+      <header class="header">
+        <div class="title-block">
+          <h1>Panel de control</h1>
+          <p>Consulta rápido el historial, los usuarios registrados y las vistas anónimas de tu página.</p>
+        </div>
+        <div class="pill">
+          <span style="width:8px;height:8px;border-radius:999px;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,0.25);"></span>
+          <span>Solo visible para ti</span>
+        </div>
+      </header>
+
+      <div class="grid">
+        <article class="card">
+          <div class="card-inner">
+            <span class="card-label">Actividad</span>
+            <div class="card-title">
+              <span>Historial de interacciones</span>
+              <span class="badge">/historial</span>
+            </div>
+            <p>Tabla completa con las últimas visitas: inicios de sesión, páginas vistas y desde qué dispositivo llegaron.</p>
+            <a href="/historial?token=xunito">
+              <span class="icon">📊</span>
+              <span>Ver historial completo</span>
+            </a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-inner">
+            <span class="card-label">Usuarios</span>
+            <div class="card-title">
+              <span>Usuarios registrados</span>
+              <span class="badge">/usuarios</span>
+            </div>
+            <p>Listado de correos que iniciaron sesión, con fecha de primera y última vez, y su estado (activo, suspendido, eliminado).</p>
+            <a href="/usuarios">
+              <span class="icon">👥</span>
+              <span>Ver usuarios registrados</span>
+            </a>
+          </div>
+        </article>
+
+        <article class="card card--danger">
+          <div class="card-inner">
+            <span class="card-label">Anónimos</span>
+            <div class="card-title">
+              <span>Vistas por IP sin login</span>
+              <span class="badge">/ips</span>
+            </div>
+            <p>Cuenta cuántas veces se abrió la página sin correo asociado (solo IP y navegador), útil para ver tráfico anónimo.</p>
+            <a href="/ips">
+              <span class="icon">🌐</span>
+              <span>Ver vistas anónimas</span>
+            </a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-inner">
+            <span class="card-label">Resumen rápido</span>
+            <div class="card-title">
+              <span>Inicios de sesión por cuenta</span>
+              <span class="badge">/login_resumen</span>
+            </div>
+            <p>Una fila por correo con cuántas veces se ha iniciado sesión, ideal para ver a tus usuarios más activos.</p>
+            <a href="/login_resumen">
+              <span class="icon">📈</span>
+              <span>Ver resumen de logins</span>
+            </a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div>
+        <div class="side-heading">Notas</div>
+        <div class="side-block">
+          <div class="dot-row">
+            <span class="dot"></span>
+            <span><strong>Solo para administración</strong></span>
+          </div>
+          <p>
+            Esta página es un menú privado para que tú veas las métricas internas de tu simulador de horarios.
+            No se muestra a los alumnos a menos que compartas la URL.
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <div class="side-heading">Secciones</div>
+        <div class="side-block">
+          <ul class="hints">
+            <li><strong>Historial</strong>: mezcla todas las interacciones recientes (login y page_view).</li>
+            <li><strong>Usuarios</strong>: te permite activar, suspender o marcar como eliminada una cuenta.</li>
+            <li><strong>Vistas anónimas</strong>: solo visitas sin correo, agrupadas por IP.</li>
+            <li><strong>Resumen de logins</strong>: una línea por cada correo con número de inicios de sesión.</li>
+          </ul>
+          <div class="mini-tag">
+            <span></span>
+				Puedes usar este panel tanto en local como en producción (por ejemplo, en Heroku).
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</body>
+</html>

@@ -3033,31 +3033,38 @@ body.auth-gate-open {
 .pm-plan-row {
     align-self: center;
     display: inline-flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 4px 8px;
-    max-width: 105px;
-    border-radius: 999px;
-    background: var(--success-color);
+    gap: 2px;
+    padding: 2px 4px;
+    border-radius: 39px;
+    background:#016fc927;
     color: #000000;
     font-size: 13px;
     cursor: pointer;
     border: 1px solid rgba(0, 0, 0, 0.25);
     margin-top: 6px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    max-width: 120px;      /* evita que sea tan largo */
+    text-align: center;    /* centra el texto */
+}
+
+.pm-plan-label,
+.pm-plan-value {
+    display: block;
+    width: 100%;
+    text-align: center;
 }
 
 .pm-plan-label {
     font-weight: 500;
     opacity: 0.85;
+    margin-bottom: 2px;
 }
 
 .pm-plan-value {
     font-weight: 600;
-    color: #fafafa;
+    color: #555454;
 }
 
 .pm-signout {

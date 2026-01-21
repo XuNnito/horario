@@ -666,6 +666,12 @@
 <script src="https://accounts.google.com/gsi/client" defer></script>
 <script src="https://apis.google.com/js/api.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
+<script>
+    // Apunta este frontend (xunito) al mismo backend Flask
+    // Ajusta esta URL en producción (por ejemplo, a tu dominio de Heroku)
+    window.BACKEND_BASE_URL = "http://127.0.0.1:5500";
+    // Ejemplo producción: window.BACKEND_BASE_URL = "https://tu-backend.herokuapp.com";
+</script>
 </script>
 
 </html>
