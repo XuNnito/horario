@@ -1,628 +1,815 @@
-<!doctype html>
-<html lang=es-MX>
+<!DOCTYPE html>
+
+<html lang="es-MX">
+
 <head>
-<meta charset=UTF-8>
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=google-site-verification content=muirhtUMme_YiV9JYMMQaf8lMVZPWpynCrFoFrC2dKA>
-<meta property=fb:app_id content=899878402456859>
-<meta property=og:title content="Horarios Bio - Simulador de Horarios">
-<meta property=og:description content="Plataforma para estudiantes irregulares donde puedes crear y organizar tu horario académico, detectar choques de horas y generar solicitudes de reinscripción.">
-<meta property=og:url content=https://xunnito.github.io/horario/ >
-<meta property=og:image content=https://xunnito.github.io/horario/SoyIngenieroUP.png>
-<meta property=og:image:width content=1200>
-<meta property=og:image:height content=630>
-<meta property=og:type content=website>
-<meta property=og:locale content=es_MX>
-<meta name=twitter:card content=summary_large_image>
-<meta name=twitter:title content="Horarios Bio - Simulador de Horarios">
-<meta name=twitter:description content="Organiza tu horario académico fácilmente y evita choques de materias.">
-<meta name=twitter:image content=https://xunnito.github.io/horario/SoyIngenieroUP.png>
-<title>Horarios Bio | Simulador de Horarios</title>
-<meta name=description content="Plataforma para estudiantes irregulares donde puedes crear y organizar tu horario académico mas facil, administrar materias, detectar choques de horas y generar solicitudes de reinscripción para tu tutor academico.">
-<link rel=icon href=/favicon.ico>
-<link rel=icon type=image/png sizes=48x48 href=icono.png>
-<link rel=apple-touch-icon sizes=180x180 href=apple-touch-icon.png>
-<link rel=stylesheet href=css/app.min.css>
-<script src=https://js.stripe.com/v3 defer></script>
-<script src=js/app.min.js defer></script>
-<script src=funcion.js defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="muirhtUMme_YiV9JYMMQaf8lMVZPWpynCrFoFrC2dKA" />
+    <meta property="fb:app_id" content="899878402456859">
+    <meta property="og:title" content="Horarios Bio - Simulador de Horarios">
+    <meta property="og:description"
+        content="Plataforma para estudiantes irregulares donde puedes crear y organizar tu horario académico, detectar choques de horas y generar solicitudes de reinscripción.">
+    <meta property="og:url" content="https://xunnito.github.io/horario/">
+    <meta property="og:image" content="https://xunnito.github.io/horario/SoyIngenieroUP.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="es_MX">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Horarios Bio - Simulador de Horarios">
+    <meta name="twitter:description" content="Organiza tu horario académico fácilmente y evita choques de materias.">
+    <meta name="twitter:image" content="https://xunnito.github.io/horario/SoyIngenieroUP.png">
+
+    <title>Horarios Bio | Simulador de Horarios</title>
+
+
+    <meta name="description"
+        content="Plataforma para estudiantes irregulares donde puedes crear y organizar tu horario académico mas facil, administrar materias, detectar choques de horas y generar solicitudes de reinscripción para tu tutor academico.">
+    <link rel="icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="48x48" href="icono.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="css/app.min.css">
+    <script src="https://js.stripe.com/v3" defer></script>
+
+   
+    <script src="js/app.min.js" defer></script>
+    <script src="funcion.js" defer></script>
+    <!--<script src="src/app.js" defer></script>-->
+
 </head>
-<div id=mobileMessage role=status aria-live=polite>
-Desde tu móvil también puedes agregar o editar materias pero recomendamos que utilices un ordenador. Desliza la lista y el horario para ver toda la información.
+
+<div id="mobileMessage" role="status" aria-live="polite">
+    Desde tu móvil también puedes agregar o editar materias pero recomendamos que utilices un ordenador. Desliza la
+    lista y el horario para ver toda la información.
 </div>
+
+
+
 <body>
-<div id=topBar>
-<div class=profile-wrapper>
-<img src=gorrito-navidad.png alt="Gorro navideño" id=profileHat class=profile-hat aria-hidden=true>
-<div id=googleProfileCircle class=profile-circle title="Iniciar sesión" role=button tabindex=0 aria-label=Perfil></div>
-</div>
-<span id=googleUserName class=user-name></span>
-<div class=google-btns>
-<button id=shareScheduleBtn type=button class=share-btn aria-label="Compartir esta página con tus amigos">
-<svg viewBox="0 0 24 24" aria-hidden=true focusable=false>
-<path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.02-4.11A3.003 3.003 0 0 0 18 7.91a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.07 9.72A3.003 3.003 0 0 0 6 9a3 3 0 1 0 0 6c.79 0 1.5-.31 2.03-.82l7.04 4.12c-.05.21-.07.43-.07.65a3 3 0 1 0 3-3z"/>
-</svg>
-<span class=share-btn__label>Compartir</span>
-</button>
-<div id=shareBanner class=hidden role=status aria-live=polite>
-Comparte con tus amigos
-</div>
-<button id=googleSignIn type=button aria-label="Iniciar sesión con Google">Iniciar con Google</button>
-<button id=googleSignOut class=hidden style=pointer-events:auto>Cerrar sesión</button>
-</div>
-</div>
-<div id=profileModal class="profile-modal hidden" aria-hidden=true>
-<div class=profile-backdrop data-close=true></div>
-<div class=profile-panel role=dialog aria-modal=true aria-labelledby=pmName>
-<img src=gorrito-navidad.png alt="Decoración navideña" class=profile-modal-hat aria-hidden=true>
-<button type=button class=pm-close id=pmClose aria-label=Cerrar>&times;</button>
-<div class=pm-avatar id=pmAvatar aria-hidden=true></div>
-<h3 id=pmName>Sin sesión</h3>
-<div class=pm-email id=pmEmail>-</div>
-<div class=pm-details>
-<div class=pm-plan-row>
-<span class=pm-plan-label>Plan actual:</span>
-<span id=pmPlan class=pm-plan-value>Gratis</span>
-</div>
-<button id=pmCareerSelect class=pm-career-select type=button aria-label="Seleccionar carrera">
-<img id=pmCareerIcon class=pm-career-select__icon src=biomedica.png alt="Carrera actual">
-<div class=pm-career-select__text>
-<strong id=pmCareer>Biomédica</strong>
-<span class=pm-career-select__hint>Toca para cambiar tu carrera</span>
-</div>
-</button>
-<button id=pmInviteCodeToggle class=pm-career-select type=button aria-label="Ingresar código de invitación">
-<div class=pm-career-select__text>
-<strong>Código de invitación</strong>
-<span class=pm-career-select__hint>Toca para ingresar un código</span>
-</div>
-</button>
-<div><strong>Fecha:</strong> <span id=pmDate>-</span></div>
-</div>
-<button id=pmSignOut class=pm-signout type=button onclick=signOutWithLoader() aria-label="Cerrar sesión">Cerrar sesión</button>
-<button id=pmDeleteAccount class="pm-signout pm-delete" type=button aria-label="Eliminar cuenta">Eliminar cuenta</button>
-</div>
-</div>
-<div id=maintenanceBanner class=maintenance-banner role=status aria-live=polite>
-<button id=maintenanceCloseBtn class=maintenance-close aria-label="Cerrar mensaje">×</button>
-<div class=maintenance-inner>
-<strong>Estamos en mantenimiento:</strong>
-Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. Ten algunos casos puede ser necesario iniciar sesión hasta 2–3 veces esto para guardar el horario correctamente. recomendamos que antes de cerrar la pestaña tomas captura o impreme tu horario
-</div>
-</div>
-<div class=container>
-<h1 id=headerTitle>Horario</h1>
-<div id=messageContainer class="message hidden"></div>
-<div id=globalLoader class="loader-overlay hidden" aria-live=polite aria-hidden=true>
-<div class=loader-content>
-<div class=loader-spinner role=presentation aria-hidden=true></div>
-<p id=globalLoaderText class=loader-text>Cargando...</p>
-</div>
-</div>
-<div id=driveQuotaModal class=hidden aria-hidden=true role=dialog aria-labelledby=driveQuotaTitle aria-modal=true>
-<div class=quota-modal__box>
-<h3 id=driveQuotaTitle>Tu Google Drive está lleno</h3>
-<p id=driveQuotaDescription>Tu almacenamiento de Google Drive está lleno. Libera espacio e inténtalo nuevamente o usa otra cuenta.</p>
-<div class=quota-modal__actions>
-<button id=driveQuotaOpenDrive type=button>Abrir Google Drive</button>
-<button id=driveQuotaSwitchAccount type=button>Iniciar sesión con otra cuenta</button>
-<button id=driveQuotaClose type=button>Ahora no</button>
-</div>
-</div>
-</div>
-<div id=careerModal class="career-modal hidden" aria-hidden=true role=dialog aria-labelledby=careerModalTitle aria-modal=true>
-<div class=career-modal__panel role=document>
-<button id=careerModalClose class=career-modal__close type=button aria-label=Cerrar>&times;</button>
-<h3 id=careerModalTitle>Selecciona tu carrera</h3>
-<p class=career-modal__subtitle>Elige una carrera para personalizar los iconos y fondo.</p>
-<div id=careerOptionsGrid class=career-modal__grid role=listbox aria-label="Listado de carreras">
-</div>
-</div>
-</div>
-<div id=careerCreateModal class="career-create hidden" aria-hidden=true role=dialog aria-labelledby=careerCreateTitle aria-modal=true>
-<div class=career-create__panel role=document>
-<button id=careerCreateClose class=career-create__close type=button aria-label=Cerrar>&times;</button>
-<h3 id=careerCreateTitle>Crear nueva carrera</h3>
-<p class=career-create__subtitle>Asigna un nombre y sube un imagen en PNG o JPG.</p>
-<form id=careerCreateForm>
-<label class=career-create__label for=careerCreateName>Nombre de la carrera</label>
-<input id=careerCreateName name=careerName maxlength=80 required placeholder="Ingresa el nombre de la carrera">
-<label class=career-create__label for=careerCreateLogo>Logo de la carrera</label>
-<div class=career-create__upload>
-<input id=careerCreateLogo type=file accept=image/png,image/jpeg>
-<div id=careerCreatePreview class="career-create__preview career-create__preview--empty" aria-hidden=true></div>
-</div>
-<p class=career-create__hint>El logo se usará como icono principal, fondo y marca de impresión del horario pdf.</p>
-<div class=career-create__actions>
-<button id=careerCreateCancel type=button>Cancelar</button>
-<button id=careerCreateSubmit type=submit>Crear carrera</button>
-</div>
-</form>
-</div>
-</div>
-<div id=careerRenameModal class="career-create hidden" aria-hidden=true role=dialog aria-labelledby=careerRenameTitle aria-modal=true>
-<div class=career-create__panel role=document>
-<button id=careerRenameClose class=career-create__close type=button aria-label=Cerrar>&times;</button>
-<h3 id=careerRenameTitle>Editar nombre de la carrera</h3>
-<p class=career-create__subtitle>Actualiza el nombre de tu carrera personalizada.</p>
-<form id=careerRenameForm>
-<label class=career-create__label for=careerRenameName>Nombre de la carrera</label>
-<input id=careerRenameName name=careerRename maxlength=80 required placeholder="Ingresa el nuevo nombre">
-<div class=career-create__actions>
-<button id=careerRenameCancel type=button>Cancelar</button>
-<button id=careerRenameSubmit type=submit>Guardar</button>
-</div>
-</form>
-</div>
-</div>
-<div id=defaultSchedulePrompt class=hidden aria-hidden=true role=dialog aria-modal=true aria-labelledby=defaultScheduleTitle>
-<div class=default-schedule__panel role=document>
-<h3 id=defaultScheduleTitle>Cargar horario 7A Biomédica</h3>
-<p>Se cargará automáticamente el horario del grupo 7A de Biomédica y podrás quitar materias después.</p>
-<div class=default-schedule__actions>
-<button id=defaultScheduleCancel type=button>Cancelar</button>
-<button id=defaultScheduleAccept type=button>Aceptar</button>
-</div>
-</div>
-</div>
-<div id=authGate class=auth-gate aria-hidden=false role=dialog aria-label="Inicio de sesión requerido">
-<div class=auth-gate__box>
-<div class=auth-gate__logo aria-hidden=true>
-<img src=biomedica.png alt=Google loading=lazy>
-</div>
-<p id=authGateMessage>
-Para cargar, simular tu horario y guardar tus horarios necesitas iniciar sesión con Google.
-</p>
-<p class=auth-gate__note>Recomendamos utilizar tu correo institucional.</p>
-<div class=auth-gate__actions>
-<button id=authGateSignIn>Iniciar sesión</button>
-<button id=authGateCancel>Cancelar</button>
-</div>
-</div>
-</div>
-<div class=row>
-<div class="panel catalog-panel" style=flex:1;min-width:200px>
-<h2 style=display:flex;align-items:center;justify-content:space-between>
-<span>Materias</span>
-<div>
-<button id=btnMasCatalog>Más +</button>
-</div>
-</h2>
-<p>Haga clic en una materia para agregarla a su horario y con el boton +mas crea mas horarios de otra grupos, carrera, covalidaciones o gurpos especiles</p>
-<div class=search-container>
-<input id=searchInput placeholder="Buscar materias, grupos o profesores...">
-<div id=suggestions class="suggestions hidden"></div>
-</div>
-<div class=group-load-buttons>
-<button id=btnLoad7A type=button>7A</button>
-<button id=btnLoad8B type=button>8B</button>
-<button id=btnLoad8C type=button>8C</button>
-<button id=btnLoad9A type=button>9A</button>
-</div>
-<div id=catalogSubjects class=catalog-subjects></div>
-</div>
-<div class=panel style=flex:2;min-width:600px>
-<h2>Horario Semanal</h2>
-<div class=schedule-actions>
-<button type=button onclick=printSchedule()>Imprimir Horario</button>
-<button id=openReinscriptionModal type=button class=btn-secondary>Solicitud de reinscripción</button>
-<button id=pmOpenPlans type=button class=btn-secondary>Ver planes</button>
-<button id=planStatusButton type=button class="btn-secondary hidden">Plan</button>
-</div>
-<div class=legend style="display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap">
-<span style=display:inline-flex;align-items:center;gap:4px>
-<span style=width:12px;height:12px;border-radius:50%;background:#28a745;display:inline-block></span>
-<span style=font-size:11px>Ordinario</span>
-</span>
-<span style=display:inline-flex;align-items:center;gap:4px>
-<span style=width:12px;height:12px;border-radius:50%;background:#d9534f;display:inline-block></span>
-<span style=font-size:11px>Choque</span>
-</span>
-<span style=display:inline-flex;align-items:center;gap:4px>
-<span style="width:12px;height:12px;border-radius:50%;color:#fff;background-color:#111827;background-image:radial-gradient(circle at 10% 20%,#00ac42da 0,#00ac42da 18%,transparent 40%),radial-gradient(circle at 80% 15%,#f7f7f7 0,#feca57 20%,transparent 42%),radial-gradient(circle at 20% 80%,#000 0,#8d8f91 22%,transparent 45%),radial-gradient(circle at 75% 75%,#5f27cd 0,#5f27cd 20%,transparent 40%),radial-gradient(circle at 50% 45%,#1dd1a1 0,#1dd1a1 18%,transparent 38%),radial-gradient(circle at 35% 30%,#383838 0,#ff9ff3 16%,transparent 36%),radial-gradient(circle at 60% 60%,#48dbfb 0,#48dbfb 18%,transparent 40%),radial-gradient(circle at 90% 55%,#fffefe 0,#ff9f43 16%,transparent 38%),radial-gradient(circle at 15% 50%,#ff4757 0,#ff4757 12%,transparent 30%),radial-gradient(circle at 40% 15%,#ff7070 0,#323232 14%,transparent 34%),radial-gradient(circle at 82% 40%,#ffb142 0,#ffb142 12%,transparent 30%),radial-gradient(circle at 55% 85%,#fff 0,#2ed573 14%,transparent 34%),radial-gradient(circle at 30% 65%,#eccc68 0,#eccc68 10%,transparent 28%),radial-gradient(circle at 68% 32%,#ff6b81 0,#ff6b81 11%,transparent 30%),radial-gradient(circle at 50% 12%,#a29bfe 0,#a29bfe 10%,transparent 28%),radial-gradient(circle at 5% 90%,#1e90ff 0,#1e90ff 12%,transparent 32%);background-size:160% 160%;background-repeat:no-repeat;display:inline-block"></span>
-<span style=font-size:11px>Grupo especial</span>
-</span>
-<span style=display:inline-flex;align-items:center;gap:4px>
-<span style=width:12px;height:12px;border-radius:50%;background:#9b59b6;display:inline-block></span>
-<span style=font-size:11px>Convalidación</span>
-</span>
-<span style=display:inline-flex;align-items:center;gap:4px>
-<span style=width:12px;height:12px;border-radius:50%;background:#2196f3;display:inline-block></span>
-<span style=font-size:11px>Otro grupo/carrera</span>
-</span>
-</div>
-<div id=printMessage class=modal>
-Opcion: Antes de imprimir, desactiva "Imprimir gráficos de fondo y encabezados y pies de la pagina"
-<br>1. Mas configuraciones y busca opciones "Graficos de fondo" <br>
-<button onclick=closeMessageAndPrint() class=print-button>¡Listo, Imprimir!</button>
-</div>
-<div class=schedule-container id=scheduleContainer>
-<table class=schedule-table>
-<thead>
-<tr>
-<th>Hora</th>
-<th>Lunes</th>
-<th>Martes</th>
-<th>miercoles</th>
-<th>Jueves</th>
-<th>Viernes</th>
-</tr>
-</thead>
-<tbody id=scheduleBody>
-</tbody>
-</table>
-</div>
-<div id=printFooterName class=print-footer aria-hidden=true></div>
-<div id=selectedSubjects>
-<h3>Materias Seleccionadas</h3>
-<div id=selectedSubjectsList></div>
-</div>
-</div>
-</div>
-</div>
-<div id=accountSuspendedModal class=modal aria-hidden=true role=dialog aria-modal=true>
-<div class=panel-modal style=max-width:420px;text-align:center>
-<h3>Cuenta suspendida</h3>
-<p style="margin:10px 0 6px">
-Tu cuenta ha sido suspendida por el administrador.
-</p>
-<p style=font-size:13px;color:#555>
-Por seguridad cerraremos tu sesión en
-<span id=suspensionCountdown>8</span> segundos.
-</p>
-<div class=modal-actions style=justify-content:center;margin-top:14px>
-<button id=suspensionSignOutNow type=button>Cerrar sesión ahora</button>
-</div>
-</div>
-</div>
-<div id=groupNotAvailableModal class="modal hidden" aria-hidden=true role=dialog aria-modal=true>
-<div style=max-width:420px;text-align:center>
-<h3>Grupo no disponible</h3>
-<p id=groupNotAvailableMessage>
-Por el momento este grupo no está disponible para cargar en tu horario.
-</p>
-<div class=modal-actions style=justify-content:center;margin-top:14px>
-<button id=groupNotAvailableClose type=button>Cerrar</button>
-</div>
-</div>
-</div>
-<div id=modalAdd class=modal-add aria-hidden=true>
-<div class=panel-modal>
-<h3>Agregar materia</h3>
-<div style=margin-top:8px>
-<label>Materia <span style=color:#f20505bb;border-radius:6px;font-size:9px>(obligatorio)</span><br>
-<input id=m_inputMateria style=width:100%>
-</label>
-</div>
-<div style=margin-top:8px>
-<label>Profesor (opcional)<br>
-<input id=m_inputProfesor style=width:100%>
-</label>
-</div>
-<div style=margin-top:8px>
-<label>Cuatrimestre y Grupo <span style=color:#f20505bb;border-radius:6px;font-size:9px>(obligatorio)</span><br>
-<input id=m_inputGrupo placeholder="Ej. 7A | Especial | Convalidación" style=width:50%>
-</label>
-</div>
-<div style=margin-top:8px>
-<label for=m_inputAula>Aula (opcional)</label>
-<input id=m_inputAula placeholder="Ej. A210">
-</div>
-<div class=modal-actions>
-<button id=m_cancel>Cancelar</button>
-<button id=m_next>Siguiente →</button>
-</div>
-</div>
-</div>
-<div id=modalSlots class=modal-slots aria-hidden=true>
-<div class=panel-modal>
-<h3>Seleccionar horarios (clic para seleccionar horas)</h3>
-<div class=small>Selecciona los cuadros correspondientes a Lunes-Viernes y horas.</div>
-<div style=margin-top:8px;overflow:auto>
-<table class=slots-table id=slotsTable>
-<thead>
-<tr>
-<th>Hora</th>
-<th>Lunes</th>
-<th>Martes</th>
-<th>Miércoles</th>
-<th>Jueves</th>
-<th>Viernes</th>
-</tr>
-</thead>
-<tbody id=slotsBody></tbody>
-</table>
-</div>
-<div style=margin-top:8px id=slotsResumen class=small></div>
-<div class=modal-actions>
-<button id=s_back>Atrás</button>
-<button id=s_save>Guardar</button>
-</div>
-</div>
-</div>
-<div id=reinscriptionModal class="reinscription-modal hidden" aria-hidden=true role=dialog aria-labelledby=reinscriptionTitle aria-modal=true>
-<div class=reinscription-modal__panel role=document>
-<button id=reinscriptionClose class=reinscription-modal__close type=button aria-label=Cerrar>&times;</button>
-<h3 id=reinscriptionTitle>Solicitud de reinscripción</h3>
-<p class=reinscription-modal__subtitle>Completa o ajusta tus datos antes de generar el formato oficial.
-</p>
-<div class=reinscription-modal__body>
-<form id=reinscriptionForm class=reinscription-modal__form>
-<div class=reinscription-field>
-<label for=reinscriptionFullName>Nombre completo</label>
-<input id=reinscriptionFullName name=fullName maxlength=120 placeholder="Nombre(s) y apellidos" required>
-</div>
-<div class=reinscription-grid>
-<div class=reinscription-field>
-<label for=reinscriptionMatricula>Matrícula</label>
-<input id=reinscriptionMatricula name=matricula maxlength=30 placeholder="Ej. 241104" required>
-</div>
-<div class=reinscription-field>
-<label for=reinscriptionCareer>Carrera</label>
-<input id=reinscriptionCareer name=career maxlength=80 required>
-</div>
-</div>
-<div class=reinscription-grid>
-<div class=reinscription-field>
-<label for=reinscriptionQuarter>Cuatrimestre</label>
-<input id=reinscriptionQuarter name=quarter maxlength=20 placeholder="Ej. 7">
-</div>
-<div class=reinscription-field>
-<label for=reinscriptionGroup>Grupo</label>
-<input id=reinscriptionGroup name=group maxlength=20 placeholder="Ej. A">
-</div>
-</div>
-<div class=reinscription-field>
-<label for=reinscriptionDebtSubject>Materia que adeuda</label>
-<input id=reinscriptionDebtSubject name=debtSubject maxlength=120 placeholder="Materia pendiente">
-<small class=reinscription-hint>Se rellena automáticamente con la materia ordinaria no cargada, puedes editarla.</small>
-</div>
-<div class=reinscription-field>
-<label for=reinscriptionSignature>Firma (PNG sin fondo) <span style=color:#d32f2f;font-weight:700>*</span></label>
-<div class=signature-required-warning style="color:#d32f2f;margin-bottom:12px;padding:10px 12px;background-color:#ffebee;border-left:4px solid #d32f2f;border-radius:4px;font-size:16px;font-weight:500;display:block">
-La firma es obligatoria para enviar la solicitud al tutor.</div>
-<div style=display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap>
-<input id=reinscriptionSignature name=signature type=file accept=image/png style=flex:1;min-width:200px>
-<button id=openDrawSignatureModal type=button style="padding:8px 16px;background-color:#06c;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px">Dibujar firma</button>
-</div>
-<div id=reinscriptionSignaturePreviewWrapper class="reinscription-signature hidden">
-<img id=reinscriptionSignaturePreview alt="Vista previa de la firma">
-<button id=reinscriptionSignatureClear type=button class=btn-link>Quitar firma</button>
-</div>
-<div id=reinscriptionLoadedSubjectsList class="reinscription-loaded-subjects hidden" aria-live=polite></div>
-</div>
-<div class="reinscription-field reinscription-email-field">
-<label for=reinscriptionTutorEmail>Correo del tutor (opcional)</label>
-<div style=display:flex;align-items:center;gap:8px;flex-wrap:wrap>
-<input id=reinscriptionTutorEmail name=tutorEmail type=email maxlength=80 placeholder="Ej: vazquez@ib.upchiapas.edu.mx" autocomplete=email style="flex:1;min-width:250px;padding:10px 12px;font-size:15px;border:1px solid rgba(36,48,79,.25);border-radius:8px">
-<label for=reinscriptionTutorDefault style=display:flex>
-<input id=reinscriptionTutorDefault type=checkbox aria-label="Seleccionar como tutor predeterminado">
-<span style=display:flex;align-items:center;gap:6px;font-size:12px;color:#54617d;font-weight:400;white-space:nowrap>¿Tu tutor es<strong style="color:#1a73e8;background:rgba(26,115,232,.08);padding:1px 2px;border-radius:3px;font-size:11px">JOSE OCTAVIO VAZQUEZ</strong>?</span>
-</label>
-</div>
-<div style=margin-top:8px;width:100%>
-<label for=reinscriptionTutorSelect style=display:block;font-size:13px;margin-bottom:4px;color:#3c4043>Si tu tutor es otro, selecciónalo aquí:</label>
-<select id=reinscriptionTutorSelect name=tutorSelect style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(36,48,79,.25);font-size:14px">
-<option value="">Selecciona tu tutor</option>
-<option value=vazquez>JOSE OCTAVIO VAZQUEZ BUENOS AIRES</option>
-<option value=corzo>MARIA DE LOURDES CORZO CUESTA</option>
-<option value=ibanez>CHRISTIAN ROBERTO IBÁÑEZ NANGÜELÚ</option>
-<option value=martinez>DIANA PAULINA MARTINEZ CANCINO</option>
-<option value=constantino>EGLAIN CONSTANTINO CORTES</option>
-<option value=cazarin>ANA LAURA CAZARIN VAZQUEZ</option>
-</select>
-</div>
-<input id=reinscriptionTutorName name=tutorName type=hidden>
-<small class=reinscription-hint>Al seleccionar un tutor se rellenará el correo y, si hay firma guardada, se pegará en el PDF junto con su nombre.</small>
-</div>
-<div class=reinscription-field>
-<label for=reinscriptionTutorMessage>Mensaje (opcional)</label>
-<textarea id=reinscriptionTutorMessage name=tutorMessage rows=3 maxlength=500 placeholder="Escribe un mensaje adicional para el tutor (opcional)"></textarea>
-</div>
-<div class="reinscription-modal__preview reinscription-modal__preview--mobile-integrated" id=mobilePreviewSection>
-<label style=font-weight:600;color:var(--secondary-color);display:block;margin-bottom:12px>Vista previa</label>
-<div id=reinscriptionPreviewStageMobile class=reinscription-preview>
-<canvas id=reinscriptionPreviewCanvasMobile class=reinscription-preview__canvas aria-hidden=true></canvas>
-<div id=reinscriptionSignatureOverlayMobile class="reinscription-signature-overlay hidden" aria-hidden=true>
-<div id=reinscriptionSignatureBoxMobile class=reinscription-signature-box>
-<button id=removeSignatureButtonMobile type=button class=reinscription-signature-remove title="Quitar firma" aria-label="Quitar firma">×</button>
-<img id=reinscriptionSignatureOverlayImageMobile alt="Firma posicionable" draggable=false>
-<div id=reinscriptionSignatureResizeMobile class=reinscription-signature-handle>
-</div>
-</div>
-</div>
-</div>
-<div class=reinscription-signature-zoom-controls>
-<button id=reinscriptionSignatureZoomOutMobile type=button title="Reducir tamaño" aria-label="Reducir tamaño">−</button>
-<button id=reinscriptionSignatureZoomInMobile type=button title="Aumentar tamaño" aria-label="Aumentar tamaño">+</button>
-</div>
-</div>
-</form>
-<div class=reinscription-modal__preview>
-<div id=reinscriptionPreviewStage class=reinscription-preview>
-<canvas id=reinscriptionPreviewCanvas class=reinscription-preview__canvas aria-hidden=true></canvas>
-<div id=reinscriptionSignatureOverlay class="reinscription-signature-overlay hidden" aria-hidden=true>
-<div id=reinscriptionSignatureBox class=reinscription-signature-box>
-<button id=removeSignatureButton type=button class=reinscription-signature-remove title="Quitar firma" aria-label="Quitar firma">×</button>
-<img id=reinscriptionSignatureOverlayImage alt="Firma posicionable" draggable=false>
-<div id=reinscriptionSignatureResize class=reinscription-signature-handle role=presentation></div>
-</div>
-</div>
-</div>
-<div class=reinscription-signature-zoom-controls>
-<button id=reinscriptionSignatureZoomOut type=button title="Reducir tamaño" aria-label="Reducir tamaño">−</button>
-<button id=reinscriptionSignatureZoomIn type=button title="Aumentar tamaño" aria-label="Aumentar tamaño">+</button>
-</div>
-<p id=reinscriptionPreviewFallback class=reinscription-modal__preview-hint>Completa los datos para generar la vista previa.</p>
-</div>
-</div>
-<div id=reinscriptionAttachWarning class="reinscription-attach-warning hidden" role=alert aria-live=polite>
-<strong>IMPORTANTE:</strong> Debes adjuntar manualmente el PDF descargado al borrador en Gmail antes de enviar. Gmail también mostrará su propio aviso.
-</div>
-<div class=reinscription-modal__actions>
-<button id=reinscriptionOpenDraft type=button class="btn-link hidden">Abrir borrador en Gmail</button>
-<button id=reinscriptionSendEmail type=button class=btn-primary>Enviar al tutor</button>
-<button id=reinscriptionDownload type=button class=btn-secondary>Descargar formato</button>
-</div>
-</div>
-</div>
-<div id=drawSignatureModal class="draw-signature-modal hidden" aria-hidden=true role=dialog>
-<div class=draw-signature-modal__overlay></div>
-<div class=draw-signature-modal__content>
-<div class=draw-signature-modal__header>
-<h2>Dibujar Firma</h2>
-<button id=closeDrawSignatureModal type=button class=draw-signature-modal__close aria-label=Cerrar>&times;</button>
-</div>
-<div class=draw-signature-modal__body>
-<canvas id=signatureCanvas class=signature-canvas width=800 height=300 style="border:2px solid #ccc;background:#fff;cursor:crosshair;display:block;margin:0 auto"></canvas>
-<p style=text-align:center;color:#666;margin-top:10px;font-size:14px>Dibuja tu firma</p>
-</div>
-<div class=draw-signature-modal__actions>
-<button id=resetSignatureCanvas type=button class=btn-secondary>Reiniciar</button>
-<button id=cancelDrawSignature type=button class=btn-secondary>Cancelar</button>
-<button id=saveDrawnSignature type=button class=btn-primary>Firmar</button>
-</div>
-</div>
-</div>
-<div id=floatingPreview class="floating-preview hidden"></div>
-<div id=inviteCodeModal class="modal-overlay hidden" aria-hidden=true role=dialog aria-modal=true>
-<div class=modal-container role=document>
-<button id=inviteCodeModalClose type=button class=modal-close aria-label=Cerrar>&times;</button>
-<h3 style=margin-top:0>Código de invitación</h3>
-<label for=pmInviteCodeInput style=display:block;margin-bottom:8px><strong>Ingresa tu código de invitación</strong></label>
-<input id=pmInviteCodeInput maxlength=50 placeholder="Ejemplo: XuNnito" style="width:90%;padding:8px 10px;margin-bottom:10px">
-<button id=pmInviteCodeSubmit type=button class="modal-button confirm" style=margin-bottom:10px>Usar código</button>
-<div id=pmInviteCodeMessage class=modal-message aria-live=polite></div>
-</div>
-</div>
-<div id=plansModal class="modal-overlay hidden" aria-hidden=true role=dialog aria-modal=true>
-<div class="modal-container plans-modal" role=document>
-<button id=plansModalClose type=button class=modal-close aria-label=Cerrar>&times;</button>
-<h3 style=margin-top:0;text-align:center>Planes de Horarios Bio</h3>
-<div class=plans-grid>
-<div class="plan-card plan-card--free">
-<div class=plan-badge>Gratis</div>
-<h4>Plan Gratis</h4>
-<p class=plan-price>$0 MXN</p>
-<ul class=plan-features>
-<li>Crea 2 materias en el catálogo</li>
-<li>1 impresión del horario</li>
-<li>1 descarga del formato de reinscripción</li>
-<li>Guarda horarios</li>
-</ul>
-</div>
-<div class="plan-card plan-card--pro">
-<div class="plan-badge plan-badge--highlight">Recomendado</div>
-<h4>Plan 49 MXN</h4>
-<p class=plan-price>$49 MXN</p>
-<ul class=plan-features>
-<li>Crea 10 materias en el catálogo</li>
-<li>10 impresiones y 10 descargas/envíos al tutor</li>
-<li>Acceso completo a todas las funciones</li>
-<li>Sin renovación automática</li>
-</ul>
-<button id=planProCheckout type=button class=plan-cta-btn>Activar plan de 49 MXN</button>
-<p class=plan-disclaimer>El pago se realiza con Stripe de forma segura. No se renovará automáticamente.</p>
-</div>
-</div>
-</div>
-</div>
-<div id=planStatusModal class="modal-overlay hidden" aria-hidden=true role=dialog aria-modal=true>
-<div class=modal-container role=document>
-<button id=planStatusClose type=button class=modal-close aria-label=Cerrar>&times;</button>
-<h3 style=margin-top:0;text-align:center>Tu plan</h3>
-<p style=font-size:14px;color:#4b5563;margin-bottom:12px;text-align:center>
-Plan actual: <strong id=planUsageTitleLabel>Gratis</strong>
-</p>
-<div style=overflow-x:auto;margin-bottom:8px>
-<table style=width:100%;border-collapse:collapse;font-size:13px>
-<thead>
-<tr style=background:#f3f4f6;color:#374151>
-<th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb">Función</th>
-<th style="text-align:right;padding:6px 8px;border-bottom:1px solid #e5e7eb">Usados</th>
-<th style="text-align:right;padding:6px 8px;border-bottom:1px solid #e5e7eb">Restantes
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="padding:6px 8px;border-bottom:1px solid #f3f4f6">Crear materias en el catálogo
-</td>
-<td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6"><span id=planUsageCatalogUsed>-</span></td>
-<td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6"><span id=planUsageCatalogRemaining>-</span></td>
-</tr>
-<tr>
-<td style="padding:6px 8px;border-bottom:1px solid #f3f4f6">Imprimir horario</td>
-<td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6"><span id=planUsagePrintUsed>-</span></td>
-<td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6"><span id=planUsagePrintRemaining>-</span></td>
-</tr>
-<tr>
-<td style="padding:6px 8px">Descargas / envíos al tutor</td>
-<td style="padding:6px 8px;text-align:right"><span id=planUsageDownloadUsed>-</span>
-</td>
-<td style="padding:6px 8px;text-align:right"><span id=planUsageDownloadRemaining>-</span></td>
-</tr>
-</tbody>
-</table>
-</div>
-<p style=font-size:12px;color:#6b7280;margin-bottom:12px;text-align:left>
-Los usos se cuentan aunque borres materias o archivos. Cada nuevo pago del plan 49 MXN vuelve a dejarte con 10 usos en cada apartado.
-</p>
-<button id=upgradePlanButton type=button class="plan-cta-btn hidden" style=width:100%;margin-top:4px onclick='!function(){var c=document.getElementById("planProCheckout");c&&c.click()}()'>
-Mejorar plan
-</button>
-</div>
-</div>
-<div id=payerInfoModal class="modal-overlay hidden" aria-hidden=true role=dialog aria-modal=true>
-<div class="modal-container payer-modal" role=document>
-<button id=payerInfoClose type=button class=modal-close aria-label=Cerrar>&times;</button>
-<h3 style=margin-top:0;text-align:center>Datos de la persona que paga</h3>
-<p style=font-size:14px;color:#6b7280;margin-bottom:12px;text-align:center>
-Usaremos estos datos para asociar el plan y poder identificar tu compra.
-</p>
-<label for=payerNameInput style=display:block;margin-bottom:6px;text-align:left;font-weight:600;font-size:14px>Nombre completo</label>
-<input id=payerNameInput placeholder="Nombre de la persona que realiza el pago" style="width:90%;padding:8px 10px;margin-bottom:10px;border-radius:6px;border:1px solid #d1d5db">
-<label for=payerEmailInput style=display:block;margin-bottom:6px;text-align:left;font-weight:600;font-size:14px>Correo electrónico</label>
-<input id=payerEmailInput type=email placeholder=correo@ejemplo.com style="width:90%;padding:8px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #d1d5db">
-<p style=font-size:12px;color:#6b7280;margin-bottom:12px;text-align:left>
-Este correo se usará para activar el plan y consultar tu estado más adelante.
-</p>
-<div id=payerInfoError style=min-height:18px;font-size:13px;color:#b91c1c;margin-bottom:8px></div>
-<button id=payerInfoContinue type=button class=plan-cta-btn style=width:100%>
-Continuar con el pago
-</button>
-</div>
-</div>
-<div id=paymentModal class="modal-overlay hidden" aria-hidden=true role=dialog aria-modal=true>
-<div class="modal-container payment-modal" role=document>
-<button id=paymentModalClose type=button class=modal-close aria-label=Cerrar>&times;</button>
-<p style=font-size:14px;color:#6b7280;margin-bottom:12px;text-align:center>
-Ingresa los datos de tu tarjeta para pagar MXN 49.00.
-</p>
-<div id=payment-element style="margin:10px 0 16px"></div>
-<div id=paymentError style=min-height:18px;font-size:13px;color:#b91c1c;margin-bottom:8px></div>
-<button id=paymentConfirmButton type=button class=plan-cta-btn style=width:100%>
-Pagar MXN 49.00
-</button>
-</div>
-</div>
+    <div id="topBar">
+        <div class="profile-wrapper">
+            <img src="gorrito-navidad.png" alt="Gorro navideño" id="profileHat" class="profile-hat" aria-hidden="true">
+            <div id="googleProfileCircle" class="profile-circle" title="Iniciar sesión" role="button" tabindex="0"
+                aria-label="Perfil"></div>
+        </div>
+        <span id="googleUserName" class="user-name"></span>
+        <div class="google-btns">
+            <button id="shareScheduleBtn" type="button" class="share-btn"
+                aria-label="Compartir esta página con tus amigos">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path
+                        d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.02-4.11A3.003 3.003 0 0 0 18 7.91a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.07 9.72A3.003 3.003 0 0 0 6 9a3 3 0 1 0 0 6c.79 0 1.5-.31 2.03-.82l7.04 4.12c-.05.21-.07.43-.07.65a3 3 0 1 0 3-3z" />
+                </svg>
+                <span class="share-btn__label">Compartir</span>
+            </button>
+            <div id="shareBanner" class="hidden" role="status" aria-live="polite">
+                Comparte con tus amigos
+            </div>
+            <button id="googleSignIn" type="button" aria-label="Iniciar sesión con Google">Iniciar con Google</button>
+            <button id="googleSignOut" class="hidden" style="pointer-events: auto;">Cerrar sesión</button>
+        </div>
+    </div>
+
+    <!-- Perfil: Modal -->
+    <div id="profileModal" class="profile-modal hidden" aria-hidden="true">
+        <div class="profile-backdrop" data-close="true"></div>
+        <div class="profile-panel" role="dialog" aria-modal="true" aria-labelledby="pmName">
+            <img src="gorrito-navidad.png" alt="Decoración navideña" class="profile-modal-hat" aria-hidden="true">
+            <button type="button" class="pm-close" id="pmClose" aria-label="Cerrar">&times;</button>
+            <div class="pm-avatar" id="pmAvatar" aria-hidden="true"></div>
+            <h3 id="pmName">Sin sesión</h3>
+            <div class="pm-email" id="pmEmail">-</div>
+            <div class="pm-details">
+                <div class="pm-plan-row">
+                    <span class="pm-plan-label">Plan actual:</span>
+                    <span id="pmPlan" class="pm-plan-value">Gratis</span>
+                </div>
+                <button id="pmCareerSelect" class="pm-career-select" type="button" aria-label="Seleccionar carrera">
+                    <img id="pmCareerIcon" class="pm-career-select__icon" src="biomedica.png" alt="Carrera actual">
+                    <div class="pm-career-select__text">
+                        <strong id="pmCareer">Biomédica</strong>
+                        <span class="pm-career-select__hint">Toca para cambiar tu carrera</span>
+                    </div>
+                </button>
+                <button id="pmInviteCodeToggle" class="pm-career-select" type="button"
+                    aria-label="Ingresar código de invitación">
+                    <div class="pm-career-select__text">
+                        <strong>Código de invitación</strong>
+                        <span class="pm-career-select__hint">Toca para ingresar un código</span>
+                    </div>
+                </button>
+                <div><strong>Fecha:</strong> <span id="pmDate">-</span></div>
+            </div>
+            <button id="pmSignOut" class="pm-signout" type="button" onclick="signOutWithLoader()"
+                aria-label="Cerrar sesión">Cerrar sesión</button>
+            <button id="pmDeleteAccount" class="pm-signout pm-delete" type="button"
+                aria-label="Eliminar cuenta">Eliminar cuenta</button>
+        </div>
+    </div>
+
+
+
+
+
+    <div id="maintenanceBanner" class="maintenance-banner" role="status" aria-live="polite">
+        <button id="maintenanceCloseBtn" class="maintenance-close" aria-label="Cerrar mensaje">×</button>
+        <div class="maintenance-inner">
+            <strong>Estamos en mantenimiento:</strong>
+            Puede que algunas funciones no funcionen correctamente o que los cambios no se guarden. Ten algunos casos
+            puede ser
+            necesario iniciar sesión hasta 2–3 veces esto para guardar el horario correctamente. recomendamos que antes
+            de cerrar la pestaña tomas captura o impreme tu horario
+        </div>
+    </div>
+
+
+    <div class="container">
+        <h1 id="headerTitle">Horario</h1>
+
+        <div id="messageContainer" class="message hidden"></div>
+
+        <div id="globalLoader" class="loader-overlay hidden" aria-live="polite" aria-hidden="true">
+            <div class="loader-content">
+                <div class="loader-spinner" role="presentation" aria-hidden="true"></div>
+                <p id="globalLoaderText" class="loader-text">Cargando...</p>
+            </div>
+        </div>
+
+        <div id="driveQuotaModal" class="hidden" aria-hidden="true" role="dialog" aria-labelledby="driveQuotaTitle"
+            aria-modal="true">
+            <div class="quota-modal__box">
+                <h3 id="driveQuotaTitle">Tu Google Drive está lleno</h3>
+                <p id="driveQuotaDescription">Tu almacenamiento de Google Drive está lleno. Libera espacio e
+                    inténtalo nuevamente o usa otra cuenta.</p>
+                <div class="quota-modal__actions">
+                    <button id="driveQuotaOpenDrive" type="button">Abrir Google Drive</button>
+                    <button id="driveQuotaSwitchAccount" type="button">Iniciar sesión con otra cuenta</button>
+                    <button id="driveQuotaClose" type="button">Ahora no</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="careerModal" class="career-modal hidden" aria-hidden="true" role="dialog"
+            aria-labelledby="careerModalTitle" aria-modal="true">
+            <div class="career-modal__panel" role="document">
+                <button id="careerModalClose" class="career-modal__close" type="button"
+                    aria-label="Cerrar">&times;</button>
+                <h3 id="careerModalTitle">Selecciona tu carrera</h3>
+                <p class="career-modal__subtitle">Elige una carrera para personalizar los iconos y fondo.</p>
+                <div id="careerOptionsGrid" class="career-modal__grid" role="listbox" aria-label="Listado de carreras">
+                </div>
+            </div>
+        </div>
+
+        <div id="careerCreateModal" class="career-create hidden" aria-hidden="true" role="dialog"
+            aria-labelledby="careerCreateTitle" aria-modal="true">
+            <div class="career-create__panel" role="document">
+                <button id="careerCreateClose" class="career-create__close" type="button"
+                    aria-label="Cerrar">&times;</button>
+                <h3 id="careerCreateTitle">Crear nueva carrera</h3>
+                <p class="career-create__subtitle">Asigna un nombre y sube un imagen en PNG o JPG.</p>
+                <form id="careerCreateForm">
+                    <label class="career-create__label" for="careerCreateName">Nombre de la carrera</label>
+                    <input id="careerCreateName" type="text" name="careerName" maxlength="80" required
+                        placeholder="Ingresa el nombre de la carrera">
+                    <label class="career-create__label" for="careerCreateLogo">Logo de la carrera</label>
+                    <div class="career-create__upload">
+                        <input id="careerCreateLogo" type="file" accept="image/png,image/jpeg">
+                        <div id="careerCreatePreview" class="career-create__preview career-create__preview--empty"
+                            aria-hidden="true"></div>
+                    </div>
+                    <p class="career-create__hint">El logo se usará como icono principal, fondo y marca de impresión del
+                        horario pdf.</p>
+                    <div class="career-create__actions">
+                        <button id="careerCreateCancel" type="button">Cancelar</button>
+                        <button id="careerCreateSubmit" type="submit">Crear carrera</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="careerRenameModal" class="career-create hidden" aria-hidden="true" role="dialog"
+            aria-labelledby="careerRenameTitle" aria-modal="true">
+            <div class="career-create__panel" role="document">
+                <button id="careerRenameClose" class="career-create__close" type="button"
+                    aria-label="Cerrar">&times;</button>
+                <h3 id="careerRenameTitle">Editar nombre de la carrera</h3>
+                <p class="career-create__subtitle">Actualiza el nombre de tu carrera personalizada.</p>
+                <form id="careerRenameForm">
+                    <label class="career-create__label" for="careerRenameName">Nombre de la carrera</label>
+                    <input id="careerRenameName" type="text" name="careerRename" maxlength="80" required
+                        placeholder="Ingresa el nuevo nombre">
+                    <div class="career-create__actions">
+                        <button id="careerRenameCancel" type="button">Cancelar</button>
+                        <button id="careerRenameSubmit" type="submit">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="defaultSchedulePrompt" class="hidden" aria-hidden="true" role="dialog" aria-modal="true"
+            aria-labelledby="defaultScheduleTitle">
+            <div class="default-schedule__panel" role="document">
+                <h3 id="defaultScheduleTitle">Cargar horario 7A Biomédica</h3>
+                <p>Se cargará automáticamente el horario del grupo 7A de Biomédica y podrás quitar materias después.</p>
+                <div class="default-schedule__actions">
+                    <button id="defaultScheduleCancel" type="button">Cancelar</button>
+                    <button id="defaultScheduleAccept" type="button">Aceptar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="authGate" class="auth-gate" aria-hidden="false" role="dialog" aria-label="Inicio de sesión requerido">
+            <div class="auth-gate__box">
+                <div class="auth-gate__logo" aria-hidden="true">
+                    <img src="biomedica.png" alt="Google" loading="lazy">
+                </div>
+                <p id="authGateMessage">
+                    Para cargar, simular tu horario y guardar tus horarios necesitas iniciar sesión con Google.
+                </p>
+                <p class="auth-gate__note">Recomendamos utilizar tu correo institucional.</p>
+                <div class="auth-gate__actions">
+                    <button id="authGateSignIn">Iniciar sesión</button>
+                    <button id="authGateCancel">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="panel catalog-panel" style="flex: 1; min-width: 200px;">
+                <h2 style="display:flex;align-items:center;justify-content:space-between;">
+                    <span>Materias</span>
+                    <div>
+                        <button id="btnMasCatalog">Más +</button>
+
+                    </div>
+                </h2>
+                <p>Haga clic en una materia para agregarla a su horario y con el boton +mas crea mas horarios de otra
+                    grupos, carrera, covalidaciones o gurpos especiles</p>
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Buscar materias, grupos o profesores..." />
+                    <div id="suggestions" class="suggestions hidden"></div>
+                </div>
+                <div class="group-load-buttons">
+                    <button id="btnLoad7A" type="button">7A</button>
+                    <button id="btnLoad8B" type="button">8B</button>
+                    <button id="btnLoad8C" type="button">8C</button>
+                    <button id="btnLoad9A" type="button">9A</button>
+                  
+                </div>
+                <div id="catalogSubjects" class="catalog-subjects"></div>
+            </div>
+
+            <div class="panel" style="flex: 2; min-width: 600px;">
+                <h2>Horario Semanal</h2>
+                <div class="schedule-actions">
+                    <button type="button" onclick="printSchedule()">Imprimir Horario</button>
+                    <button id="openReinscriptionModal" type="button" class="btn-secondary">Solicitud de
+                        reinscripción</button>
+                    <button id="pmOpenPlans" type="button" class="btn-secondary">Ver planes</button>
+                    <button id="planStatusButton" type="button" class="btn-secondary hidden">Plan</button>
+                </div>
+                <div class="legend" style="display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap;">
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
+                        <span
+                            style="width:12px;height:12px;border-radius:50%;background:#28a745;display:inline-block;"></span>
+                        <span style="font-size:11px;">Ordinario</span>
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
+                        <span
+                            style="width:12px;height:12px;border-radius:50%;background:#d9534f;display:inline-block;"></span>
+                        <span style="font-size:11px;">Choque</span>
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
+                        <span style="width:12px;height:12px;border-radius:50%;  color: #ffffff;
+                        background-color: #111827;
+                        background-image:
+                            radial-gradient(circle at 10% 20%, #00ac42da 0, #00ac42da 18%, transparent 40%),
+                            radial-gradient(circle at 80% 15%, #f7f7f7 0, #feca57 20%, transparent 42%),
+                            radial-gradient(circle at 20% 80%, #000000 0, #8d8f91 22%, transparent 45%),
+                            radial-gradient(circle at 75% 75%, #5f27cd 0, #5f27cd 20%, transparent 40%),
+                            radial-gradient(circle at 50% 45%, #1dd1a1 0, #1dd1a1 18%, transparent 38%),
+                            radial-gradient(circle at 35% 30%, #383838 0, #ff9ff3 16%, transparent 36%),
+                            radial-gradient(circle at 60% 60%, #48dbfb 0, #48dbfb 18%, transparent 40%),
+                            radial-gradient(circle at 90% 55%, #fffefe 0, #ff9f43 16%, transparent 38%),
+                            radial-gradient(circle at 15% 50%, #ff4757 0, #ff4757 12%, transparent 30%),
+                            radial-gradient(circle at 40% 15%, #ff7070 0, #323232 14%, transparent 34%),
+                            radial-gradient(circle at 82% 40%, #ffb142 0, #ffb142 12%, transparent 30%),
+                            radial-gradient(circle at 55% 85%, #ffffff 0, #2ed573 14%, transparent 34%),
+                            radial-gradient(circle at 30% 65%, #eccc68 0, #eccc68 10%, transparent 28%),
+                            radial-gradient(circle at 68% 32%, #ff6b81 0, #ff6b81 11%, transparent 30%),
+                            radial-gradient(circle at 50% 12%, #a29bfe 0, #a29bfe 10%, transparent 28%),
+                            radial-gradient(circle at 5% 90%, #1e90ff 0, #1e90ff 12%, transparent 32%);
+                        background-size: 160% 160%;
+                        background-repeat: no-repeat;display:inline-block;"></span>
+                        <span style="font-size:11px;">Grupo especial</span>
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
+                        <span
+                            style="width:12px;height:12px;border-radius:50%;background:#9b59b6;display:inline-block;"></span>
+                        <span style="font-size:11px;">Convalidación</span>
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:4px;">
+                        <span
+                            style="width:12px;height:12px;border-radius:50%;background:#2196f3;display:inline-block;"></span>
+                        <span style="font-size:11px;">Otro grupo/carrera</span>
+                    </span>
+                </div>
+                <div id="printMessage" class="modal">
+                    Opcion: Antes de imprimir, desactiva "Imprimir gráficos de fondo y encabezados y pies de la pagina"
+                    <br>1. Mas configuraciones y busca
+                    opciones "Graficos de fondo" <br>
+                    <button onclick="closeMessageAndPrint()" class="print-button">¡Listo, Imprimir!</button>
+                </div>
+                <div class="schedule-container" id="scheduleContainer">
+                    <table class="schedule-table">
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Lunes</th>
+                                <th>Martes</th>
+                                <th>miercoles</th>
+                                <th>Jueves</th>
+                                <th>Viernes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="printFooterName" class="print-footer" aria-hidden="true"></div>
+
+                <div id="selectedSubjects">
+                    <h3>Materias Seleccionadas</h3>
+                    <div id="selectedSubjectsList"></div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+    <div id="accountSuspendedModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="panel-modal" style="max-width:420px;text-align:center;">
+            <h3>Cuenta suspendida</h3>
+            <p style="margin:10px 0 6px;">
+                Tu cuenta ha sido suspendida por el administrador.
+            </p>
+            <p style="font-size:13px;color:#555;">
+                Por seguridad cerraremos tu sesión en
+                <span id="suspensionCountdown">8</span> segundos.
+            </p>
+            <div class="modal-actions" style="justify-content:center;margin-top:14px;">
+                <button id="suspensionSignOutNow" type="button">Cerrar sesión ahora</button>
+            </div>
+        </div>
+
+    </div>
+
+
+
+    <div id="groupNotAvailableModal" class="modal hidden" aria-hidden="true" role="dialog" aria-modal="true">
+        <div style="max-width:420px;text-align:center;">
+            <h3>Grupo no disponible</h3>
+            <p id="groupNotAvailableMessage">
+                Por el momento este grupo no está disponible para cargar en tu horario.
+            </p>
+            <div class="modal-actions" style="justify-content:center;margin-top:14px;">
+                <button id="groupNotAvailableClose" type="button">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalAdd" class="modal-add" aria-hidden="true">
+        <div class="panel-modal">
+            <h3>Agregar materia</h3>
+            <div style="margin-top:8px">
+                <label>Materia <span style="color:#f20505bb;border-radius:6px;font-size:9px;">(obligatorio)</span><br>
+                    <input id="m_inputMateria" type="text" style="width:100%" />
+                </label>
+            </div>
+            <div style="margin-top:8px">
+                <label>Profesor (opcional)<br>
+                    <input id="m_inputProfesor" type="text" style="width:100%" />
+                </label>
+            </div>
+            <div style="margin-top:8px">
+
+                <label>Cuatrimestre y Grupo <span
+                        style="color:#f20505bb;border-radius:6px;font-size:9px;">(obligatorio)</span><br>
+                    <input id="m_inputGrupo" type="text" placeholder="Ej. 7A | Especial | Convalidación"
+                        style="width:50%;">
+                </label>
+            </div>
+            <div style="margin-top:8px">
+                <label for="m_inputAula">Aula (opcional)</label>
+                <input id="m_inputAula" type="text" placeholder="Ej. A210" />
+            </div>
+            <div class="modal-actions">
+                <button id="m_cancel">Cancelar</button>
+                <button id="m_next">Siguiente →</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="modalSlots" class="modal-slots" aria-hidden="true">
+        <div class="panel-modal">
+            <h3>Seleccionar horarios (clic para seleccionar horas)</h3>
+            <div class="small">Selecciona los cuadros correspondientes a Lunes-Viernes y horas.</div>
+            <div style="margin-top:8px; overflow:auto; ">
+                <table class="slots-table" id="slotsTable">
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            <th>Lunes</th>
+                            <th>Martes</th>
+                            <th>Miércoles</th>
+                            <th>Jueves</th>
+                            <th>Viernes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="slotsBody"></tbody>
+                </table>
+            </div>
+            <div style="margin-top:8px" id="slotsResumen" class="small"></div>
+            <div class="modal-actions">
+                <button id="s_back">Atrás</button>
+                <button id="s_save">Guardar</button>
+            </div>
+        </div>
+    </div>
+    <div id="reinscriptionModal" class="reinscription-modal hidden" aria-hidden="true" role="dialog"
+        aria-labelledby="reinscriptionTitle" aria-modal="true">
+        <div class="reinscription-modal__panel" role="document">
+            <button id="reinscriptionClose" class="reinscription-modal__close" type="button"
+                aria-label="Cerrar">&times;</button>
+            <h3 id="reinscriptionTitle">Solicitud de reinscripción</h3>
+            <p class="reinscription-modal__subtitle">Completa o ajusta tus datos antes de generar el formato oficial.
+            </p>
+            <div class="reinscription-modal__body">
+                <form id="reinscriptionForm" class="reinscription-modal__form">
+                    <div class="reinscription-field">
+                        <label for="reinscriptionFullName">Nombre completo</label>
+                        <input id="reinscriptionFullName" name="fullName" type="text" maxlength="120"
+                            placeholder="Nombre(s) y apellidos" required>
+                    </div>
+                    <div class="reinscription-grid">
+                        <div class="reinscription-field">
+                            <label for="reinscriptionMatricula">Matrícula</label>
+                            <input id="reinscriptionMatricula" name="matricula" type="text" maxlength="30"
+                                placeholder="Ej. 241104" required>
+                        </div>
+                        <div class="reinscription-field">
+                            <label for="reinscriptionCareer">Carrera</label>
+                            <input id="reinscriptionCareer" name="career" type="text" maxlength="80" required>
+                        </div>
+                    </div>
+                    <div class="reinscription-grid">
+                        <div class="reinscription-field">
+                            <label for="reinscriptionQuarter">Cuatrimestre</label>
+                            <input id="reinscriptionQuarter" name="quarter" type="text" maxlength="20"
+                                placeholder="Ej. 7">
+                        </div>
+                        <div class="reinscription-field">
+                            <label for="reinscriptionGroup">Grupo</label>
+                            <input id="reinscriptionGroup" name="group" type="text" maxlength="20" placeholder="Ej. A">
+                        </div>
+                    </div>
+                    <div class="reinscription-field">
+                        <label for="reinscriptionDebtSubject">Materia que adeuda</label>
+                        <input id="reinscriptionDebtSubject" name="debtSubject" type="text" maxlength="120"
+                            placeholder="Materia pendiente">
+                        <small class="reinscription-hint">Se rellena automáticamente con la materia ordinaria no
+                            cargada, puedes editarla.</small>
+                    </div>
+                    <div class="reinscription-field">
+                        <label for="reinscriptionSignature">Firma (PNG sin fondo) <span
+                                style="color: #d32f2f; font-weight: bold;">*</span></label>
+                        <div class="signature-required-warning"
+                            style="color: #d32f2f; margin-bottom: 12px; padding: 10px 12px; background-color: #ffebee; border-left: 4px solid #d32f2f; border-radius: 4px; font-size: 16px; font-weight: 500; display: block;">
+                            La firma es obligatoria para enviar la solicitud al tutor.</div>
+                        <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+                            <input id="reinscriptionSignature" name="signature" type="file" accept="image/png"
+                                style="flex: 1; min-width: 200px;">
+                            <button id="openDrawSignatureModal" type="button"
+                                style="padding: 8px 16px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Dibujar
+                                firma</button>
+                        </div>
+                        <div id="reinscriptionSignaturePreviewWrapper" class="reinscription-signature hidden">
+                            <img id="reinscriptionSignaturePreview" alt="Vista previa de la firma">
+                            <button id="reinscriptionSignatureClear" type="button" class="btn-link">Quitar
+                                firma</button>
+                        </div>
+                        <div id="reinscriptionLoadedSubjectsList" class="reinscription-loaded-subjects hidden"
+                            aria-live="polite"></div>
+                    </div>
+                    <div class="reinscription-field reinscription-email-field">
+                        <label for="reinscriptionTutorEmail">Correo del tutor (opcional)</label>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap; ">
+                            <input id="reinscriptionTutorEmail" name="tutorEmail" type="email" maxlength="80"
+                                placeholder="Ej: vazquez@ib.upchiapas.edu.mx" autocomplete="email"
+                                style="flex: 1; min-width: 250px; padding: 10px 12px; font-size: 15px; border: 1px solid rgba(36, 48, 79, 0.25); border-radius: 8px;">
+                            <label for="reinscriptionTutorDefault" style="display:flex;">
+                                <input id="reinscriptionTutorDefault" type="checkbox"
+                                    aria-label="Seleccionar como tutor predeterminado">
+                                <span
+                                    style="display:flex; align-items:center; gap:6px; font-size:12px; color:#54617d; font-weight:400; white-space:nowrap;">¿Tu
+                                    tutor es<strong
+                                        style="color:#1a73e8; background:rgba(26,115,232,0.08); padding:1px 2px; border-radius:3px; font-size:11px;">JOSE
+                                        OCTAVIO VAZQUEZ</strong>?</span>
+                            </label>
+                        </div>
+                       
+                        <div style="margin-top:8px; width:100%;">
+                            <label for="reinscriptionTutorSelect"
+                                style="display:block; font-size:13px; margin-bottom:4px; color:#3c4043;">Si tu tutor es
+                                otro, selecciónalo aquí:</label>
+                            <select id="reinscriptionTutorSelect" name="tutorSelect"
+                                style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(36, 48, 79, 0.25); font-size:14px;">
+                                <option value="">Selecciona tu tutor</option>
+                                <option value="vazquez">JOSE OCTAVIO VAZQUEZ BUENOS AIRES</option>
+                                <option value="corzo">MARIA DE LOURDES CORZO CUESTA</option>
+                                <option value="ibanez">CHRISTIAN ROBERTO IBÁÑEZ NANGÜELÚ</option>
+                                <option value="martinez">DIANA PAULINA MARTINEZ CANCINO</option>
+                                <option value="constantino">EGLAIN CONSTANTINO CORTES</option>
+                                <option value="cazarin">ANA LAURA CAZARIN VAZQUEZ</option>
+                            </select>
+                        </div>
+                        <input id="reinscriptionTutorName" name="tutorName" type="hidden">
+                        <small class="reinscription-hint">Al seleccionar un tutor se rellenará el correo y, si hay firma
+                            guardada, se pegará en el PDF junto con su nombre.</small>
+                    </div>
+                    <div class="reinscription-field">
+                        <label for="reinscriptionTutorMessage">Mensaje (opcional)</label>
+                        <textarea id="reinscriptionTutorMessage" name="tutorMessage" rows="3" maxlength="500"
+                            placeholder="Escribe un mensaje adicional para el tutor (opcional)"></textarea>
+                    </div>
+                    
+                    <div class="reinscription-modal__preview reinscription-modal__preview--mobile-integrated"
+                        id="mobilePreviewSection">
+                        <label
+                            style="font-weight: 600; color: var(--secondary-color); display: block; margin-bottom: 12px;">Vista
+                            previa</label>
+                        <div id="reinscriptionPreviewStageMobile" class="reinscription-preview">
+                            <canvas id="reinscriptionPreviewCanvasMobile" class="reinscription-preview__canvas"
+                                aria-hidden="true"></canvas>
+                            <div id="reinscriptionSignatureOverlayMobile" class="reinscription-signature-overlay hidden"
+                                aria-hidden="true">
+                                <div id="reinscriptionSignatureBoxMobile" class="reinscription-signature-box">
+                                    <button id="removeSignatureButtonMobile" type="button"
+                                        class="reinscription-signature-remove" title="Quitar firma"
+                                        aria-label="Quitar firma">×</button>
+                                    <img id="reinscriptionSignatureOverlayImageMobile" alt="Firma posicionable"
+                                        draggable="false">
+                                    <div id="reinscriptionSignatureResizeMobile" class="reinscription-signature-handle">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="reinscription-signature-zoom-controls">
+                            <button id="reinscriptionSignatureZoomOutMobile" type="button" title="Reducir tamaño"
+                                aria-label="Reducir tamaño">−</button>
+                            <button id="reinscriptionSignatureZoomInMobile" type="button" title="Aumentar tamaño"
+                                aria-label="Aumentar tamaño">+</button>
+                        </div>
+                    </div>
+                </form>
+                <div class="reinscription-modal__preview">
+                    <div id="reinscriptionPreviewStage" class="reinscription-preview">
+                        <canvas id="reinscriptionPreviewCanvas" class="reinscription-preview__canvas"
+                            aria-hidden="true"></canvas>
+                        <div id="reinscriptionSignatureOverlay" class="reinscription-signature-overlay hidden"
+                            aria-hidden="true">
+                            <div id="reinscriptionSignatureBox" class="reinscription-signature-box">
+                                <button id="removeSignatureButton" type="button" class="reinscription-signature-remove"
+                                    title="Quitar firma" aria-label="Quitar firma">×</button>
+                                <img id="reinscriptionSignatureOverlayImage" alt="Firma posicionable" draggable="false">
+                                <div id="reinscriptionSignatureResize" class="reinscription-signature-handle"
+                                    role="presentation"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="reinscription-signature-zoom-controls">
+                        <button id="reinscriptionSignatureZoomOut" type="button" title="Reducir tamaño"
+                            aria-label="Reducir tamaño">−</button>
+                        <button id="reinscriptionSignatureZoomIn" type="button" title="Aumentar tamaño"
+                            aria-label="Aumentar tamaño">+</button>
+                    </div>
+                    <p id="reinscriptionPreviewFallback" class="reinscription-modal__preview-hint">Completa los datos
+                        para generar la vista previa.</p>
+                </div>
+            </div>
+            <div id="reinscriptionAttachWarning" class="reinscription-attach-warning hidden" role="alert"
+                aria-live="polite">
+                <strong>IMPORTANTE:</strong> Debes adjuntar manualmente el PDF descargado al borrador en Gmail antes de
+                enviar. Gmail también mostrará su propio aviso.
+            </div>
+            <div class="reinscription-modal__actions">
+                <button id="reinscriptionOpenDraft" type="button" class="btn-link hidden">Abrir borrador en
+                    Gmail</button>
+                <button id="reinscriptionSendEmail" type="button" class="btn-primary">Enviar al tutor</button>
+                <button id="reinscriptionDownload" type="button" class="btn-secondary">Descargar formato</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="drawSignatureModal" class="draw-signature-modal hidden" aria-hidden="true" role="dialog">
+        <div class="draw-signature-modal__overlay"></div>
+        <div class="draw-signature-modal__content">
+            <div class="draw-signature-modal__header">
+                <h2>Dibujar Firma</h2>
+                <button id="closeDrawSignatureModal" type="button" class="draw-signature-modal__close"
+                    aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="draw-signature-modal__body">
+                <canvas id="signatureCanvas" class="signature-canvas" width="800" height="300"
+                    style="border: 2px solid #ccc; background: white; cursor: crosshair; display: block; margin: 0 auto;"></canvas>
+                <p style="text-align: center; color: #666; margin-top: 10px; font-size: 14px;">Dibuja tu firma</p>
+            </div>
+            <div class="draw-signature-modal__actions">
+                <button id="resetSignatureCanvas" type="button" class="btn-secondary">Reiniciar</button>
+                <button id="cancelDrawSignature" type="button" class="btn-secondary">Cancelar</button>
+                <button id="saveDrawnSignature" type="button" class="btn-primary">Firmar</button>
+            </div>
+        </div>
+    </div>
+    <div id="floatingPreview" class="floating-preview hidden"></div>
+
+    <div id="inviteCodeModal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-container" role="document">
+            <button id="inviteCodeModalClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
+            <h3 style="margin-top:0;">Código de invitación</h3>
+            <label for="pmInviteCodeInput" style="display:block;margin-bottom:8px;"><strong>Ingresa tu código de
+                    invitación</strong></label>
+            <input id="pmInviteCodeInput" type="text" maxlength="50" placeholder="Ejemplo: XuNnito"
+                style="width:90%;padding:8px 10px;margin-bottom:10px;">
+            <button id="pmInviteCodeSubmit" type="button" class="modal-button confirm" style="margin-bottom:10px;">Usar
+                código</button>
+            <div id="pmInviteCodeMessage" class="modal-message" aria-live="polite"></div>
+        </div>
+    </div>
+
+    <div id="plansModal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-container plans-modal" role="document">
+            <button id="plansModalClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
+            <h3 style="margin-top:0; text-align:center;">Planes de Horarios Bio</h3>
+            <div class="plans-grid">
+                <div class="plan-card plan-card--free">
+                    <div class="plan-badge">Gratis</div>
+                    <h4>Plan Gratis</h4>
+                    <p class="plan-price">$0 MXN</p>
+                    <ul class="plan-features">
+                        <li>Crea 2 materias en el catálogo</li>
+                        <li>1 impresión del horario</li>
+                        <li>1 descarga del formato de reinscripción</li>
+                        <li>Guarda horarios</li>
+                    </ul>
+                </div>
+                <div class="plan-card plan-card--pro">
+                    <div class="plan-badge plan-badge--highlight">Recomendado</div>
+                    <h4>Plan 49 MXN</h4>
+                    <p class="plan-price">$49 MXN</p>
+                    <ul class="plan-features">
+                        <li>Crea 10 materias en el catálogo</li>
+                        <li>10 impresiones y 10 descargas/envíos al tutor</li>
+                        <li>Acceso completo a todas las funciones</li>
+                        <li>Sin renovación automática</li>
+                    </ul>
+                    <button id="planProCheckout" type="button" class="plan-cta-btn">Activar plan de 49 MXN</button>
+                    <p class="plan-disclaimer">El pago se realiza con Stripe de forma segura. No se renovará
+                        automáticamente.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="planStatusModal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-container" role="document">
+            <button id="planStatusClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
+            <h3 style="margin-top:0; text-align:center;">Tu plan</h3>
+            <p style="font-size:14px;color:#4b5563;margin-bottom:12px; text-align:center;">
+                Plan actual: <strong id="planUsageTitleLabel">Gratis</strong>
+            </p>
+
+            <div style="overflow-x:auto; margin-bottom:8px;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#f3f4f6; color:#374151;">
+                            <th style="text-align:left; padding:6px 8px; border-bottom:1px solid #e5e7eb;">Función</th>
+                            <th style="text-align:right; padding:6px 8px; border-bottom:1px solid #e5e7eb;">Usados</th>
+                            <th style="text-align:right; padding:6px 8px; border-bottom:1px solid #e5e7eb;">Restantes
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding:6px 8px; border-bottom:1px solid #f3f4f6;">Crear materias en el catálogo
+                            </td>
+                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span
+                                    id="planUsageCatalogUsed">-</span></td>
+                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span
+                                    id="planUsageCatalogRemaining">-</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 8px; border-bottom:1px solid #f3f4f6;">Imprimir horario</td>
+                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span
+                                    id="planUsagePrintUsed">-</span></td>
+                            <td style="padding:6px 8px; text-align:right; border-bottom:1px solid #f3f4f6;"><span
+                                    id="planUsagePrintRemaining">-</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 8px;">Descargas / envíos al tutor</td>
+                            <td style="padding:6px 8px; text-align:right;"><span id="planUsageDownloadUsed">-</span>
+                            </td>
+                            <td style="padding:6px 8px; text-align:right;"><span
+                                    id="planUsageDownloadRemaining">-</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p style="font-size:12px;color:#6b7280;margin-bottom:12px; text-align:left;">
+                Los usos se cuentan aunque borres materias o archivos. Cada nuevo pago del plan 49 MXN vuelve a dejarte
+                con 10 usos en cada apartado.
+            </p>
+            <button id="upgradePlanButton" type="button" class="plan-cta-btn hidden" style="width:100%;margin-top:4px;"
+                onclick="(function(){ var btn=document.getElementById('planProCheckout'); if(btn){ btn.click(); } })();">
+                Mejorar plan
+            </button>
+        </div>
+    </div>
+
+    <div id="payerInfoModal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-container payer-modal" role="document">
+            <button id="payerInfoClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
+            <h3 style="margin-top:0; text-align:center;">Datos de la persona que paga</h3>
+            <p style="font-size:14px;color:#6b7280;margin-bottom:12px; text-align:center;">
+                Usaremos estos datos para asociar el plan y poder identificar tu compra.
+            </p>
+            <label for="payerNameInput"
+                style="display:block;margin-bottom:6px;text-align:left;font-weight:600;font-size:14px;">Nombre
+                completo</label>
+            <input id="payerNameInput" type="text" placeholder="Nombre de la persona que realiza el pago"
+                style="width:90%;padding:8px 10px;margin-bottom:10px;border-radius:6px;border:1px solid #d1d5db;">
+            <label for="payerEmailInput"
+                style="display:block;margin-bottom:6px;text-align:left;font-weight:600;font-size:14px;">Correo
+                electrónico</label>
+            <input id="payerEmailInput" type="email" placeholder="correo@ejemplo.com"
+                style="width:90%;padding:8px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #d1d5db;">
+            <p style="font-size:12px;color:#6b7280;margin-bottom:12px; text-align:left;">
+                Este correo se usará para activar el plan y consultar tu estado más adelante.
+            </p>
+            <div id="payerInfoError" style="min-height:18px;font-size:13px;color:#b91c1c;margin-bottom:8px;"></div>
+            <button id="payerInfoContinue" type="button" class="plan-cta-btn" style="width:100%;">
+                Continuar con el pago
+            </button>
+        </div>
+    </div>
+
+    <div id="paymentModal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-container payment-modal" role="document">
+            <button id="paymentModalClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
+            <p style="font-size:14px;color:#6b7280;margin-bottom:12px; text-align:center;">
+                Ingresa los datos de tu tarjeta para pagar MXN 49.00.
+            </p>
+            <div id="payment-element" style="margin:10px 0 16px;"></div>
+            <div id="paymentError" style="min-height:18px;font-size:13px;color:#b91c1c;margin-bottom:8px;"></div>
+            <button id="paymentConfirmButton" type="button" class="plan-cta-btn" style="width:100%;">
+                Pagar MXN 49.00
+            </button>
+        </div>
+    </div>
+
 </body>
-<footer class=footer>
-<p>&copy; 2025 XuNnito</p>
-<a href=https://www.facebook.com/XuNnitohz target=_blank rel="noopener noreferrer" aria-label=Facebook class="icon fb">
-<svg viewBox="0 0 24 24">
-<path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-</svg>
-Facebook
-</a>
-<a id=whatsappSupportLink href=# aria-label=WhatsApp target=_blank rel="noopener noreferrer">
-<img src="https://www.google.com/s2/favicons?domain=whatsapp.com" width=12 alt=WhatsApp>
-Reportar problema
-</a>
+<footer class="footer">
+    <p>&copy; 2025 XuNnito</p>
+
+    <a href="https://www.facebook.com/XuNnitohz" target="_blank" rel="noopener noreferrer" aria-label="Facebook"
+        class="icon fb">
+        <svg viewBox="0 0 24 24">
+            <path
+                d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+        </svg>
+        Facebook
+    </a>
+
+    <a id="whatsappSupportLink" href="#" aria-label="WhatsApp" target="_blank" rel="noopener noreferrer">
+        <img src="https://www.google.com/s2/favicons?domain=whatsapp.com" width="12" alt="WhatsApp">
+        Reportar problema
+    </a>
+
 </footer>
-<script src=https://accounts.google.com/gsi/client defer></script>
-<script src=https://apis.google.com/js/api.js defer></script>
-<script src=https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js defer></script>
-<script>window.BACKEND_BASE_URL="https://horarioxunu-d8a240277988.herokuapp.com/"</script>
+<script src="https://accounts.google.com/gsi/client" defer></script>
+<script src="https://apis.google.com/js/api.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
+<script>
+    window.BACKEND_BASE_URL = "https://horarioxunu-d8a240277988.herokuapp.com/";
+</script>
+</script>
 
 </html>

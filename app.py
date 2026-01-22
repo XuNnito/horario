@@ -145,20 +145,41 @@ init_db()
 def add_cors_headers(response):  # type: ignore[override]
 		"""Permite que el frontend se conecte desde otro dominio.
 
-		Configura la variable de entorno FRONTEND_ORIGIN, por ejemplo:
-		FRONTEND_ORIGIN=http://127.0.0.1:5501
+		Se usa la variable de entorno FRONTEND_ORIGIN para configurar
+		los orígenes permitidos. Puedes definir uno o varios separados
+		por comas, por ejemplo:
+
+		FRONTEND_ORIGIN="https://xunnito.github.io,http://127.0.0.1:5501"
 		"""
 
 		origin = request.headers.get("Origin")
-		allowed_origin = os.environ.get("FRONTEND_ORIGIN")
-		if origin and allowed_origin:
-				# Coincidencia exacta o prefijo simple
-				if origin == allowed_origin or origin.startswith(allowed_origin.rstrip("/")):
+		configured = os.environ.get("FRONTEND_ORIGIN", "")
+
+		allowed_origins: list[str] = []
+		if configured:
+				# Soporta varios orígenes separados por comas
+				allowed_origins = [o.strip().rstrip("/") for o in configured.split(",") if o.strip()]
+		else:
+				# Fallback razonable si no está configurada la variable de entorno.
+				# Incluye GitHub Pages y desarrollo local típico.
+				allowed_origins = [
+						"https://xunnito.github.io",
+						"http://127.0.0.1:5500",
+						"http://localhost:5500",
+				]
+
+		if origin:
+				origin_clean = origin.rstrip("/")
+				if origin_clean in allowed_origins:
 						response.headers["Access-Control-Allow-Origin"] = origin
 						response.headers["Vary"] = "Origin"
 						response.headers["Access-Control-Allow-Credentials"] = "true"
+
 		response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		response.headers.setdefault("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		# Aseguramos que las preflight OPTIONS respondan 200 con los headers
+		if request.method == "OPTIONS" and response.status_code == 405:
+				response.status_code = 200
 		return response
 
 
