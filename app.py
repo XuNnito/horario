@@ -12,7 +12,6 @@ from flask import (
 		render_template_string,
 		request,
 )
-from urllib.parse import urlsplit
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -25,15 +24,15 @@ STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
 
 # Planes disponibles en la app (ids lógicos internos)
 # En este proyecto usamos un único plan de pago basado en usos:
-#   Plan xunu -> 49 MXN, sin fecha de expiración (se limita por número de usos).
+#   Plan_xunu -> 49 MXN, sin fecha de expiración (se limita por número de usos).
 PLAN_DURATIONS_DAYS = {
-		"Plan xunu": None,
+		"Plan_xunu": None,
 }
 
 # Ids de precios de Stripe (rellenar con tu price_xxx real)
-# "Plan xunu" será el plan de 49 MXN, sin renovación automática.
+# "Plan_xunu" será el plan de 49 MXN, sin renovación automática.
 STRIPE_PRICE_IDS = {
-		"Plan xunu": os.environ.get("STRIPE_PRICE_Plan xunu"),
+		"Plan_xunu": os.environ.get("STRIPE_PRICE_Plan_xunu"),
 }
 
 try:
@@ -158,18 +157,8 @@ def add_cors_headers(response):  # type: ignore[override]
 
 		allowed_origins: list[str] = []
 		if configured:
-				# Soporta varios orígenes separados por comas y normaliza quitando el path.
-				raw_list = [o.strip().rstrip("/") for o in configured.split(",") if o.strip()]
-				for item in raw_list:
-						allowed_origins.append(item)
-						try:
-								parsed = urlsplit(item)
-								if parsed.scheme and parsed.netloc:
-										base = f"{parsed.scheme}://{parsed.netloc}"
-										if base not in allowed_origins:
-												allowed_origins.append(base)
-						except Exception:  # noqa: BLE001
-								pass
+				# Soporta varios orígenes separados por comas
+				allowed_origins = [o.strip().rstrip("/") for o in configured.split(",") if o.strip()]
 		else:
 				# Fallback razonable si no está configurada la variable de entorno.
 				# Incluye GitHub Pages y desarrollo local típico.
@@ -485,7 +474,7 @@ def _increment_usage_counter(email: str, field: str, free_limit: int | None) -> 
 
 	Actualmente:
 	- Plan free: usa ``free_limit`` pasado por parámetro.
-	- Plan Plan xunu: límite fijo de 10 usos por tipo (crear, imprimir, descargar).
+	- Plan Plan_xunu: límite fijo de 10 usos por tipo (crear, imprimir, descargar).
 
 	Devuelve (allowed, payload) donde payload es un dict listo para devolver al frontend.
 	"""
@@ -530,9 +519,9 @@ def _increment_usage_counter(email: str, field: str, free_limit: int | None) -> 
 				current_value = 0
 
 	limit_free = free_limit
-	# Límite para planes de pago (por ahora solo Plan xunu)
+	# Límite para planes de pago (por ahora solo Plan_xunu)
 	limit_paid: int | None = None
-	if effective == "Plan xunu":
+	if effective == "Plan_xunu":
 		limit_paid = 10
 
 	allowed = True
@@ -581,13 +570,13 @@ def api_plan_debug_activate():
 
 		Solo debe usarse en desarrollo. Protegido con ADMIN_TOKEN.
 		Ejemplo de uso:
-		  POST /api/plan/debug-activate?token=admin {"email": "correo@ejemplo.com", "plan_id": "Plan xunu"}
+		  POST /api/plan/debug-activate?token=admin {"email": "correo@ejemplo.com", "plan_id": "Plan_xunu"}
 		"""
 
 		_require_admin()
 		data = request.get_json(silent=True) or {}
 		email = str(data.get("email") or "").strip()
-		plan_id = str(data.get("plan_id") or "Plan xunu").strip() or "Plan xunu"
+		plan_id = str(data.get("plan_id") or "Plan_xunu").strip() or "Plan_xunu"
 		name = data.get("name") or None
 
 		if not email:
@@ -1278,7 +1267,7 @@ def api_usage_status():
 								current_value = 0
 
 				limit_free = free_limit
-				limit_paid: int | None = 10 if effective == "Plan xunu" else None
+				limit_paid: int | None = 10 if effective == "Plan_xunu" else None
 
 				active_limit: int | None = None
 				if effective == "free" and limit_free is not None:
@@ -1385,7 +1374,7 @@ def api_plan_activate_client():
 def api_create_checkout_session():
 		"""Crea una sesión de Stripe Checkout para comprar un plan.
 
-		El frontend envía: {"plan_id": "basic_20"|"Plan xunu"|"pro_50", "email": "...", "name": "..."}
+		El frontend envía: {"plan_id": "basic_20"|"Plan_xunu"|"pro_50", "email": "...", "name": "..."}
 		"""
 
 		if stripe is None or not STRIPE_SECRET_KEY:
@@ -1435,7 +1424,7 @@ def api_create_checkout_session():
 def api_create_payment_intent():
 	"""Crea un PaymentIntent para pagar un plan dentro de la propia página.
 
-	El frontend envía: {"plan_id": "Plan xunu", "email": "...", "name": "..."}
+	El frontend envía: {"plan_id": "Plan_xunu", "email": "...", "name": "..."}
 	"""
 
 	if stripe is None or not STRIPE_SECRET_KEY:
@@ -1454,7 +1443,7 @@ def api_create_payment_intent():
 	if not email:
 		return jsonify({"error": "Es necesario un correo para asociar el plan."}), 400
 
-	# Monto fijo para el plan Plan xunu: 49 MXN
+	# Monto fijo para el plan Plan_xunu: 49 MXN
 	amount = 4900  # en centavos de MXN
 
 	# Intentar asociar un Customer para que Stripe pueda recordar métodos de pago
