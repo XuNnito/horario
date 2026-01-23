@@ -12,6 +12,7 @@ from flask import (
 		render_template_string,
 		request,
 )
+from urllib.parse import urlsplit
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -157,8 +158,18 @@ def add_cors_headers(response):  # type: ignore[override]
 
 		allowed_origins: list[str] = []
 		if configured:
-				# Soporta varios orígenes separados por comas
-				allowed_origins = [o.strip().rstrip("/") for o in configured.split(",") if o.strip()]
+				# Soporta varios orígenes separados por comas y normaliza quitando el path.
+				raw_list = [o.strip().rstrip("/") for o in configured.split(",") if o.strip()]
+				for item in raw_list:
+						allowed_origins.append(item)
+						try:
+								parsed = urlsplit(item)
+								if parsed.scheme and parsed.netloc:
+										base = f"{parsed.scheme}://{parsed.netloc}"
+										if base not in allowed_origins:
+												allowed_origins.append(base)
+						except Exception:  # noqa: BLE001
+								pass
 		else:
 				# Fallback razonable si no está configurada la variable de entorno.
 				# Incluye GitHub Pages y desarrollo local típico.
