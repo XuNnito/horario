@@ -171,8 +171,7 @@ def add_cors_headers(response):  # type: ignore[override]
 						except Exception:  # noqa: BLE001
 								pass
 		else:
-				# Fallback razonable si no está configurada la variable de entorno.
-				# Incluye GitHub Pages y desarrollo local típico.
+				
 				allowed_origins = [
 						"https://xunnito.github.io",
 						"http://127.0.0.1:5500",

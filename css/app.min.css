@@ -57,6 +57,114 @@ h3 {
     height: auto;
 }
 
+.google-btns button {
+    
+}
+
+.theme-toggle-btn {
+    background: var(--secondary-color);
+    border: none;
+    cursor: pointer;
+    margin-right: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.theme-toggle-btn:hover {
+    background: #0065a8;
+}
+.theme-toggle-icon {
+    width: 20px;
+    height: 20px;
+    display: block;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.6;
+}
+
+.theme-toggle-icon .icon-sun-circle {
+    fill: currentColor;
+}
+
+.theme-toggle-icon .icon-sun-rays {
+    stroke-linecap: round;
+}
+
+.theme-toggle-icon .icon-moon {
+    fill: currentColor;
+    opacity: 0.2;
+}
+
+body.theme-dark {
+    --bg-color: #050816;
+    --border-color: #1f2937;
+    color: #e5e7eb;
+    background-image: none;
+    background-color: #050816;
+}
+
+body.theme-dark #topBar {
+    background: #0b1120;
+    box-shadow: 0 1px 6px rgba(15, 23, 42, 0.9);
+}
+
+body.theme-dark .panel {
+    background-color: rgba(17, 24, 39, 0.9);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+
+body.theme-dark .schedule-table th,
+body.theme-dark .schedule-table td {
+    border-color: #374151;
+}
+
+body.theme-dark reinscription-modal__preview {
+    background-color: #020617;
+    color: #e5e7eb;
+}
+
+body.theme-dark .schedule-table thead th {
+    background-color: #111827;
+    color: #e5e7eb;
+}
+
+body.theme-dark .schedule-table tr:nth-child(even) {
+    background-color: #020617;
+}
+
+body.theme-dark .subject-card {
+    background-color: #1f2937;
+    color: #e5e7eb;
+}
+
+body.theme-dark .message {
+    background-color: rgba(15, 23, 42, 0.9);
+}
+
+body.theme-dark .subject-item {
+    background-color: #111827;
+    color: #f9fafb;
+    box-shadow: 10px 4px 8px #393a3a;
+
+}
+body.theme-dark .subject-item:hover {
+    background-color: #111827;
+    color: #f9fafb;
+    box-shadow: 0 4px 8px #0052a3;
+
+}
+
+
+body.theme-dark .subject-item h3 {
+    color: #f9fafb;
+    font-weight: 700;
+}
+
+body.theme-dark .subject-item p {
+    color: #e5e7eb;
+    font-weight: 500;
+}
+
 .row {
     display: flex;
     flex-wrap: wrap;
@@ -404,6 +512,10 @@ button:hover {
     position: relative;
 }
 
+body.theme-dark .search-container input {
+    background: #1f1f1f;
+}
+
 .group-load-buttons {
     margin-top: -14px;
     /* más cerca del buscador */
@@ -450,6 +562,15 @@ button:hover {
 .suggestion-item:hover {
     background-color: var(--primary-color);
     color: white;
+}
+
+body.theme-dark .suggestion-item {
+    color: #e5e7eb;
+}
+
+body.theme-dark .suggestion-item:hover {
+    background-color: #1d4ed8;
+    color: #f9fafb;
 }
 
 .group-7A {
@@ -513,6 +634,26 @@ button:hover {
     width: 760px;
     max-width: 95%;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+body.theme-dark .panel-modal {
+    background: #020617;
+    color: #e5e7eb;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.9);
+}
+
+body.theme-dark .panel-modal input[type="text"],
+body.theme-dark .panel-modal input[type="email"],
+body.theme-dark .panel-modal textarea,
+body.theme-dark .panel-modal select {
+    background-color: #020617;
+    color: #e5e7eb;
+    border-color: #374151;
+}
+
+body.theme-dark .panel-modal input::placeholder,
+body.theme-dark .panel-modal textarea::placeholder {
+    color: #6b7280;
 }
 
 .slots-table {
@@ -581,6 +722,25 @@ button:hover {
 .slots-table th.slot-hour.row-hover,
 .slots-table td.slot.row-hover:not(.selected) {
     background: #e0f3ff;
+}
+
+body.theme-dark .slots-table thead th {
+    background: #111827;
+    color: #e5e7eb;
+}
+
+body.theme-dark .slots-table td.slot {
+    background: #020617;
+    color: #e5e7eb;
+}
+
+body.theme-dark .slots-table th.slot-hour.row-hover,
+body.theme-dark .slots-table td.slot.row-hover:not(.selected) {
+    background: #0f172a;
+}
+
+body.theme-dark .slots-table td.slot.selected {
+    color: #f9fafb;
 }
 
 /* Más pequeño en PC */
@@ -708,6 +868,26 @@ button:hover {
     flex-direction: column;
     position: relative;
     overflow: hidden;
+}
+
+body.theme-dark .reinscription-modal__panel {
+    background: #020617;
+    color: #e5e7eb;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.95);
+}
+
+body.theme-dark .reinscription-modal__panel input[type="text"],
+body.theme-dark .reinscription-modal__panel input[type="email"],
+body.theme-dark .reinscription-modal__panel textarea,
+body.theme-dark .reinscription-modal__panel select {
+    background-color: #020617;
+    color: #e5e7eb;
+    border-color: #374151;
+}
+
+body.theme-dark .reinscription-modal__panel input::placeholder,
+body.theme-dark .reinscription-modal__panel textarea::placeholder {
+    color: #6b7280;
 }
 
 .reinscription-modal__close {
@@ -852,6 +1032,11 @@ button:hover {
     background: #fff;
     min-height: 300px;
     overflow: hidden;
+}
+
+body.theme-dark .reinscription-preview {
+    background: #020617;
+    border-color: rgba(148, 163, 184, 0.5);
 }
 
 .reinscription-preview__canvas {
@@ -1471,6 +1656,12 @@ button:hover {
     flex-direction: column;
 }
 
+body.theme-dark .career-modal__panel {
+    background: #020617;
+    color: #e5e7eb;
+    box-shadow: 0 22px 60px rgba(15, 23, 42, 0.95);
+}
+
 .career-modal__close {
     position: absolute;
     top: 12px;
@@ -1536,6 +1727,21 @@ button:hover {
     cursor: pointer;
     transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
     position: relative;
+}
+
+body.theme-dark .career-option {
+    background: #020617;
+    border-color: rgba(148, 163, 184, 0.5);
+}
+
+body.theme-dark .career-option__name {
+    color: #e5e7eb;
+}
+
+body.theme-dark .career-option.is-selected {
+    border-color: #38bdf8;
+    background: #0b1120;
+    box-shadow: 0 14px 28px rgba(56, 189, 248, 0.3);
 }
 
 .career-option:hover {
@@ -1920,6 +2126,12 @@ button:hover {
     width: 300px;
     animation: fadeIn 0.3s ease-in-out;
     position: relative;
+}
+
+body.theme-dark .modal-container {
+    background-color: #020617;
+    color: #e5e7eb;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.95);
 }
 
 .modal-container.payment-modal {
@@ -2838,6 +3050,12 @@ body.auth-gate-open {
     text-align: left;
 }
 
+body.theme-dark .default-schedule__panel {
+    background: #020617;
+    color: #e5e7eb;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.95);
+}
+
 .default-schedule__panel h3 {
     margin: 0 0 12px;
     font-size: 1.2rem;
@@ -2980,6 +3198,12 @@ body.auth-gate-open {
     z-index: 8000;
 }
 
+body.theme-dark .profile-panel {
+    background: #020617;
+    color: #e5e7eb;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
+}
+
 .pm-close {
     position: absolute;
     right: 8px;
@@ -3102,6 +3326,19 @@ body.auth-gate-open {
     cursor: pointer;
     text-align: left;
     transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+body.theme-dark .pm-career-select {
+    background: #020617;
+    border-color: rgba(148, 163, 184, 0.6);
+}
+
+body.theme-dark .pm-career-select__text {
+    color: #e5e7eb;
+}
+
+body.theme-dark .pm-career-select__hint {
+    color: #9ca3af;
 }
 
 .pm-career-select:hover {
@@ -3259,6 +3496,10 @@ body.auth-gate-open {
 
 }
 
+body.theme-dark .modal-container.plans-modal {
+    background-color: #020617;
+}
+
 @media (min-width: 1024px) {
     .modal-container.plans-modal {
         max-height: none;
@@ -3374,6 +3615,16 @@ body.auth-gate-open {
 .plan-badge--highlight {
     background: rgba(52, 211, 153, 0.16);
     color: #065f46;
+}
+
+body.theme-dark .plan-badge {
+    background: #020617;
+    color: #e5e7eb;
+}
+
+body.theme-dark .plan-badge--highlight {
+    background: rgba(34, 197, 94, 0.18);
+    color: #bbf7d0;
 }
 
 .plan-cta-btn {

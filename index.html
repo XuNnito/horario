@@ -11,16 +11,14 @@
     <meta property="og:description"
         content="Plataforma para estudiantes irregulares donde puedes crear y organizar tu horario académico, detectar choques de horas y generar solicitudes de reinscripción.">
     <meta property="og:url" content="https://xunnito.github.io/horario/">
-    <meta property="og:image" content="https://xunnito.github.io/horario/SoyIngenieroUP.png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
+    <meta property="og:image" content="https://xunnito.github.io/horario/SoyIngenieroUP_vista_previa_meta.png">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="es_MX">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Horarios Bio - Simulador de Horarios">
     <meta name="twitter:description" content="Organiza tu horario académico fácilmente y evita choques de materias.">
-    <meta name="twitter:image" content="https://xunnito.github.io/horario/SoyIngenieroUP.png">
+    <meta name="twitter:image" content="https://xunnito.github.io/horario/SoyIngenieroUP_vista_previa_meta.png">
 
     <title>Horarios Bio | Simulador de Horarios</title>
 
@@ -56,6 +54,24 @@
         </div>
         <span id="googleUserName" class="user-name"></span>
         <div class="google-btns">
+            <button id="themeToggle" type="button" class="theme-toggle-btn" aria-label="Cambiar tema">
+                <svg id="themeToggleIcon" class="theme-toggle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <!-- Sol -->
+                    <circle class="icon-sun-circle" cx="12" cy="12" r="4" />
+                    <g class="icon-sun-rays">
+                        <line x1="12" y1="2" x2="12" y2="5" />
+                        <line x1="12" y1="19" x2="12" y2="22" />
+                        <line x1="4.22" y1="4.22" x2="6.34" y2="6.34" />
+                        <line x1="17.66" y1="17.66" x2="19.78" y2="19.78" />
+                        <line x1="2" y1="12" x2="5" y2="12" />
+                        <line x1="19" y1="12" x2="22" y2="12" />
+                        <line x1="4.22" y1="19.78" x2="6.34" y2="17.66" />
+                        <line x1="17.66" y1="6.34" x2="19.78" y2="4.22" />
+                    </g>
+                    <!-- Luna -->
+                    <path class="icon-moon" d="M17 3a7 7 0 0 0 0 14 7 7 0 0 1-6.5-10.5A7 7 0 0 0 17 3z" />
+                </svg>
+            </button>
             <button id="shareScheduleBtn" type="button" class="share-btn"
                 aria-label="Compartir esta página con tus amigos">
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -325,13 +341,16 @@
                     <button onclick="closeMessageAndPrint()" class="print-button">¡Listo, Imprimir!</button>
                 </div>
                 <div class="schedule-container" id="scheduleContainer">
+                    <div id="scheduleSaturdayLoader" class="small hidden" aria-live="polite" style="margin-bottom:4px;">
+                        Cargando sábado...
+                    </div>
                     <table class="schedule-table">
                         <thead>
                             <tr>
                                 <th>Hora</th>
                                 <th>Lunes</th>
                                 <th>Martes</th>
-                                <th>miercoles</th>
+                                <th>Miércoles</th>
                                 <th>Jueves</th>
                                 <th>Viernes</th>
                             </tr>
@@ -421,6 +440,12 @@
         <div class="panel-modal">
             <h3>Seleccionar horarios (clic para seleccionar horas)</h3>
             <div class="small">Selecciona los cuadros correspondientes a Lunes-Viernes y horas.</div>
+            <button id="enableSaturdaySlotsButton" type="button" class="btn-link" style="margin-top:4px;font-size:11px;padding:2px 4px;">
+                ○ Sábado (opcional)
+            </button>
+            <div id="saturdaySlotsLoader" class="small hidden" aria-live="polite" style="margin-top:4px;">
+                Agregando sábado...
+            </div>
             <div style="margin-top:8px; overflow:auto; ">
                 <table class="slots-table" id="slotsTable">
                     <thead>
@@ -651,6 +676,20 @@
             <button id="pmInviteCodeSubmit" type="button" class="modal-button confirm" style="margin-bottom:10px;">Usar
                 código</button>
             <div id="pmInviteCodeMessage" class="modal-message" aria-live="polite"></div>
+        </div>
+    </div>
+
+    <div id="themeConfirmModal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-container" role="document">
+            <button id="themeConfirmClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
+            <h3 style="margin-top:0; text-align:center;">Cambiar tema</h3>
+            <p id="themeConfirmMessage" style="font-size:14px;color:#4b5563;margin-bottom:12px; text-align:center;">
+                Quieres activar el modo oscuro?
+            </p>
+            <div class="modal-actions" style="justify-content:flex-end;margin-top:14px;gap:8px;">
+                <button id="themeConfirmCancel" type="button">Cancelar</button>
+                <button id="themeConfirmAccept" type="button" class="plan-cta-btn">Aceptar y cambiar tema</button>
+            </div>
         </div>
     </div>
 
