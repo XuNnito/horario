@@ -1925,6 +1925,8 @@ button:hover {
 .modal-container.payment-modal {
     width: 560px;
     max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .modal-container.payer-modal {
