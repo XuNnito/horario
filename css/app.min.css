@@ -58,6 +58,7 @@ h3 {
 }
 
 .google-btns button {
+    color: white;
     
 }
 
@@ -139,6 +140,39 @@ body.theme-dark .subject-card {
 
 body.theme-dark .message {
     background-color: rgba(15, 23, 42, 0.9);
+}
+
+/* Transición escalonada cuando se cambia de tema */
+body.theme-transitioning {
+    transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+body.theme-transitioning #topBar {
+    transition: background-color 0.4s ease, box-shadow 0.4s ease;
+    transition-delay: 0s;
+}
+
+body.theme-transitioning .panel {
+    transition: background-color 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease, color 0.4s ease;
+    transition-delay: 0.06s;
+}
+
+body.theme-transitioning .schedule-table th,
+body.theme-transitioning .schedule-table td {
+    transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+    transition-delay: 0.12s;
+}
+
+body.theme-transitioning .subject-item,
+body.theme-transitioning .subject-card {
+    transition: background-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
+    transition-delay: 0.18s;
+}
+
+body.theme-transitioning .panel-modal,
+body.theme-transitioning .modal-container {
+    transition: background-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+    transition-delay: 0.24s;
 }
 
 body.theme-dark .subject-item {
@@ -452,6 +486,16 @@ button:hover {
     margin-top: 6px;
     font-size: 12px;
     opacity: 0.96;
+}
+
+body.theme-dark .selected-subject-card {
+    background:
+        radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.1), transparent 60%),
+        radial-gradient(circle at 100% 100%, rgba(0, 172, 66, 0.08), transparent 55%),
+        linear-gradient(135deg, rgba(17, 24, 39, 0.8), rgba(55, 65, 81, 0.6));
+    color: #e5e7eb;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.6);
 }
 
 .selected-subject-card__remove {
@@ -3290,7 +3334,7 @@ body.theme-dark .profile-panel {
 
 .pm-plan-value {
     font-weight: 600;
-    color: #555454;
+    color: #999393;
 }
 
 .pm-signout {
@@ -3479,8 +3523,8 @@ body.theme-dark .pm-career-select__hint {
     content: "";
     position: absolute;
     top: -6px;
-    left: 24px;
-    /* apúntalo hacia el icono de compartir */
+    left: 26%;
+    transform: translateX(-50%);
     border-width: 0 6px 6px 6px;
     border-style: solid;
     border-color: transparent transparent #323232 transparent;
@@ -3549,6 +3593,13 @@ body.theme-dark .modal-container.plans-modal {
     display: flex;
     flex-direction: column;
     flex: 1 1 0;
+}
+
+body.theme-dark .plan-card {
+    background: #020617;
+    color: #e5e7eb;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    border-color: rgba(148, 163, 184, 0.6);
 }
 
 .plan-card:hover {
