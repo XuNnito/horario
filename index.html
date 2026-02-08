@@ -28,11 +28,11 @@
     <link rel="icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="48x48" href="icono.png">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="stylesheet" href="css/app.min.css">
+    <link rel="stylesheet" href="dist/css/styles.css">
     <script src="https://js.stripe.com/v3" defer></script>
 
     <script src="funcion.js" defer></script>
-    <script src="dist/app.js" defer></script>
+    <script src="dist/js/app.js" defer></script>
 
 
 </head>
@@ -443,12 +443,11 @@
         <div class="panel-modal">
             <h3>Seleccionar horarios (clic para seleccionar horas)</h3>
             <div class="small">Selecciona los cuadros correspondientes a Lunes-Viernes y horas.</div>
-            <button id="enableSaturdaySlotsButton" type="button" class="btn-link"
-                style="margin-top:4px;font-size:11px;padding:2px 4px;">
-                ○ Sábado (opcional)
-            </button>
-            <div id="saturdaySlotsLoader" class="small hidden" aria-live="polite" style="margin-top:4px;">
-                Agregando sábado...
+            <div class="small" style="margin-top:4px; display:flex; align-items:center; gap:8px;">
+                <label style="display:flex; align-items:center; gap:4px; cursor:pointer; font-size:11px;">
+                    <input id="enableSaturdaySlotsToggle" type="checkbox">
+                    <span>Sábado (opcional)</span>
+                </label>
             </div>
             <div style="margin-top:8px; overflow:auto; ">
                 <table class="slots-table" id="slotsTable">

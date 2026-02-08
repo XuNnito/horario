@@ -142,16 +142,48 @@
     };
     if (pmDeleteAccount) {
         pmDeleteAccount.addEventListener('click', async () => {
-            if (!confirm('¿Eliminar cuenta? Esto borrará todas las materias y horarios guardados en este navegador.')) {
+            if (!confirm('¿Eliminar tu cuenta por completo? Se borrarán tu plan, horarios y datos guardados en este sistema. Esta acción no se puede deshacer.')) {
                 return;
             }
-            clearLocalScheduleAndCatalogOnSignOut();
+
+            showLoader('Eliminando tu cuenta...');
             try {
-                await signOutWithLoader();
-                showMessage('Cuenta eliminada y sesión cerrada.', 'success');
+                const url = (typeof apiUrl === 'function') ? apiUrl('/api/account/delete') : '/api/account/delete';
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                let data = null;
+                try {
+                    data = await resp.json();
+                } catch (e) {
+                    data = null;
+                }
+                if (!resp.ok || !data || !data.ok) {
+                    const reason = data && data.error ? data.error : 'unknown';
+                    throw new Error('delete_failed:' + reason);
+                }
+
+                // Borrar todos los datos locales relacionados con la cuenta
+                try {
+                    clearLocalScheduleAndCatalogOnSignOut();
+                } catch (e) {
+                    console.warn('No se pudo limpiar todos los datos locales tras eliminar la cuenta', e);
+                }
+
+                // Cerrar sesión de Google en el cliente sin volver a notificar al backend
+                try {
+                    await signOutGoogle({ skipLoader: true, loaderMessage: 'Cerrando sesión...' });
+                } catch (e) {
+                    console.warn('Error al cerrar sesión de Google tras eliminar la cuenta', e);
+                }
+
+                showMessage('Tu cuenta y datos guardados se eliminaron de este sistema.', 'success');
             } catch (error) {
                 console.error('delete account error', error);
                 showMessage('No se pudo eliminar la cuenta. Vuelve a intentarlo.', 'error');
+            } finally {
+                hideLoader();
             }
         });
     }
@@ -1509,15 +1541,8 @@ function addInteractionSignInGuard() {
         // Evitar que la interacción realice acciones no autorizadas
         try { e.preventDefault(); e.stopPropagation(); } catch (ex) { }
         authGateDismissed = false;
+        // Mostrar solo el modal de login; no abrir Google automáticamente
         lockInterface('Debes iniciar sesión para interactuar.');
-        try {
-            // Redirigir al flujo de backend para iniciar sesión
-            const url = apiUrl('/auth/google');
-            window.location.href = url || '/auth/google';
-        } catch (ex) {
-            console.warn('Redirección a /auth/google fallo, se intenta requestGoogleSignIn', ex);
-            try { requestGoogleSignIn(); } catch (ex2) { console.warn('requestGoogleSignIn fallo desde guard:', ex2); }
-        }
     };
     window._forceSignInHandler = handler;
     document.addEventListener('click', handler, true);
@@ -3646,7 +3671,7 @@ function handleCatalogSubjectMouseDown(event, subject, sourceEl) {
 
     // Bajar un poco la opacidad del original para indicar que se está "levantando"
     if (catalogDragState.sourceEl) {
-        catalogDragState.sourceEl.style.opacity = '0.45';
+        catalogDragState.sourceEl.style.opacity = '0.70';
     }
 
     // Mostrar mensaje inicial mientras se empieza a arrastrar la materia
@@ -5922,8 +5947,7 @@ const s_back = document.getElementById('s_back');
 const s_save = document.getElementById('s_save');
 const slotsBody = document.getElementById('slotsBody');
 const slotsResumen = document.getElementById('slotsResumen');
-const saturdaySlotsButton = document.getElementById('enableSaturdaySlotsButton');
-const saturdaySlotsLoader = document.getElementById('saturdaySlotsLoader');
+const saturdaySlotsToggle = document.getElementById('enableSaturdaySlotsToggle');
 
 // Persistencia de materias creadas
 const CUSTOM_KEY = 'catalog_custom_subjects';
@@ -6065,6 +6089,37 @@ function addSaturdayColumnIfNeeded() {
     updateSlotsResumen();
 }
 
+function removeSaturdayColumn() {
+    const table = document.getElementById('slotsTable');
+    if (!table || !slotsBody) return;
+
+    const headerRow = table.tHead && table.tHead.rows && table.tHead.rows[0];
+    if (headerRow) {
+        const thSat = headerRow.querySelector('th[data-day="sabado"], th.saturday-col');
+        if (thSat && thSat.parentNode) {
+            thSat.parentNode.removeChild(thSat);
+        }
+    }
+
+    const rows = slotsBody.querySelectorAll('tr');
+    rows.forEach(row => {
+        const satCell = row.querySelector('td.slot[data-day="sabado"]');
+        if (satCell && satCell.parentNode) {
+            satCell.parentNode.removeChild(satCell);
+        }
+    });
+
+    // Limpiar selecciones de sábado del conjunto de slots seleccionados
+    const keysToDelete = [];
+    selectedSlots.forEach(key => {
+        if (key.startsWith('sabado|')) keysToDelete.push(key);
+    });
+    keysToDelete.forEach(key => selectedSlots.delete(key));
+
+    saturdayColumnAdded = false;
+    updateSlotsResumen();
+}
+
 function buildSlotsTable() {
     slotsBody.innerHTML = '';
     for (let hour of appHours) {
@@ -6131,21 +6186,21 @@ function updateSlotsResumen() {
     }
 }
 
-if (saturdaySlotsButton) {
-    saturdaySlotsButton.addEventListener('click', () => {
-        if (saturdayColumnAdded) return;
-        saturdaySlotsButton.disabled = true;
-        if (saturdaySlotsLoader) {
-            saturdaySlotsLoader.classList.remove('hidden');
-        }
+if (saturdaySlotsToggle) {
+    saturdaySlotsToggle.addEventListener('change', () => {
+        const includeSaturday = saturdaySlotsToggle.checked;
+        // Usar loader global centrado en pantalla
+        showLoader('Actualizando sábado...');
+        saturdaySlotsToggle.disabled = true;
+
         setTimeout(() => {
-            addSaturdayColumnIfNeeded();
-            if (saturdaySlotsLoader) {
-                saturdaySlotsLoader.classList.add('hidden');
+            if (includeSaturday) {
+                addSaturdayColumnIfNeeded();
+            } else {
+                removeSaturdayColumn();
             }
-            saturdaySlotsButton.disabled = true;
-            // Cambiar el punto vacío a lleno para indicar que sábado está incluido
-            saturdaySlotsButton.textContent = '● Sábado incluido';
+            hideLoader();
+            saturdaySlotsToggle.disabled = false;
         }, 2000);
     });
 }
@@ -7994,7 +8049,7 @@ function handleAuthError(err) {
         }
     } else {
         // Mensaje genérico para otros errores
-        try { showMessage('Error al acceder a Google, contacta con el desarrolador.', 'error'); } catch (e) { }
+        try { showMessage('Error al guardar tu horario iniciar sesión.', 'error'); } catch (e) { }
     }
 }
 
@@ -8282,7 +8337,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (code.toLowerCase() === 'xunito') {
             showInviteMessage('Código válido, espere un momento...', false);
             setTimeout(function () {
-                window.location.href = './xunito';
+                window.location.href = '/xunito';
             }, 900);
         } else {
             showInviteMessage('Código no válido. Verifica tu invitación.', true);
@@ -8417,7 +8472,7 @@ if (typeof document !== 'undefined') {
     });
 }
 
-// ================== INTEGRACIÓN PLANES (MODO GRATIS) ==================
+// ================== INTEGRACIÓN PLANES (GRATIS / 49 MXN) ==================
 
 // URL base del backend. Si el frontend está en otro dominio, define
 // window.BACKEND_BASE_URL en index.html (por ejemplo, "https://tu-backend.com").
@@ -8473,14 +8528,16 @@ var currentUsageState = {
 };
 
 function describePlan(planId) {
-    // Toda la aplicación funciona ahora en modo gratuito.
-    return 'Gratis';
+    if (!planId || planId === 'free') return 'Gratis';
+    // "Plan_xunu" es nuestro plan de 49 MXN basado en usos
+    return 'Plan 49 MXN';
 }
 
 function renderPlanInProfile() {
     var pmPlan = document.getElementById('pmPlan');
     if (!pmPlan) return;
     var label = describePlan(currentPlanState.planId);
+    // El plan de 49 MXN ya no expira por días, solo por límites de uso.
     pmPlan.textContent = label;
 }
 
@@ -8588,16 +8645,37 @@ function updatePlanButtonsUI() {
 }
 
 async function fetchPlanStatusFromBackend() {
-    // En modo gratuito el plan siempre es "free" y no se consulta backend.
-    currentPlanState = { planId: 'free', rawPlan: 'free', expiresAtTs: null, nowTs: null };
-    renderPlanInProfile();
-    updatePlanButtonsUI();
-    return currentPlanState;
+    try {
+        var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
+        if (!email) {
+            currentPlanState = { planId: 'free', rawPlan: 'free', expiresAtTs: null, nowTs: null };
+            renderPlanInProfile();
+            return currentPlanState;
+        }
+        var url = apiUrl('/api/plan/status?email=' + encodeURIComponent(email));
+        var res = await fetch(url, { method: 'GET', credentials: 'include' }).catch(function () { return null; });
+        if (!res || !res.ok) {
+            console.warn('No se pudo obtener el estado del plan', res && res.status);
+            return currentPlanState;
+        }
+        var data = await res.json();
+        currentPlanState = {
+            planId: data.plan_id || 'free',
+            rawPlan: data.raw_plan || 'free',
+            expiresAtTs: data.expires_at_ts != null ? Number(data.expires_at_ts) : null,
+            nowTs: data.now_ts != null ? Number(data.now_ts) : null
+        };
+        renderPlanInProfile();
+        updatePlanButtonsUI();
+        return currentPlanState;
+    } catch (e) {
+        console.warn('Error consultando el plan actual', e);
+        return currentPlanState;
+    }
 }
 
 async function ensureFeatureAllowed(kind) {
     // kind: 'catalog', 'print', 'download'
-    // Mantiene la validación de sesión, pero no aplica límites de plan ni pagos.
     var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
     if (!email) {
         if (typeof showMessage === 'function') {
@@ -8606,17 +8684,83 @@ async function ensureFeatureAllowed(kind) {
         throw new Error('missing_email');
     }
 
-    // Siempre permitir la acción en el plan gratis sin contactar backend
-    currentPlanState.planId = 'free';
-    currentPlanState.rawPlan = 'free';
+    var endpoint;
+    if (kind === 'catalog') endpoint = '/api/usage/catalog-create';
+    else if (kind === 'print') endpoint = '/api/usage/print';
+    else if (kind === 'download') endpoint = '/api/usage/download';
+    else throw new Error('usage_kind_not_supported');
+
+    var url = apiUrl(endpoint);
+    var res;
+    try {
+        res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ email: email })
+        });
+    } catch (e) {
+        console.error('Error conectando con el backend de planes', e);
+        if (typeof showMessage === 'function') {
+            showMessage('No se pudo verificar tu plan. Intenta nuevamente en unos segundos.', 'error');
+        }
+        throw e;
+    }
+
+    var data = await res.json().catch(function () { return {}; });
+    var allowed = !!data.allowed;
+    var reason = data.reason || (allowed ? 'ok' : 'blocked');
+    var planId = data.plan_id || 'free';
+
+    currentPlanState.planId = planId;
+    currentPlanState.rawPlan = data.raw_plan || planId;
+    currentPlanState.expiresAtTs = data.expires_at_ts != null ? Number(data.expires_at_ts) : currentPlanState.expiresAtTs;
+    currentPlanState.nowTs = data.now_ts != null ? Number(data.now_ts) : currentPlanState.nowTs;
+    if (kind === 'catalog' || kind === 'print' || kind === 'download') {
+        updateUsageState(kind, data);
+        renderUsageInPlanModal();
+        updatePlanButtonsUI();
+    }
     renderPlanInProfile();
-    return { allowed: true, plan_id: 'free' };
+
+    if (!allowed) {
+        openPlansModal(kind, reason);
+        throw new Error('feature_not_allowed_' + kind);
+    }
+
+    return data;
 }
 
 async function fetchUsageStatusFromBackend() {
-    // En modo totalmente gratuito no consultamos límites al backend.
-    renderPlanInProfile();
-    return currentUsageState;
+    try {
+        var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
+        if (!email) return currentUsageState;
+        var url = apiUrl('/api/usage/status?email=' + encodeURIComponent(email));
+        var res = await fetch(url, { method: 'GET', credentials: 'include' }).catch(function () { return null; });
+        if (!res || !res.ok) {
+            console.warn('No se pudo obtener el estado de usos', res && res.status);
+            return currentUsageState;
+        }
+        var data = await res.json();
+        if (data.plan_id) {
+            currentPlanState.planId = data.plan_id || 'free';
+            currentPlanState.rawPlan = data.raw_plan || currentPlanState.planId;
+            currentPlanState.expiresAtTs = data.expires_at_ts != null ? Number(data.expires_at_ts) : currentPlanState.expiresAtTs;
+            currentPlanState.nowTs = data.now_ts != null ? Number(data.now_ts) : currentPlanState.nowTs;
+        }
+        if (data.usage) {
+            if (data.usage.catalog) updateUsageState('catalog', data.usage.catalog);
+            if (data.usage.print) updateUsageState('print', data.usage.print);
+            if (data.usage.download) updateUsageState('download', data.usage.download);
+        }
+        renderPlanInProfile();
+        renderUsageInPlanModal();
+        updatePlanButtonsUI();
+        return currentUsageState;
+    } catch (e) {
+        console.warn('Error consultando el uso actual', e);
+        return currentUsageState;
+    }
 }
 
 function openPlansModal(kind, reason) {
@@ -8931,11 +9075,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (typeof showMessage === 'function') {
                         showMessage('Debes iniciar sesión con Google para ver los planes.', 'warning');
                     }
+                    // Mostrar el modal de login (authGate) en lugar del flujo antiguo
                     try {
-                        if (typeof requestGoogleSignIn === 'function') {
-                            requestGoogleSignIn();
-                        }
-                    } catch (e) { }
+                        lockInterface('Debes iniciar sesión para ver los planes.');
+                    } catch (e) {
+                        console.warn('No se pudo mostrar el modal de login desde pmOpenPlans', e);
+                    }
                     return;
                 }
                 openPlansModal();
@@ -8954,11 +9099,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (typeof showMessage === 'function') {
                         showMessage('Debes iniciar sesión con Google para ver los planes.', 'warning');
                     }
+                    // Mostrar el modal de login (authGate) en lugar del flujo antiguo
                     try {
-                        if (typeof requestGoogleSignIn === 'function') {
-                            requestGoogleSignIn();
-                        }
-                    } catch (e) { }
+                        lockInterface('Debes iniciar sesión para ver los planes.');
+                    } catch (e) {
+                        console.warn('No se pudo mostrar el modal de login desde pmPlanPill', e);
+                    }
                     return;
                 }
                 if (currentPlanState && currentPlanState.planId && currentPlanState.planId !== 'free') {
@@ -8983,11 +9129,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (typeof showMessage === 'function') {
                     showMessage('Debes iniciar sesión con Google para ver tu plan.', 'warning');
                 }
+                // Mostrar el modal de login (authGate) en lugar del flujo antiguo
                 try {
-                    if (typeof requestGoogleSignIn === 'function') {
-                        requestGoogleSignIn();
-                    }
-                } catch (e) { }
+                    lockInterface('Debes iniciar sesión para ver tu plan.');
+                } catch (e) {
+                    console.warn('No se pudo mostrar el modal de login desde planStatusButton', e);
+                }
                 return;
             }
 

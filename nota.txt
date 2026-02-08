@@ -14,3 +14,7 @@ window.BACKEND_BASE_URL = "http://127.0.0.1:5500";
 				return redirect(frontend_origin.rstrip("/"))
 
 		# Fallback: si no hay FRONTEND_ORIGIN definido, redirigimos a la raíz del backend.
+
+
+
+        npm run build
