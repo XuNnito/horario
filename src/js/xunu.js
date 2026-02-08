@@ -8337,7 +8337,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (code.toLowerCase() === 'xunito') {
             showInviteMessage('Código válido, espere un momento...', false);
             setTimeout(function () {
-                window.location.href = '/xunito';
+                window.location.href = 'https://horarioxunu-d8a240277988.herokuapp.com/xunito/index.html';
             }, 900);
         } else {
             showInviteMessage('Código no válido. Verifica tu invitación.', true);
