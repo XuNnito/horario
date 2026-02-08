@@ -1,7 +1,5 @@
 Flask>=3.0,<4
 stripe>=10,<12
 gunicorn>=21,<22
-
-Flask>=3.0,<4
-stripe>=10,<12
-gunicorn>=21,<22
+requests>=2.31,<3
+python-dotenv>=1.0,<2

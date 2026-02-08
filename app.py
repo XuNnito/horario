@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import os
 import sqlite3
+import json
 from datetime import datetime, timedelta
 
+import requests
 from flask import (
 		Flask,
 		abort,
@@ -11,12 +13,27 @@ from flask import (
 		redirect,
 		render_template_string,
 		request,
+		session,
 )
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlencode
+
+try:
+		# Cargar variables de entorno desde .env en desarrollo/local
+		from dotenv import load_dotenv  # type: ignore[import]
+
+		load_dotenv()
+except Exception:
+		# En producción (Heroku, etc.) normalmente ya vienen en el entorno
+		pass
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "security_logs.db")
+
+# Configuración OAuth de Google para Drive (lado servidor)
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+# El redirect_uri se calcula dinámicamente según el host actual.
 
 # Configuración de Stripe (claves y planes)
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
@@ -132,11 +149,68 @@ def init_db() -> None:
 		except sqlite3.OperationalError:
 				pass
 
+		# Tabla para guardar tokens de Google OAuth (Drive) por correo
+		try:
+				cur.execute(
+						"""
+						CREATE TABLE IF NOT EXISTS google_tokens (
+								email TEXT PRIMARY KEY,
+								refresh_token TEXT NOT NULL,
+								access_token TEXT,
+								access_token_expires_at INTEGER
+						)
+						""",
+				)
+		except sqlite3.OperationalError:
+				pass
+
+		# Columna opcional para guardar la URL del avatar/foto de perfil
+		try:
+				cur.execute(
+						"ALTER TABLE users ADD COLUMN avatar_url TEXT",
+				)
+		except sqlite3.OperationalError:
+				# Ya existe la columna
+				pass
+
+		# Tabla para guardar un snapshot del horario por usuario
+		try:
+				cur.execute(
+						"""
+						CREATE TABLE IF NOT EXISTS schedules (
+								email TEXT PRIMARY KEY,
+								data TEXT NOT NULL,
+								updated_at TEXT NOT NULL
+						)
+						""",
+				)
+		except sqlite3.OperationalError:
+				pass
+
 		conn.commit()
 		conn.close()
 
 
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="")
+
+# Clave de sesión para firmar cookies seguras.
+# En producción, define FLASK_SECRET_KEY con un valor largo y aleatorio.
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-change-me")
+
+# Duración máxima de la sesión de la app: ~4 meses (120 días).
+app.permanent_session_lifetime = timedelta(days=120)
+
+# Opcional: permitir que la cookie de sesión funcione cuando el frontend
+# está en otro dominio (por ejemplo, GitHub Pages) y hace peticiones
+# al backend con credentials="include".
+#
+# Activa esto SOLO en producción y sobre HTTPS definiendo:
+#   SESSION_SAMESITE_NONE=1
+if os.environ.get("SESSION_SAMESITE_NONE", "0") == "1":
+		app.config.update(
+				SESSION_COOKIE_SAMESITE="None",
+				SESSION_COOKIE_SECURE=True,
+		)
 
 # Flask 3 ya no tiene before_first_request; inicializamos la BD al importar el módulo.
 init_db()
@@ -236,24 +310,31 @@ def _get_ip() -> str | None:
 		return request.remote_addr
 
 
-def _upsert_user(name: str | None, email: str | None) -> None:
+def _upsert_user(name: str | None, email: str | None, avatar_url: str | None = None) -> None:
 		if not email:
 				return
 		conn = get_db_connection()
 		cur = conn.cursor()
 		now = _now_iso()
 
-		cur.execute("SELECT email FROM users WHERE email = ?", (email,))
+		cur.execute("SELECT email, avatar_url FROM users WHERE email = ?", (email,))
 		row = cur.fetchone()
 		if row:
-				cur.execute(
-						"UPDATE users SET name = COALESCE(?, name), last_seen = ? WHERE email = ?",
-						(name, now, email),
-				)
+				# Mantener el avatar anterior si no se proporciona uno nuevo
+				if avatar_url is not None and avatar_url != "":
+						cur.execute(
+								"UPDATE users SET name = COALESCE(?, name), avatar_url = ?, last_seen = ? WHERE email = ?",
+								(name, avatar_url, now, email),
+						)
+				else:
+						cur.execute(
+								"UPDATE users SET name = COALESCE(?, name), last_seen = ? WHERE email = ?",
+								(name, now, email),
+						)
 		else:
 				cur.execute(
-						"INSERT INTO users (email, name, first_seen, last_seen, status) VALUES (?, ?, ?, ?, 'active')",
-						(email, name, now, now),
+						"INSERT INTO users (email, name, avatar_url, first_seen, last_seen, status) VALUES (?, ?, ?, ?, ?, 'active')",
+						(email, name, avatar_url, now, now),
 				)
 
 		conn.commit()
@@ -268,6 +349,7 @@ def _get_user(email: str) -> sqlite3.Row | None:
 				SELECT
 					email,
 					name,
+					avatar_url,
 					first_seen,
 					last_seen,
 					status,
@@ -306,6 +388,107 @@ def _insert_visit(event_type: str, name: str | None, email: str | None, path: st
 		)
 		conn.commit()
 		conn.close()
+
+
+def _save_google_tokens(
+		email: str,
+		refresh_token: str,
+		access_token: str | None,
+		access_expires_at: int | None,
+) -> None:
+		"""Guarda o actualiza los tokens de Google para un usuario.
+
+		- refresh_token: largo plazo (offline), obligatorio.
+		- access_token: corto plazo, se puede regenerar usando el refresh_token.
+		"""
+
+		if not email or not refresh_token:
+				return
+
+		conn = get_db_connection()
+		cur = conn.cursor()
+		cur.execute(
+				"""
+				INSERT INTO google_tokens (email, refresh_token, access_token, access_token_expires_at)
+				VALUES (?, ?, ?, ?)
+				ON CONFLICT(email) DO UPDATE SET
+					refresh_token = excluded.refresh_token,
+					access_token = COALESCE(excluded.access_token, google_tokens.access_token),
+					access_token_expires_at = COALESCE(excluded.access_token_expires_at, google_tokens.access_token_expires_at)
+				""",
+				(email, refresh_token, access_token, access_expires_at),
+		)
+		conn.commit()
+		conn.close()
+
+
+def _get_fresh_google_access_token(email: str) -> str | None:
+		"""Devuelve un access_token válido para Google Drive usando el refresh_token guardado.
+
+		Si el access_token actual no ha expirado, se reutiliza. Si ha expirado, se solicita
+		uno nuevo a Google usando el refresh_token y se actualiza en la BD.
+		"""
+
+		if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+				return None
+		if not email:
+				return None
+
+		conn = get_db_connection()
+		cur = conn.cursor()
+		cur.execute(
+				"SELECT refresh_token, access_token, access_token_expires_at FROM google_tokens WHERE email = ?",
+				(email,),
+		)
+		row = cur.fetchone()
+		if row is None:
+				conn.close()
+				return None
+
+		refresh_token = row["refresh_token"]
+		access_token = row["access_token"]
+		expires_at = row["access_token_expires_at"] or 0
+		now_ts = _now_ts()
+
+		try:
+				expires_at_int = int(expires_at)
+		except (TypeError, ValueError):
+				expires_at_int = 0
+
+		# Si el access_token aún es válido (con pequeño margen), reutilizar
+		if access_token and expires_at_int - 60 > now_ts:
+				conn.close()
+				return str(access_token)
+
+		# Generar nuevo access_token usando el refresh_token
+		try:
+				resp = requests.post(
+						"https://oauth2.googleapis.com/token",
+						data={
+								"client_id": GOOGLE_CLIENT_ID,
+								"client_secret": GOOGLE_CLIENT_SECRET,
+								"refresh_token": refresh_token,
+								"grant_type": "refresh_token",
+						},
+						timeout=10,
+				)
+				data = resp.json()
+				new_access = data.get("access_token")
+				expires_in = data.get("expires_in")
+				if not new_access or not expires_in:
+						conn.close()
+						return None
+
+				new_expires_at = now_ts + int(expires_in)
+				cur.execute(
+						"UPDATE google_tokens SET access_token = ?, access_token_expires_at = ? WHERE email = ?",
+						(str(new_access), int(new_expires_at), email),
+				)
+				conn.commit()
+		finally:
+				conn.close()
+
+		return str(new_access)
 
 
 def _get_or_create_stripe_customer(email: str, name: str | None = None) -> str | None:
@@ -428,6 +611,501 @@ def index():
 		_insert_visit(event_type="page_view", name=None, email=None, path=request.path)
 		# Envía el archivo index.html existente
 		return app.send_static_file("index.html")
+
+
+@app.get("/auth/google")
+def auth_google_start():
+		"""Inicia el flujo OAuth de Google (lado servidor) para Drive.
+
+		Redirige al usuario a la pantalla de consentimiento de Google. Una vez que
+		acepta, Google redirige a /auth/google/callback con un código de autorización.
+		"""
+
+		if not GOOGLE_CLIENT_ID:
+				return "Google OAuth no está configurado en el servidor (falta GOOGLE_CLIENT_ID)", 500
+
+		# Determinar redirect_uri dinámicamente según el host actual
+		base = request.url_root.rstrip("/")
+		redirect_uri = f"{base}/auth/google/callback"
+
+		scope = " ".join(
+				[
+						"https://www.googleapis.com/auth/drive.appdata",
+						"https://www.googleapis.com/auth/userinfo.email",
+						"openid",
+				],
+		)
+
+		params = {
+				"client_id": GOOGLE_CLIENT_ID,
+				"redirect_uri": redirect_uri,
+				"response_type": "code",
+				"scope": scope,
+				"access_type": "offline",
+				"include_granted_scopes": "true",
+				"prompt": "consent",
+		}
+		auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params)
+		return redirect(auth_url)
+
+
+@app.get("/auth/google/callback")
+def auth_google_callback():
+		"""Callback de Google OAuth: intercambia el code por tokens y los guarda.
+
+		Después de guardar los tokens y crear la sesión de la app, redirige al
+		inicio para que el frontend pueda seguir trabajando normalmente.
+		"""
+
+		if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+				return "Google OAuth no está configurado correctamente en el servidor.", 500
+
+		code = request.args.get("code")
+		if not code:
+				return "Falta el parámetro 'code' en la respuesta de Google.", 400
+
+		# Debe coincidir exactamente con el redirect_uri usado en auth_google_start
+		base = request.url_root.rstrip("/")
+		redirect_uri = f"{base}/auth/google/callback"
+
+		# Intercambiar code por tokens en el endpoint de Google
+		try:
+				resp = requests.post(
+						"https://oauth2.googleapis.com/token",
+						data={
+								"code": code,
+								"client_id": GOOGLE_CLIENT_ID,
+								"client_secret": GOOGLE_CLIENT_SECRET,
+								"redirect_uri": redirect_uri,
+								"grant_type": "authorization_code",
+						},
+						timeout=10,
+				)
+				data = resp.json()
+		except Exception as exc:  # noqa: BLE001
+				return f"Error al solicitar tokens a Google: {exc}", 500
+
+		refresh_token = data.get("refresh_token")
+		access_token = data.get("access_token")
+		expires_in = data.get("expires_in")
+		if not refresh_token:
+				# Google solo envía refresh_token la primera vez que se concede acceso.
+				# Si no hay refresh_token, no podremos renovar. Avisar.
+				return "Google no devolvió refresh_token. Entra a tu configuración de aplicaciones conectadas y vuelve a autorizar la app.", 500
+
+		# Obtener correo del usuario desde el endpoint userinfo
+		try:
+				ui_resp = requests.get(
+						"https://www.googleapis.com/oauth2/v3/userinfo",
+						headers={"Authorization": f"Bearer {access_token}"},
+						timeout=10,
+				)
+				ui_data = ui_resp.json()
+				email = ui_data.get("email")
+				name = ui_data.get("name")
+		except Exception as exc:  # noqa: BLE001
+				return f"No se pudo obtener información del usuario desde Google: {exc}", 500
+
+		if not email:
+				return "Google no devolvió un correo electrónico válido.", 500
+
+		# Guardar/actualizar usuario en nuestra tabla local, incluyendo avatar si existe
+		avatar_url = ui_data.get("picture")
+		_upsert_user(name=name, email=email, avatar_url=avatar_url)
+
+		# Calcular momento de expiración del access_token
+		now_ts = _now_ts()
+		access_expires_at = now_ts + int(expires_in or 0) if access_token and expires_in else None
+
+		_save_google_tokens(
+				email=email,
+				refresh_token=str(refresh_token),
+				access_token=str(access_token) if access_token else None,
+				access_expires_at=access_expires_at,
+		)
+
+		# Crear sesión de la app
+		session.permanent = True
+		session["email"] = email
+		if name:
+				session["name"] = name
+
+		# Registrar login en el historial de visitas
+		_insert_visit(event_type="login", name=name, email=email, path="/auth/google/callback")
+
+		# Redirigir a la página principal; el frontend podrá ya usar /api/drive/*
+		return redirect("/")
+
+
+@app.post("/api/session/login")
+def api_session_login():
+	"""Crea/actualiza una sesión de la app basada en correo.
+
+	El frontend debe llamar a este endpoint después de un login exitoso con Google,
+	enviando al menos {"email": "...", "name": "..."}.
+
+	La información sensible (tokens de Google) NO se guarda aquí; solo se
+	mantiene una sesión propia de la app usando cookies HttpOnly.
+	"""
+
+	data = request.get_json(silent=True) or {}
+	email = str(data.get("email") or "").strip()
+	name = data.get("name") or None
+	avatar_url = data.get("avatar_url") or None
+
+	if not email:
+			return jsonify({"ok": False, "error": "missing_email"}), 400
+
+	# Comprobar si el usuario está bloqueado
+	user = _get_user(email)
+	if user is not None and user["status"] in {"suspended", "deleted"}:
+			return (
+					jsonify(
+							{
+									"ok": False,
+									"blocked": True,
+									"status": user["status"],
+							},
+					),
+					403,
+			)
+
+	# Asegurar que exista/actualizar en la tabla de usuarios
+	_upsert_user(name=name, email=email, avatar_url=avatar_url)
+	row = _get_user(email)
+	effective, stored, expires_ts = _calculate_effective_plan(row)
+
+	# Crear sesión de la app (cookie firmada, HttpOnly)
+	session.permanent = True
+	session["email"] = email
+	if name:
+			session["name"] = name
+
+	avatar_url: str | None = None
+	if row is not None and "avatar_url" in row.keys():  # type: ignore[operator]
+			avatar_url = row["avatar_url"]  # type: ignore[index]
+
+	return jsonify(
+			{
+					"ok": True,
+					"email": email,
+					"name": name,
+					"avatar_url": avatar_url,
+					"plan_id": effective,
+					"raw_plan": stored,
+					"expires_at_ts": expires_ts,
+			},
+	)
+
+
+@app.get("/api/session/me")
+def api_session_me():
+	"""Devuelve la sesión actual de la app basada en la cookie.
+
+	Sirve para que el frontend restaure el estado de login sin tener que pedir
+	un nuevo token de Google inmediatamente.
+	"""
+
+	email = session.get("email")
+	name = session.get("name")
+	if not email:
+			return jsonify({"ok": False, "authenticated": False}), 200
+
+	row = _get_user(email)
+	effective, stored, expires_ts = _calculate_effective_plan(row)
+	avatar_url: str | None = None
+	if row is not None and "avatar_url" in row.keys():  # type: ignore[operator]
+			avatar_url = row["avatar_url"]  # type: ignore[index]
+
+	return jsonify(
+			{
+					"ok": True,
+					"authenticated": True,
+					"email": email,
+					"name": name or (row["name"] if row is not None else None),
+					"avatar_url": avatar_url,
+					"plan_id": effective,
+					"raw_plan": stored,
+					"expires_at_ts": expires_ts,
+			},
+	)
+
+
+@app.post("/api/session/logout")
+def api_session_logout():
+	"""Cierra la sesión de la app limpiando la cookie firmada."""
+
+	session.clear()
+	return jsonify({"ok": True})
+
+
+def _require_app_session() -> str | None:
+		"""Devuelve el email de la sesión actual o None si no hay sesión."""
+
+		email = session.get("email")
+		return str(email) if email else None
+
+
+def _delete_account_completely(email: str) -> None:
+		"""Elimina por completo todos los datos asociados a un email.
+
+		- Anonimiza el historial (visits) borrando nombre/correo.
+		- Elimina snapshots de horario, tokens de Google y clientes de Stripe.
+		- Elimina el registro principal de la tabla users.
+		"""
+
+		if not email:
+				return
+
+		conn = get_db_connection()
+		cur = conn.cursor()
+		# Anonimizar historial para que no quede correo asociado
+		cur.execute(
+				"UPDATE visits SET email = NULL, name = NULL WHERE email = ?",
+				(email,),
+		)
+		# Eliminar datos ligados a la cuenta
+		cur.execute("DELETE FROM schedules WHERE email = ?", (email,))
+		cur.execute("DELETE FROM google_tokens WHERE email = ?", (email,))
+		cur.execute("DELETE FROM stripe_customers WHERE email = ?", (email,))
+		cur.execute("DELETE FROM users WHERE email = ?", (email,))
+		conn.commit()
+		conn.close()
+
+
+@app.post("/api/drive/save")
+def api_drive_save():
+		"""Guarda el horario del usuario en Google Drive (appDataFolder) desde el backend.
+
+		El frontend envía el mismo JSON que antes se subía desde JavaScript. Aquí solo
+		se recibe y se guarda en el archivo horario_data.json del espacio appDataFolder
+		usando la API REST de Drive con el access_token renovado desde el servidor.
+		"""
+
+		email = _require_app_session()
+		if not email:
+				return jsonify({"ok": False, "error": "not_authenticated"}), 401
+
+		payload = request.get_json(silent=True)
+		if payload is None:
+				return jsonify({"ok": False, "error": "invalid_json"}), 400
+
+		access_token = _get_fresh_google_access_token(email)
+		if not access_token:
+				return jsonify({"ok": False, "error": "no_drive_token"}), 403
+
+		file_name = "horario_data.json"
+		content = jsonify(payload).get_data(as_text=True)
+
+		headers = {"Authorization": f"Bearer {access_token}"}
+
+		try:
+				# Buscar si ya existe el archivo en appDataFolder
+				list_resp = requests.get(
+						"https://www.googleapis.com/drive/v3/files",
+						params={
+								"spaces": "appDataFolder",
+								"q": f"name='{file_name}' and trashed=false",
+								"fields": "files(id, name, modifiedTime)",
+								"pageSize": 1,
+						},
+						headers=headers,
+						timeout=10,
+				)
+				list_data = list_resp.json()
+				files = list_data.get("files") or []
+				file_id = files[0]["id"] if files else None
+
+				if file_id:
+						# Actualizar contenido existente (subida simple media)
+						update_resp = requests.patch(
+								f"https://www.googleapis.com/upload/drive/v3/files/{file_id}",
+								params={"uploadType": "media"},
+								data=content,
+								headers={
+										"Authorization": f"Bearer {access_token}",
+										"Content-Type": "application/json",
+								},
+								timeout=10,
+						)
+						update_resp.raise_for_status()
+				else:
+						# Crear archivo nuevo con subida multipart sencilla
+						metadata = {"name": file_name, "parents": ["appDataFolder"]}
+						files_payload = {
+								"data": ("metadata", jsonify(metadata).get_data(as_text=True), "application/json; charset=UTF-8"),
+								"file": (file_name, content, "application/json"),
+						}
+						create_resp = requests.post(
+								"https://www.googleapis.com/upload/drive/v3/files",
+								params={"uploadType": "multipart"},
+								files=files_payload,
+								headers={"Authorization": f"Bearer {access_token}"},
+								timeout=10,
+						)
+						create_resp.raise_for_status()
+		except Exception as exc:  # noqa: BLE001
+				return jsonify({"ok": False, "error": f"drive_error: {exc}"}), 500
+
+		return jsonify({"ok": True})
+
+
+@app.post("/api/account/delete")
+def api_account_delete():
+		"""Elimina por completo la cuenta del usuario autenticado.
+
+		Borra todos los datos asociados al correo en la base de datos y cierra
+		la sesión de la app. No se elimina nada dentro de la cuenta de Google
+		del usuario (Drive, Gmail), solo los registros locales de este sistema.
+		"""
+
+		email = _require_app_session()
+		if not email:
+				return jsonify({"ok": False, "error": "not_authenticated"}), 401
+
+		# Registrar un evento anónimo de eliminación de cuenta (sin correo)
+		try:
+				_insert_visit(
+						"account_deleted",
+						name=None,
+						email=None,
+						path=request.path,
+				)
+		except Exception:  # noqa: BLE001
+				# No bloquear la eliminación si el log falla
+				pass
+
+		_delete_account_completely(email)
+		# Cerrar sesión de la app (cookie firmada)
+		session.clear()
+		return jsonify({"ok": True})
+
+
+@app.post("/api/schedule/save")
+def api_schedule_save() -> "flask.Response":  # type: ignore[name-defined]
+		"""Guarda un snapshot del horario del usuario en la BD.
+
+		Se usa como respaldo/local cache adicional a Google Drive para que,
+		aunque falle Drive o aún no haya tokens, la app pueda recordar el
+		último horario conocido al volver a iniciar sesión.
+		"""
+
+		email = _require_app_session()
+		if not email:
+				return jsonify({"ok": False, "error": "not_authenticated"}), 401
+
+		payload = request.get_json(silent=True)
+		if payload is None:
+				return jsonify({"ok": False, "error": "invalid_json"}), 400
+
+		try:
+				blob = json.dumps(payload, ensure_ascii=False)
+		except Exception:
+				return jsonify({"ok": False, "error": "serialize_error"}), 400
+
+		conn = get_db_connection()
+		cur = conn.cursor()
+		cur.execute(
+				"""
+				INSERT INTO schedules (email, data, updated_at)
+				VALUES (?, ?, ?)
+				ON CONFLICT(email) DO UPDATE SET
+						data = excluded.data,
+						updated_at = excluded.updated_at
+				""",
+				(email, blob, _now_iso()),
+		)
+		conn.commit()
+		conn.close()
+		return jsonify({"ok": True})
+
+
+@app.get("/api/schedule/load")
+def api_schedule_load() -> "flask.Response":  # type: ignore[name-defined]
+		"""Devuelve el último snapshot del horario guardado en la BD.
+
+		Si no existe registro para ese usuario devuelve 404.
+		"""
+
+		email = _require_app_session()
+		if not email:
+				return jsonify({"ok": False, "error": "not_authenticated"}), 401
+
+		conn = get_db_connection()
+		cur = conn.cursor()
+		cur.execute("SELECT data, updated_at FROM schedules WHERE email = ?", (email,))
+		row = cur.fetchone()
+		conn.close()
+		if row is None:
+				return jsonify({"ok": False, "error": "not_found"}), 404
+
+		try:
+				data = json.loads(row["data"])
+		except Exception:
+				return jsonify(
+						{
+								"ok": False,
+								"error": "corrupt_schedule",
+						},
+				), 500
+
+		return jsonify({"ok": True, "data": data, "updated_at": row["updated_at"]})
+
+
+@app.get("/api/drive/load")
+def api_drive_load():
+		"""Carga el horario del usuario desde Google Drive (appDataFolder).
+
+		Devuelve el JSON previamente guardado en horario_data.json o un error si no
+		existe o no hay sesión/tokens.
+		"""
+
+		email = _require_app_session()
+		if not email:
+				return jsonify({"ok": False, "error": "not_authenticated"}), 401
+
+		access_token = _get_fresh_google_access_token(email)
+		if not access_token:
+				return jsonify({"ok": False, "error": "no_drive_token"}), 403
+
+		file_name = "horario_data.json"
+		headers = {"Authorization": f"Bearer {access_token}"}
+
+		try:
+				# Buscar archivo en appDataFolder
+				list_resp = requests.get(
+						"https://www.googleapis.com/drive/v3/files",
+						params={
+								"spaces": "appDataFolder",
+								"q": f"name='{file_name}' and trashed=false",
+								"fields": "files(id, name, modifiedTime)",
+								"pageSize": 1,
+						},
+						headers=headers,
+						timeout=10,
+				)
+				list_data = list_resp.json()
+				files = list_data.get("files") or []
+				if not files:
+						return jsonify({"ok": False, "error": "not_found"}), 404
+
+				file_id = files[0]["id"]
+				content_resp = requests.get(
+						f"https://www.googleapis.com/drive/v3/files/{file_id}",
+						params={"alt": "media"},
+						headers=headers,
+						timeout=10,
+				)
+				text = content_resp.text
+				try:
+						data = content_resp.json()
+				except Exception:
+						# Si no es JSON válido devolvemos el texto bruto
+						return jsonify({"ok": True, "raw": text})
+		except Exception as exc:  # noqa: BLE001
+				return jsonify({"ok": False, "error": f"drive_error: {exc}"}), 500
+
+		return jsonify({"ok": True, "data": data})
 
 
 @app.get("/panel")

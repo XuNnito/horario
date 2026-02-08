@@ -13,10 +13,14 @@
 ::selection {
     background-color: var(--success-color);
     color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+
+
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family:cursive;
     background-color: var(--bg-color);
     margin: 0;
     padding: 10px;
@@ -197,6 +201,43 @@ body.theme-dark .subject-item h3 {
 body.theme-dark .subject-item p {
     color: #e5e7eb;
     font-weight: 500;
+}
+
+/* Vista previa al arrastrar una materia hacia el horario */
+.schedule-drop-preview {
+    outline: 2px dashed #3b82f6;
+    background-color: rgba(59, 130, 246, 0.14);
+}
+
+body.theme-dark .schedule-drop-preview {
+    outline-color: #60a5fa;
+    background-color: rgba(37, 99, 235, 0.18);
+}
+
+/* Tarjeta de vista previa dentro de las celdas al arrastrar (menos intensa) */
+.subject-card-drop-preview {
+    opacity: 0.6;
+    border-style: dashed;
+    border-width: 1px;
+}
+
+/* Fantasma de arrastre para subject-item (si se usa custom drag) */
+.subject-drag-ghost {
+    position: absolute;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 2;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.35);
+    max-width: 260px;
+    font-size: 13px;
+}
+
+body.theme-dark .subject-drag-ghost {
+    background-color: #020617;
+    color: #e5e7eb;
 }
 
 .row {
@@ -583,33 +624,37 @@ body.theme-dark .search-container input {
     font-size: 16px;
 }
 
-.suggestions {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    background-color: white;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    max-height: 200px;
-    overflow-y: auto;
-}
-
 .suggestion-item {
     padding: 10px;
     cursor: pointer;
     font-size: 14px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+
+.suggestion-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.25s ease;
+   
 }
 
 .suggestion-item:hover {
     background-color: var(--primary-color);
     color: white;
+    border-radius: 12px;
+    transform: translateX(4px);
 }
+
 
 body.theme-dark .suggestion-item {
     color: #e5e7eb;
+    background: #000000;
 }
 
 body.theme-dark .suggestion-item:hover {
@@ -1573,6 +1618,27 @@ body.theme-dark .reinscription-preview {
 
 .subject-item p {
     font-size: 0.95rem;
+}
+
+/* Barra de ayuda para drag & drop de materias */
+.drag-hint-bar {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.96);
+    color: #e5e7eb;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.4);
+    z-index: 10000;
+    pointer-events: none;
+}
+
+body.theme-dark .drag-hint-bar {
+    background: rgba(17, 24, 39, 0.98);
+    color: #f9fafb;
 }
 
 /* Estilos para inputs y botones dentro del modal (más grandes y con mejor spacing) */

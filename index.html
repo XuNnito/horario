@@ -31,10 +31,9 @@
     <link rel="stylesheet" href="css/app.min.css">
     <script src="https://js.stripe.com/v3" defer></script>
 
-   
-    <script src="js/app.min.js" defer></script>
     <script src="funcion.js" defer></script>
-    <!--<script src="src/app.js" defer></script>-->
+    <script src="dist/app.js" defer></script>
+
 
 </head>
 
@@ -46,6 +45,9 @@
 
 
 <body>
+    <div id="dragHintBar" class="drag-hint-bar hidden" role="status" aria-live="polite">
+        Arrastra la materia hasta el horario y suéltala para agregarla o simplemente haga click.
+    </div>
     <div id="topBar">
         <div class="profile-wrapper">
             <img src="gorrito-navidad.png" alt="Gorro navideño" id="profileHat" class="profile-hat" aria-hidden="true">
@@ -55,7 +57,8 @@
         <span id="googleUserName" class="user-name"></span>
         <div class="google-btns">
             <button id="themeToggle" type="button" class="theme-toggle-btn" aria-label="Cambiar tema">
-                <svg id="themeToggleIcon" class="theme-toggle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <svg id="themeToggleIcon" class="theme-toggle-icon" viewBox="0 0 24 24" aria-hidden="true"
+                    focusable="false">
                     <!-- Sol -->
                     <circle class="icon-sun-circle" cx="12" cy="12" r="4" />
                     <g class="icon-sun-rays">
@@ -118,7 +121,7 @@
                 </button>
                 <div><strong>Fecha:</strong> <span id="pmDate">-</span></div>
             </div>
-            <button id="pmSignOut" class="pm-signout" type="button" onclick="signOutWithLoader()"
+            <button id="pmSignOut" class="pm-signout" type="button"
                 aria-label="Cerrar sesión">Cerrar sesión</button>
             <button id="pmDeleteAccount" class="pm-signout pm-delete" type="button"
                 aria-label="Eliminar cuenta">Eliminar cuenta</button>
@@ -274,7 +277,7 @@
                     <button id="btnLoad8B" type="button">8B</button>
                     <button id="btnLoad8C" type="button">8C</button>
                     <button id="btnLoad9A" type="button">9A</button>
-                  
+
                 </div>
                 <div id="catalogSubjects" class="catalog-subjects"></div>
             </div>
@@ -440,7 +443,8 @@
         <div class="panel-modal">
             <h3>Seleccionar horarios (clic para seleccionar horas)</h3>
             <div class="small">Selecciona los cuadros correspondientes a Lunes-Viernes y horas.</div>
-            <button id="enableSaturdaySlotsButton" type="button" class="btn-link" style="margin-top:4px;font-size:11px;padding:2px 4px;">
+            <button id="enableSaturdaySlotsButton" type="button" class="btn-link"
+                style="margin-top:4px;font-size:11px;padding:2px 4px;">
                 ○ Sábado (opcional)
             </button>
             <div id="saturdaySlotsLoader" class="small hidden" aria-live="polite" style="margin-top:4px;">
@@ -549,7 +553,7 @@
                                         OCTAVIO VAZQUEZ</strong>?</span>
                             </label>
                         </div>
-                       
+
                         <div style="margin-top:8px; width:100%;">
                             <label for="reinscriptionTutorSelect"
                                 style="display:block; font-size:13px; margin-bottom:4px; color:#3c4043;">Si tu tutor es
@@ -574,7 +578,7 @@
                         <textarea id="reinscriptionTutorMessage" name="tutorMessage" rows="3" maxlength="500"
                             placeholder="Escribe un mensaje adicional para el tutor (opcional)"></textarea>
                     </div>
-                    
+
                     <div class="reinscription-modal__preview reinscription-modal__preview--mobile-integrated"
                         id="mobilePreviewSection">
                         <label
@@ -847,8 +851,7 @@
 <script src="https://apis.google.com/js/api.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
 <script>
-    window.BACKEND_BASE_URL = "https://horarioxunu-d8a240277988.herokuapp.com/";
-</script>
+   window.BACKEND_BASE_URL = "https://horarioxunu-d8a240277988.herokuapp.com/";
 </script>
 
 </html>

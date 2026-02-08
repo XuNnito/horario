@@ -1,0 +1,26 @@
+{
+  "name": "horario",
+  "version": "1.0.0",
+ "scripts": {
+  "build": "javascript-obfuscator src/app.js --output dist/app.js"
+
+
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/XuNnito/horario.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/XuNnito/horario/issues"
+  },
+  "homepage": "https://github.com/XuNnito/horario#readme",
+  "description": "",
+  "devDependencies": {
+    "javascript-obfuscator": "^5.3.0"
+  }
+
+  
+}
