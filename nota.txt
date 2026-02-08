@@ -6,3 +6,11 @@ window.BACKEND_BASE_URL = "https://horarioxunu-d8a240277988.herokuapp.com/";
 window.BACKEND_BASE_URL = "http://127.0.0.1:5500";
 
 
+		# Redirigir al frontend principal (GitHub Pages u otro dominio) si está configurado.
+		# Esto mantiene el backend solo como API y callback OAuth.
+		frontend_origin = os.environ.get("FRONTEND_ORIGIN")
+		if frontend_origin:
+				# Usamos el origen tal cual (puede incluir ruta como "/horario")
+				return redirect(frontend_origin.rstrip("/"))
+
+		# Fallback: si no hay FRONTEND_ORIGIN definido, redirigimos a la raíz del backend.

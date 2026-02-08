@@ -733,7 +733,14 @@ def auth_google_callback():
 		# Registrar login en el historial de visitas
 		_insert_visit(event_type="login", name=name, email=email, path="/auth/google/callback")
 
-		# Redirigir a la página principal; el frontend podrá ya usar /api/drive/*
+		# Redirigir al frontend principal (GitHub Pages u otro dominio) si está configurado.
+		# Esto mantiene el backend solo como API y callback OAuth.
+		frontend_origin = os.environ.get("FRONTEND_ORIGIN")
+		if frontend_origin:
+				# Usamos el origen tal cual (puede incluir ruta como "/horario")
+				return redirect(frontend_origin.rstrip("/"))
+
+		# Fallback: si no hay FRONTEND_ORIGIN definido, redirigimos a la raíz del backend.
 		return redirect("/")
 
 
