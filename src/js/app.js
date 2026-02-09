@@ -5982,7 +5982,55 @@ function openSlotsModal() {
 }
 function closeSlotsModal() { modalSlots.style.display = 'none'; }
 
-btnMas.addEventListener('click', () => {
+btnMas.addEventListener('click', async () => {
+    // Requiere sesión para crear materias personalizadas
+    var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
+    if (!email) {
+        try {
+            if (typeof showMessage === 'function') {
+                showMessage('Debes iniciar sesión con Google para crear nuevas materias.', 'warning');
+            }
+            if (typeof lockInterface === 'function') {
+                lockInterface('Debes iniciar sesión para crear nuevas materias.');
+            }
+        } catch (e) { }
+        return;
+    }
+
+    // Intentar obtener el estado más reciente de usos desde el backend
+    try {
+        if (typeof fetchUsageStatusFromBackend === 'function') {
+            await fetchUsageStatusFromBackend();
+        }
+    } catch (e) { /* si falla, usamos el estado local */ }
+
+    var usage = currentUsageState && currentUsageState.catalog ? currentUsageState.catalog : { used: 0, limit: null, remaining: null };
+    var planId = currentPlanState && currentPlanState.planId ? currentPlanState.planId : 'free';
+    var exceeded = false;
+
+    if (usage.limit != null && usage.remaining === 0) {
+        // El backend ya informó límite alcanzado
+        exceeded = true;
+    } else if (usage.limit == null && planId === 'free' && typeof usage.used === 'number' && usage.used >= 2) {
+        // Plan gratis sin límite explícito pero con contador local >= 2
+        exceeded = true;
+    }
+
+    if (exceeded) {
+        try {
+            if (typeof openPlansModal === 'function') {
+                openPlansModal('catalog', 'limit_reached');
+            } else {
+                var plansModal = document.getElementById('plansModal');
+                if (plansModal) {
+                    plansModal.classList.remove('hidden');
+                    plansModal.setAttribute('aria-hidden', 'false');
+                }
+            }
+        } catch (e) { }
+        return;
+    }
+
     // Nuevo registro: limpiar campos y selección de horas
     editingSubjectId = null;
     m_inputMateria.value = '';
@@ -8648,12 +8696,26 @@ function updatePlanButtonsUI() {
     var allLimitsKnown = hasPaid && currentUsageState.catalog.limit !== null && currentUsageState.print.limit !== null && currentUsageState.download.limit !== null;
     var allExhausted = allLimitsKnown && currentUsageState.catalog.remaining === 0 && currentUsageState.print.remaining === 0 && currentUsageState.download.remaining === 0;
 
-    if (hasPaid && !allExhausted) {
-        if (plansBtn) plansBtn.classList.add('hidden');
-        if (planStatusBtn) planStatusBtn.classList.remove('hidden');
-    } else {
-        if (plansBtn) plansBtn.classList.remove('hidden');
-        if (planStatusBtn) planStatusBtn.classList.add('hidden');
+    // El botón "Plan" (planStatusButton) debe estar disponible
+    // para cualquier usuario con sesión iniciada, incluso en plan gratis,
+    // para que pueda ver la tabla "Tu plan".
+    if (planStatusBtn) {
+        var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
+        if (email) {
+            planStatusBtn.classList.remove('hidden');
+        } else {
+            planStatusBtn.classList.add('hidden');
+        }
+    }
+
+    // El botón "Ver planes" se oculta sólo cuando el usuario
+    // ya tiene un plan de pago con usos disponibles.
+    if (plansBtn) {
+        if (hasPaid && !allExhausted) {
+            plansBtn.classList.add('hidden');
+        } else {
+            plansBtn.classList.remove('hidden');
+        }
     }
 }
 
