@@ -618,6 +618,18 @@ def index():
 		return app.send_static_file("index.html")
 
 
+@app.route("/xunito")
+@app.route("/xunito/")
+def xunito_index():
+	"""Sirve la página especial de Xunito sin redirigir a index.html.
+
+	Permite que /xunito y /xunito/ carguen el archivo xunito/index.html
+	sin cambiar la URL en el navegador.
+	"""
+
+	return app.send_static_file("xunito/index.html")
+
+
 @app.get("/auth/google")
 def auth_google_start():
 		"""Inicia el flujo OAuth de Google (lado servidor) para Drive.
