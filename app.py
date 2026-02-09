@@ -603,6 +603,11 @@ def _calculate_effective_plan(row: sqlite3.Row | None) -> tuple[str, str, int | 
 						expires_ts = None
 
 		effective = stored_plan
+		# Para el plan Plan_xunu el diseño actual es "sin fecha de expiración",
+		# solo limitado por número de usos. Ignoramos cualquier fecha guardada.
+		if effective == "Plan_xunu":
+				expires_ts = None
+
 		# Cualquier plan de pago con fecha de expiración vencida vuelve a "free".
 		if effective != "free" and expires_ts is not None and expires_ts < now_ts:
 				effective = "free"
