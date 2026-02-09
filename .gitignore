@@ -16,10 +16,9 @@ Thumbs.db
 coverage/
 tmp/
 uploads/
-*.sql
 # Carpeta personalizada (cambie el nombre por la que necesita ignorar)
 carpeta_que_no_deben_subir/
 css/styles.css
 css/styles copy.css
-*.db
+security_logs.db
 xunito/applocal.js
