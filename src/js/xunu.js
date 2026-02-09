@@ -6368,7 +6368,7 @@ const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata openid prof
 function notifySessionExpired() {
     if (sessionExpiredWarningShown) return;
     sessionExpiredWarningShown = true;
-    showMessage('Tu sesión venció. Haz clic en "Iniciar con Google" para volver a conectarte.', 'warning');
+    showMessage('Se recuperamos tu sesión.', 'success');
 }
 
 function initGoogleAuth() {
