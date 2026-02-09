@@ -8333,7 +8333,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Regla: si el código es "xunito" -> mostrar mensaje y luego redirigir a /xunito
+        
         if (code.toLowerCase() === 'xunito') {
             showInviteMessage('Código válido, espere un momento...', false);
             setTimeout(function () {
@@ -8358,7 +8358,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var link = document.getElementById('whatsappSupportLink');
             if (!link) return;
             var base = 'https://wa.me/5219601151824?text=';
-            // Primero la URL, luego salto de línea y después el mensaje
+            
             var msg = window.location.href + '\nHola, tengo un problema con mi horario en la página Horarios Bio';
             link.href = base + encodeURIComponent(msg);
         })();
@@ -9221,3 +9221,6 @@ document.addEventListener('DOMContentLoaded', function () {
     estiloTexto
   );
 })();
+
+
+

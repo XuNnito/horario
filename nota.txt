@@ -2,7 +2,10 @@
 
 <script src="dist/app.js"></script>
 
-window.BACKEND_BASE_URL = "https://horarioxunu-d8a240277988.herokuapp.com/";
+<script>
+    window.BACKEND_BASE_URL = "https://horarioxunu-d8a240277988.herokuapp.com/";
+</script>
+
 window.BACKEND_BASE_URL = "http://127.0.0.1:5500";
 
 

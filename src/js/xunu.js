@@ -237,14 +237,14 @@ window.__googleProfile = window.__googleProfile || null;
 let printAutoTimer = null;
 
 function printSchedule() {
-    const dialog = document.getElementById('printMessage');
-    if (!dialog) return;
-    dialog.style.display = 'flex';
-    dialog.setAttribute('aria-hidden', 'false');
-    clearTimeout(printAutoTimer);
-    printAutoTimer = setTimeout(() => {
-        closeMessageAndPrint();
-    }, 850);
+        const dialog = document.getElementById('printMessage');
+        if (!dialog) return;
+        dialog.style.display = 'flex';
+        dialog.setAttribute('aria-hidden', 'false');
+        clearTimeout(printAutoTimer);
+        printAutoTimer = setTimeout(() => {
+                closeMessageAndPrint();
+        }, 850);
 }
 
 function closeMessageAndPrint() {
@@ -462,16 +462,16 @@ const DEFAULT_CAREER_ICON_SRC = `biomedica.png`;
 
 
 const BASE_CAREER_OPTIONS = [
-    { id: 'biomedica', name: 'Biomédica', icon: `${CAREER_ICON_BASE_PATH}biomedica.png`, fallbackIcon: `${fallbackIconimg}biomedica.png` },
-    { id: 'mecatronica', name: 'Mecatrónica', icon: `${CAREER_ICON_BASE_PATH}meca.png`, fallbackIcon: `${fallbackIconimg}meca.png` },
-    { id: 'ambiental', name: 'Ambiental', icon: `${CAREER_ICON_BASE_PATH}ambiental.png`, fallbackIcon: `${fallbackIconimg}ambiental.png` },
-    { id: 'manufactura', name: 'Manufactura', icon: `${CAREER_ICON_BASE_PATH}manu.png`, fallbackIcon: `${fallbackIconimg}manu.png` },
-    { id: 'software', name: 'Software', icon: `${CAREER_ICON_BASE_PATH}sofware.png`, fallbackIcon: `${fallbackIconimg}sofware.png` },
-    { id: 'industrial', name: 'Industrial', icon: `${CAREER_ICON_BASE_PATH}industrial.png`, fallbackIcon: `${fallbackIconimg}industrial.png` },
-    { id: 'petrolera', name: 'Petrolera', icon: `${CAREER_ICON_BASE_PATH}petro.png`, fallbackIcon: `${fallbackIconimg}petro.png` },
-    { id: 'nanotecnologia', name: 'Nanotecnologia', icon: `${CAREER_ICON_BASE_PATH}nano.png`, fallbackIcon: `${fallbackIconimg}nano.png` },
-    { id: 'robotica', name: 'Robótica', icon: `${CAREER_ICON_BASE_PATH}robotica.png`, fallbackIcon: `${fallbackIconimg}robotica.png` },
-    { id: 'alimentos', name: 'Alimentos', icon: `${CAREER_ICON_BASE_PATH}alimentos.png`, fallbackIcon: `${fallbackIconimg}alimentos.png` },
+    { id: 'biomedica',        name: 'Biomédica',           icon: `${CAREER_ICON_BASE_PATH}biomedica.png`,        fallbackIcon: `${fallbackIconimg}biomedica.png` },
+    { id: 'mecatronica',      name: 'Mecatrónica',         icon: `${CAREER_ICON_BASE_PATH}meca.png`,             fallbackIcon: `${fallbackIconimg}meca.png` },
+    { id: 'ambiental',        name: 'Ambiental',           icon: `${CAREER_ICON_BASE_PATH}ambiental.png`,        fallbackIcon: `${fallbackIconimg}ambiental.png` },
+    { id: 'manufactura',      name: 'Manufactura',         icon: `${CAREER_ICON_BASE_PATH}manu.png`,             fallbackIcon: `${fallbackIconimg}manu.png` },
+    { id: 'software',         name: 'Software',            icon: `${CAREER_ICON_BASE_PATH}sofware.png`,          fallbackIcon: `${fallbackIconimg}sofware.png` },
+    { id: 'industrial',       name: 'Industrial',          icon: `${CAREER_ICON_BASE_PATH}industrial.png`,       fallbackIcon: `${fallbackIconimg}industrial.png` },
+    { id: 'petrolera',        name: 'Petrolera',           icon: `${CAREER_ICON_BASE_PATH}petro.png`,            fallbackIcon: `${fallbackIconimg}petro.png` },
+    { id: 'nanotecnologia',   name: 'Nanotecnologia',      icon: `${CAREER_ICON_BASE_PATH}nano.png`,             fallbackIcon: `${fallbackIconimg}nano.png` },
+    { id: 'robotica',         name: 'Robótica',            icon: `${CAREER_ICON_BASE_PATH}robotica.png`,         fallbackIcon: `${fallbackIconimg}robotica.png` },
+    { id: 'alimentos',        name: 'Alimentos',           icon: `${CAREER_ICON_BASE_PATH}alimentos.png`,        fallbackIcon: `${fallbackIconimg}alimentos.png` },
     { id: 'gestionempresarial', name: 'Gestión Empresarial', icon: `${CAREER_ICON_BASE_PATH}gestionempresarial.png`, fallbackIcon: `${fallbackIconimg}gestionempresarial.png` },
 ];
 
@@ -5591,7 +5591,7 @@ function removeFromSchedule(id) {
         // para que el cambio quede guardado en la nube.
         (async () => {
             const ok = await ensureSaveToDrive({
-                interactive: true,
+            interactive: true,
                 showSuccess: false,
                 successMessage: 'Cambio guardado en Google Drive',
                 silent: true
@@ -5809,7 +5809,7 @@ function updateScheduleView() {
 
                     subjectCard.appendChild(removeButton);
 
-                    // --- NUEVO: titulo y tooltip dentro de la tarjeta mostrando hora y aula ---
+                   // --- NUEVO: titulo y tooltip dentro de la tarjeta mostrando hora y aula ---
                     // obtener aula preferida en el sujeto, si no existe buscar en catalogSubjects
                     const aulaCard = item.subject.aula ?? (catalogSubjects.find(cs => cs.id === item.subject.id) || {}).aula ?? '-';
                     const horarioLabel = `${item.session.startTime}-${item.session.endTime}`;
@@ -8333,7 +8333,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Regla: si el código es "xunito" -> mostrar mensaje y luego redirigir a /xunito
+        
         if (code.toLowerCase() === 'xunito') {
             showInviteMessage('Código válido, espere un momento...', false);
             setTimeout(function () {
@@ -8354,14 +8354,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-(function () {
-    var link = document.getElementById('whatsappSupportLink');
-    if (!link) return;
-    var base = 'https://wa.me/5219601151824?text=';
-    // Primero la URL, luego salto de línea y después el mensaje
-    var msg = window.location.href + '\nHola, tengo un problema con mi horario en la página Horarios Bio';
-    link.href = base + encodeURIComponent(msg);
-})();
+       (function () {
+            var link = document.getElementById('whatsappSupportLink');
+            if (!link) return;
+            var base = 'https://wa.me/5219601151824?text=';
+            
+            var msg = window.location.href + '\nHola, tengo un problema con mi horario en la página Horarios Bio';
+            link.href = base + encodeURIComponent(msg);
+        })();
 document.addEventListener('DOMContentLoaded', function () {
     var shareBtn = document.getElementById('shareScheduleBtn');
     if (!shareBtn) return;
@@ -8383,9 +8383,9 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // 2) Respaldo: intentar abrir WhatsApp con el mensaje
-        // Primero el enlace y luego en otra línea el mensaje
-        var waMessage = encodeURIComponent(shareUrl + '\n' + shareText);
+    // 2) Respaldo: intentar abrir WhatsApp con el mensaje
+    // Primero el enlace y luego en otra línea el mensaje
+    var waMessage = encodeURIComponent(shareUrl + '\n' + shareText);
         var waUrl = 'https://wa.me/?text=' + waMessage;
 
         // Intentar abrir en nueva pestaña
@@ -8629,66 +8629,145 @@ function renderUsageInPlanModal() {
 }
 
 function updatePlanButtonsUI() {
-    // En la versión gratuita ocultamos los botones relacionados con planes de pago.
     var plansBtn = document.getElementById('pmOpenPlans');
     var planStatusBtn = document.getElementById('planStatusButton');
-    if (plansBtn) plansBtn.classList.add('hidden');
-    if (planStatusBtn) planStatusBtn.classList.add('hidden');
+    var hasPaid = currentPlanState.planId && currentPlanState.planId !== 'free';
+    var allLimitsKnown = hasPaid && currentUsageState.catalog.limit !== null && currentUsageState.print.limit !== null && currentUsageState.download.limit !== null;
+    var allExhausted = allLimitsKnown && currentUsageState.catalog.remaining === 0 && currentUsageState.print.remaining === 0 && currentUsageState.download.remaining === 0;
+
+    if (hasPaid && !allExhausted) {
+        if (plansBtn) plansBtn.classList.add('hidden');
+        if (planStatusBtn) planStatusBtn.classList.remove('hidden');
+    } else {
+        if (plansBtn) plansBtn.classList.remove('hidden');
+        if (planStatusBtn) planStatusBtn.classList.add('hidden');
+    }
 }
 
 async function fetchPlanStatusFromBackend() {
-    // Simplificado: siempre mostrar plan gratis sin consultar al backend.
-    currentPlanState = {
-        planId: 'free',
-        rawPlan: 'free',
-        expiresAtTs: null,
-        nowTs: null
-    };
     try {
+        var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
+        if (!email) {
+            currentPlanState = { planId: 'free', rawPlan: 'free', expiresAtTs: null, nowTs: null };
+            renderPlanInProfile();
+            return currentPlanState;
+        }
+        var url = apiUrl('/api/plan/status?email=' + encodeURIComponent(email));
+        var res = await fetch(url, { method: 'GET', credentials: 'include' }).catch(function () { return null; });
+        if (!res || !res.ok) {
+            console.warn('No se pudo obtener el estado del plan', res && res.status);
+            return currentPlanState;
+        }
+        var data = await res.json();
+        currentPlanState = {
+            planId: data.plan_id || 'free',
+            rawPlan: data.raw_plan || 'free',
+            expiresAtTs: data.expires_at_ts != null ? Number(data.expires_at_ts) : null,
+            nowTs: data.now_ts != null ? Number(data.now_ts) : null
+        };
         renderPlanInProfile();
         updatePlanButtonsUI();
-    } catch (e) { }
-    return currentPlanState;
+        return currentPlanState;
+    } catch (e) {
+        console.warn('Error consultando el plan actual', e);
+        return currentPlanState;
+    }
 }
 
 async function ensureFeatureAllowed(kind) {
-    // Todas las funciones (catálogo, impresión, descarga) son gratuitas e ilimitadas.
-    // No se realizan llamadas al backend ni se bloquea ninguna acción.
-    if (!kind) {
-        return { allowed: true, plan_id: 'free', raw_plan: 'free' };
+    // kind: 'catalog', 'print', 'download'
+    var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
+    if (!email) {
+        if (typeof showMessage === 'function') {
+            showMessage('Debes iniciar sesión con Google para usar esta función.', 'warning');
+        }
+        throw new Error('missing_email');
     }
 
-    currentPlanState.planId = 'free';
-    currentPlanState.rawPlan = 'free';
-    currentPlanState.expiresAtTs = null;
-    currentPlanState.nowTs = null;
+    var endpoint;
+    if (kind === 'catalog') endpoint = '/api/usage/catalog-create';
+    else if (kind === 'print') endpoint = '/api/usage/print';
+    else if (kind === 'download') endpoint = '/api/usage/download';
+    else throw new Error('usage_kind_not_supported');
 
-    if (currentUsageState && currentUsageState[kind]) {
-        currentUsageState[kind].limit = null;
-        currentUsageState[kind].remaining = null;
-    }
-
+    var url = apiUrl(endpoint);
+    var res;
     try {
-        renderPlanInProfile();
+        res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ email: email })
+        });
+    } catch (e) {
+        console.error('Error conectando con el backend de planes', e);
+        if (typeof showMessage === 'function') {
+            showMessage('No se pudo verificar tu plan. Intenta nuevamente en unos segundos.', 'error');
+        }
+        throw e;
+    }
+
+    var data = await res.json().catch(function () { return {}; });
+    var allowed = !!data.allowed;
+    var reason = data.reason || (allowed ? 'ok' : 'blocked');
+    var planId = data.plan_id || 'free';
+
+    currentPlanState.planId = planId;
+    currentPlanState.rawPlan = data.raw_plan || planId;
+    currentPlanState.expiresAtTs = data.expires_at_ts != null ? Number(data.expires_at_ts) : currentPlanState.expiresAtTs;
+    currentPlanState.nowTs = data.now_ts != null ? Number(data.now_ts) : currentPlanState.nowTs;
+    if (kind === 'catalog' || kind === 'print' || kind === 'download') {
+        updateUsageState(kind, data);
         renderUsageInPlanModal();
         updatePlanButtonsUI();
-    } catch (e) { }
+    }
+    renderPlanInProfile();
 
-    return { allowed: true, plan_id: 'free', raw_plan: 'free' };
+    if (!allowed) {
+        openPlansModal(kind, reason);
+        throw new Error('feature_not_allowed_' + kind);
+    }
+
+    return data;
 }
 
 async function fetchUsageStatusFromBackend() {
-    // Sin límites remotos: devolvemos el estado local sin consultar al backend.
-    return currentUsageState;
+    try {
+        var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
+        if (!email) return currentUsageState;
+        var url = apiUrl('/api/usage/status?email=' + encodeURIComponent(email));
+        var res = await fetch(url, { method: 'GET', credentials: 'include' }).catch(function () { return null; });
+        if (!res || !res.ok) {
+            console.warn('No se pudo obtener el estado de usos', res && res.status);
+            return currentUsageState;
+        }
+        var data = await res.json();
+        if (data.plan_id) {
+            currentPlanState.planId = data.plan_id || 'free';
+            currentPlanState.rawPlan = data.raw_plan || currentPlanState.planId;
+            currentPlanState.expiresAtTs = data.expires_at_ts != null ? Number(data.expires_at_ts) : currentPlanState.expiresAtTs;
+            currentPlanState.nowTs = data.now_ts != null ? Number(data.now_ts) : currentPlanState.nowTs;
+        }
+        if (data.usage) {
+            if (data.usage.catalog) updateUsageState('catalog', data.usage.catalog);
+            if (data.usage.print) updateUsageState('print', data.usage.print);
+            if (data.usage.download) updateUsageState('download', data.usage.download);
+        }
+        renderPlanInProfile();
+        renderUsageInPlanModal();
+        updatePlanButtonsUI();
+        return currentUsageState;
+    } catch (e) {
+        console.warn('Error consultando el uso actual', e);
+        return currentUsageState;
+    }
 }
 
 function openPlansModal(kind, reason) {
-    // En la versión gratuita no se muestran planes de pago.
-    if (typeof showMessage === 'function') {
-        showMessage('Todas las funciones están disponibles de forma gratuita. Los planes de pago han sido desactivados.', 'info', 6000);
-    } else if (typeof alert === 'function') {
-        alert('Todas las funciones están disponibles de forma gratuita. Los planes de pago han sido desactivados.');
-    }
+    var modal = document.getElementById('plansModal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
 }
 
 function closePlansModal() {
@@ -8715,12 +8794,55 @@ var __payerContinueBtn = null;
 var __payerModalInitialized = false;
 
 function openPayerInfoModal() {
-    // En la versión gratuita no se solicita información de pago.
-    if (typeof showMessage === 'function') {
-        showMessage('Los pagos están desactivados. Todas las funciones son gratuitas.', 'info', 6000);
-    } else if (typeof alert === 'function') {
-        alert('Los pagos están desactivados. Todas las funciones son gratuitas.');
+    if (!__payerModalInitialized) {
+        __payerModalEl = document.getElementById('payerInfoModal');
+        __payerNameInput = document.getElementById('payerNameInput');
+        __payerEmailInput = document.getElementById('payerEmailInput');
+        __payerErrorEl = document.getElementById('payerInfoError');
+        __payerContinueBtn = document.getElementById('payerInfoContinue');
+        var closePayerBtn = document.getElementById('payerInfoClose');
+        if (closePayerBtn && __payerModalEl) {
+            closePayerBtn.addEventListener('click', function () { closePayerInfoModal(); });
+        }
+        if (__payerModalEl) {
+            __payerModalEl.addEventListener('click', function (e) { if (e.target === __payerModalEl) closePayerInfoModal(); });
+        }
+        if (__payerContinueBtn) {
+            __payerContinueBtn.addEventListener('click', async function () {
+                if (!__payerContinueBtn || __payerContinueBtn.disabled) return;
+                var name = __payerNameInput && __payerNameInput.value ? __payerNameInput.value.trim() : '';
+                var email = __payerEmailInput && __payerEmailInput.value ? __payerEmailInput.value.trim() : '';
+                if (!email) {
+                    if (__payerErrorEl) __payerErrorEl.textContent = 'Escribe el correo de la persona que realizará el pago.';
+                    return;
+                }
+                if (__payerErrorEl) __payerErrorEl.textContent = '';
+                var originalText = __payerContinueBtn.textContent;
+                __payerContinueBtn.disabled = true;
+                __payerContinueBtn.textContent = 'Cargando...';
+                try {
+                    await startPlanCheckout('Plan_xunu', email, name);
+                    closePayerInfoModal();
+                } finally {
+                    __payerContinueBtn.disabled = false;
+                    __payerContinueBtn.textContent = originalText;
+                }
+            });
+        }
+        __payerModalInitialized = true;
     }
+    if (!__payerModalEl) return;
+    if (__payerErrorEl) __payerErrorEl.textContent = '';
+    if (__payerNameInput && typeof getCurrentUserFullName === 'function') {
+        var n = getCurrentUserFullName();
+        if (n && !__payerNameInput.value) __payerNameInput.value = n;
+    }
+    if (__payerEmailInput && typeof getCurrentUserEmail === 'function') {
+        var e = getCurrentUserEmail();
+        if (e && !__payerEmailInput.value) __payerEmailInput.value = e;
+    }
+    __payerModalEl.classList.remove('hidden');
+    __payerModalEl.setAttribute('aria-hidden', 'false');
 }
 
 function closePayerInfoModal() {
@@ -8730,12 +8852,25 @@ function closePayerInfoModal() {
 }
 
 function openPaymentModal() {
-    // No se muestra ningún modal de pago en la versión gratuita.
-    if (typeof showMessage === 'function') {
-        showMessage('El sistema de pago ha sido desactivado. No necesitas pagar para usar la app.', 'info', 6000);
-    } else if (typeof alert === 'function') {
-        alert('El sistema de pago ha sido desactivado. No necesitas pagar para usar la app.');
+    if (!__paymentModalInitialized) {
+        __paymentModalEl = document.getElementById('paymentModal');
+        __paymentErrorEl = document.getElementById('paymentError');
+        __paymentConfirmBtn = document.getElementById('paymentConfirmButton');
+        var closeBtn = document.getElementById('paymentModalClose');
+        if (closeBtn && __paymentModalEl) {
+            closeBtn.addEventListener('click', function () { closePaymentModal(); });
+        }
+        if (__paymentModalEl) {
+            __paymentModalEl.addEventListener('click', function (e) { if (e.target === __paymentModalEl) closePaymentModal(); });
+        }
+        if (__paymentConfirmBtn) {
+            __paymentConfirmBtn.addEventListener('click', handleConfirmPaymentClick);
+        }
+        __paymentModalInitialized = true;
     }
+    if (!__paymentModalEl) return;
+    __paymentModalEl.classList.remove('hidden');
+    __paymentModalEl.setAttribute('aria-hidden', 'false');
 }
 
 function closePaymentModal() {
@@ -8745,26 +8880,152 @@ function closePaymentModal() {
 }
 
 async function setupStripeElements(clientSecret, publishableKey) {
-    // Stripe no se usa en la versión gratuita; devolver false para evitar flujo de pago.
-    return false;
+    if (typeof Stripe === 'undefined') {
+        if (typeof showMessage === 'function') {
+            showMessage('Stripe no está disponible en esta página.', 'error');
+        }
+        return false;
+    }
+    if (!__stripeInstance || !__stripeInstance.__pk || __stripeInstance.__pk !== publishableKey) {
+        __stripeInstance = Stripe(publishableKey);
+        __stripeInstance.__pk = publishableKey;
+    }
+    var container = document.getElementById('payment-element');
+    if (!container) return false;
+    container.innerHTML = '';
+    __stripeClientSecret = clientSecret;
+    __stripeElements = __stripeInstance.elements({ clientSecret: clientSecret, appearance: { theme: 'stripe' } });
+    // Usar Payment Element en modo "tabs" para una experiencia más clara,
+    // donde Stripe mostrará primero tarjetas guardadas (si existen) y debajo
+    // la opción de agregar una nueva forma de pago.
+    __stripePaymentElement = __stripeElements.create('payment', { layout: 'tabs' });
+    __stripePaymentElement.mount(container);
+    if (__paymentErrorEl) __paymentErrorEl.textContent = '';
+    return true;
 }
 
 async function handleConfirmPaymentClick() {
-    // No hay proceso de pago en la versión gratuita.
-    if (typeof showMessage === 'function') {
-        showMessage('El sistema de pago está desactivado. No es necesario confirmar ningún pago.', 'info', 6000);
-    } else if (typeof alert === 'function') {
-        alert('El sistema de pago está desactivado. No es necesario confirmar ningún pago.');
+    if (!__stripeInstance || !__stripeElements) return;
+    if (!__paymentConfirmBtn) return;
+    if (__paymentConfirmBtn.disabled) return;
+    var originalText = __paymentConfirmBtn.textContent;
+    __paymentConfirmBtn.disabled = true;
+    __paymentConfirmBtn.textContent = 'Procesando...';
+    if (__paymentErrorEl) __paymentErrorEl.textContent = '';
+    var result;
+    try {
+        result = await __stripeInstance.confirmPayment({
+            elements: __stripeElements,
+            confirmParams: { return_url: window.location.href },
+            redirect: 'if_required'
+        });
+    } catch (e) {
+        console.error('Error al confirmar el pago', e);
+        if (typeof showMessage === 'function') {
+            showMessage('No se pudo procesar el pago.', 'error');
+        }
+        __paymentConfirmBtn.disabled = false;
+        __paymentConfirmBtn.textContent = originalText;
+        return;
+    }
+    __paymentConfirmBtn.disabled = false;
+    __paymentConfirmBtn.textContent = originalText;
+    if (result && result.error) {
+        console.warn('Error de Stripe al pagar', result.error);
+        if (__paymentErrorEl) {
+            __paymentErrorEl.textContent = result.error.message || 'No se pudo completar el pago.';
+        }
+        return;
+    }
+    if (result && result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+        if (typeof showMessage === 'function') {
+            showMessage('Pago realizado correctamente. Activando tu plan...', 'success', 6000);
+        }
+        try {
+            // Sabemos que este flujo solo vende el plan de 49 MXN (Plan_xunu)
+            if (typeof currentPlanState !== 'undefined' && currentPlanState) {
+                currentPlanState.planId = 'Plan_xunu';
+                currentPlanState.rawPlan = 'Plan_xunu';
+                if (typeof renderPlanInProfile === 'function') {
+                    renderPlanInProfile();
+                }
+            }
+            // Notificar al backend para activar el plan también en la base de datos
+            try {
+                var sessionEmail = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
+                var sessionName = (typeof getCurrentUserFullName === 'function') ? getCurrentUserFullName() : '';
+                if (sessionEmail) {
+                    var activateUrl = apiUrl('/api/plan/activate-client');
+                    await fetch(activateUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ email: sessionEmail, name: sessionName, plan_id: 'Plan_xunu' })
+                    }).catch(function (e) { console.warn('No se pudo activar el plan en backend', e); });
+                }
+            } catch (e) {
+                console.warn('Error activando plan en backend tras pago', e);
+            }
+            // Intentar guardar el nuevo estado también en Drive, sin molestar al usuario si falla
+            if (typeof ensureSaveToDrive === 'function') {
+                ensureSaveToDrive({ interactive: false, showSuccess: false, silent: true });
+            }
+        } catch (e) { }
+        closePaymentModal();
+        if (typeof fetchPlanStatusFromBackend === 'function') {
+            setTimeout(function () { fetchPlanStatusFromBackend(); }, 2500);
+        }
+        if (typeof fetchUsageStatusFromBackend === 'function') {
+            setTimeout(function () { fetchUsageStatusFromBackend(); }, 3000);
+        }
     }
 }
 
 async function startPlanCheckout(planId, emailOverride, nameOverride) {
-    // No iniciar ningún flujo de pago en la versión gratuita.
-    if (typeof showMessage === 'function') {
-        showMessage('Los planes de pago han sido eliminados. La app es completamente gratuita.', 'info', 6000);
-    } else if (typeof alert === 'function') {
-        alert('Los planes de pago han sido eliminados. La app es completamente gratuita.');
+    var sessionEmail = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
+    if (!sessionEmail) {
+        if (typeof showMessage === 'function') {
+            showMessage('Debes iniciar sesión con Google antes de comprar un plan.', 'warning');
+        }
+        try {
+            if (typeof requestGoogleSignIn === 'function') {
+                requestGoogleSignIn();
+            }
+        } catch (e) { }
+        return;
     }
+    var email = emailOverride || sessionEmail;
+    var name = nameOverride || ((typeof getCurrentUserFullName === 'function') ? getCurrentUserFullName() : '');
+
+    var url = apiUrl('/api/payment/create-intent');
+    var res;
+    try {
+        res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ plan_id: planId, email: email, name: name })
+        });
+    } catch (e) {
+        console.error('Error al crear sesión de pago', e);
+        if (typeof showMessage === 'function') {
+            showMessage('No se pudo iniciar el pago. Revisa tu conexión.', 'error');
+        }
+        return;
+    }
+
+    var data = await res.json().catch(function () { return {}; });
+    if (!res.ok || !data.clientSecret || !data.publishableKey) {
+        var msg = data.error || 'No se pudo iniciar el pago. Inténtalo más tarde.';
+        if (typeof showMessage === 'function') {
+            showMessage(msg, 'error');
+        }
+        return;
+    }
+
+    var ok = await setupStripeElements(data.clientSecret, data.publishableKey);
+    if (!ok) return;
+    openPaymentModal();
 }
 
 // Sobrescribir printSchedule para aplicar límite de impresión
@@ -8798,65 +9059,65 @@ if (typeof onProfileLoaded === 'function') {
 
 // Interceptar clicks en descarga, impresión y creación de materias
 document.addEventListener('DOMContentLoaded', function () {
-    var plansModal = document.getElementById('plansModal');
-    var plansClose = document.getElementById('plansModalClose');
-    var pmOpenPlans = document.getElementById('pmOpenPlans');
-    var pmPlanPill = document.querySelector('.pm-plan-row');
-    var planProCheckoutBtn = document.getElementById('planProCheckout');
-    var planStatusButton = document.getElementById('planStatusButton');
-    var planStatusModal = document.getElementById('planStatusModal');
-    var planStatusClose = document.getElementById('planStatusClose');
+        var plansModal = document.getElementById('plansModal');
+        var plansClose = document.getElementById('plansModalClose');
+        var pmOpenPlans = document.getElementById('pmOpenPlans');
+        var pmPlanPill = document.querySelector('.pm-plan-row');
+        var planProCheckoutBtn = document.getElementById('planProCheckout');
+        var planStatusButton = document.getElementById('planStatusButton');
+        var planStatusModal = document.getElementById('planStatusModal');
+        var planStatusClose = document.getElementById('planStatusClose');
 
-    if (pmOpenPlans) {
-        pmOpenPlans.addEventListener('click', function () {
-            var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
-            if (!email) {
-                if (typeof showMessage === 'function') {
-                    showMessage('Debes iniciar sesión con Google para ver los planes.', 'warning');
+        if (pmOpenPlans) {
+            pmOpenPlans.addEventListener('click', function () {
+                var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
+                if (!email) {
+                    if (typeof showMessage === 'function') {
+                        showMessage('Debes iniciar sesión con Google para ver los planes.', 'warning');
+                    }
+                    // Mostrar el modal de login (authGate) en lugar del flujo antiguo
+                    try {
+                        lockInterface('Debes iniciar sesión para ver los planes.');
+                    } catch (e) {
+                        console.warn('No se pudo mostrar el modal de login desde pmOpenPlans', e);
+                    }
+                    return;
                 }
-                // Mostrar el modal de login (authGate) en lugar del flujo antiguo
-                try {
-                    lockInterface('Debes iniciar sesión para ver los planes.');
-                } catch (e) {
-                    console.warn('No se pudo mostrar el modal de login desde pmOpenPlans', e);
-                }
-                return;
-            }
-            openPlansModal();
-        });
-    }
-    if (pmPlanPill) {
-        pmPlanPill.addEventListener('click', function () {
-            // Cerrar el modal de perfil si está abierto
-            var profileModal = document.getElementById('profileModal');
-            if (profileModal && !profileModal.classList.contains('hidden')) {
-                profileModal.classList.add('hidden');
-                profileModal.setAttribute('aria-hidden', 'true');
-            }
-            var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
-            if (!email) {
-                if (typeof showMessage === 'function') {
-                    showMessage('Debes iniciar sesión con Google para ver los planes.', 'warning');
-                }
-                // Mostrar el modal de login (authGate) en lugar del flujo antiguo
-                try {
-                    lockInterface('Debes iniciar sesión para ver los planes.');
-                } catch (e) {
-                    console.warn('No se pudo mostrar el modal de login desde pmPlanPill', e);
-                }
-                return;
-            }
-            if (currentPlanState && currentPlanState.planId && currentPlanState.planId !== 'free') {
-                renderUsageInPlanModal();
-                if (planStatusModal) {
-                    planStatusModal.classList.remove('hidden');
-                    planStatusModal.setAttribute('aria-hidden', 'false');
-                }
-            } else {
                 openPlansModal();
-            }
-        });
-    }
+            });
+        }
+        if (pmPlanPill) {
+            pmPlanPill.addEventListener('click', function () {
+                // Cerrar el modal de perfil si está abierto
+                var profileModal = document.getElementById('profileModal');
+                if (profileModal && !profileModal.classList.contains('hidden')) {
+                    profileModal.classList.add('hidden');
+                    profileModal.setAttribute('aria-hidden', 'true');
+                }
+                var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
+                if (!email) {
+                    if (typeof showMessage === 'function') {
+                        showMessage('Debes iniciar sesión con Google para ver los planes.', 'warning');
+                    }
+                    // Mostrar el modal de login (authGate) en lugar del flujo antiguo
+                    try {
+                        lockInterface('Debes iniciar sesión para ver los planes.');
+                    } catch (e) {
+                        console.warn('No se pudo mostrar el modal de login desde pmPlanPill', e);
+                    }
+                    return;
+                }
+                if (currentPlanState && currentPlanState.planId && currentPlanState.planId !== 'free') {
+                    renderUsageInPlanModal();
+                    if (planStatusModal) {
+                        planStatusModal.classList.remove('hidden');
+                        planStatusModal.setAttribute('aria-hidden', 'false');
+                    }
+                } else {
+                    openPlansModal();
+                }
+            });
+        }
     if (plansClose && plansModal) {
         plansClose.addEventListener('click', function () { closePlansModal(); });
         plansModal.addEventListener('click', function (e) { if (e.target === plansModal) closePlansModal(); });
@@ -8945,18 +9206,167 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
+// ================== MODO GRATUITO: desactivar planes y pagos ==================
+// Este bloque sobrescribe las funciones relacionadas con planes/Stripe para que
+// todo funcione como versión gratuita sin límites ni pagos.
 
+(function setupFreeMode() {
+    try {
+        if (typeof currentPlanState === 'undefined' || !currentPlanState) {
+            window.currentPlanState = {
+                planId: 'free',
+                rawPlan: 'free',
+                expiresAtTs: null,
+                nowTs: null
+            };
+        } else {
+            currentPlanState.planId = 'free';
+            currentPlanState.rawPlan = 'free';
+            currentPlanState.expiresAtTs = null;
+            currentPlanState.nowTs = null;
+        }
+    } catch (e) { }
+})();
+
+function describePlan(planId) {
+    return 'Gratis';
+}
+
+function renderPlanInProfile() {
+    var pmPlan = document.getElementById('pmPlan');
+    if (!pmPlan) return;
+    pmPlan.textContent = 'Gratis';
+}
+
+async function ensureFeatureAllowed(kind) {
+    // Antes se consultaba al backend para validar límites.
+    // Ahora siempre se permite la acción sin hacer peticiones.
+    return { allowed: true, plan_id: 'free' };
+}
+
+async function fetchPlanStatusFromBackend() {
+    try {
+        if (typeof currentPlanState !== 'undefined' && currentPlanState) {
+            currentPlanState.planId = 'free';
+            currentPlanState.rawPlan = 'free';
+        }
+        renderPlanInProfile();
+    } catch (e) { }
+    return (typeof currentPlanState !== 'undefined')
+        ? currentPlanState
+        : { planId: 'free', rawPlan: 'free' };
+}
+
+async function fetchUsageStatusFromBackend() {
+    // Sin límites ni métricas de uso en modo gratuito.
+    return {};
+}
+
+function updatePlanButtonsUI() {
+    var plansBtn = document.getElementById('pmOpenPlans');
+    var planStatusBtn = document.getElementById('planStatusButton');
+    if (plansBtn) plansBtn.classList.add('hidden');
+    if (planStatusBtn) planStatusBtn.classList.add('hidden');
+}
+
+function renderUsageInPlanModal() {
+    var catalogUsedEl = document.getElementById('planUsageCatalogUsed');
+    var catalogRemEl = document.getElementById('planUsageCatalogRemaining');
+    var printUsedEl = document.getElementById('planUsagePrintUsed');
+    var printRemEl = document.getElementById('planUsagePrintRemaining');
+    var downloadUsedEl = document.getElementById('planUsageDownloadUsed');
+    var downloadRemEl = document.getElementById('planUsageDownloadRemaining');
+    var planLabelEl = document.getElementById('planUsageTitleLabel');
+
+    if (planLabelEl) planLabelEl.textContent = 'Plan: Gratis';
+
+    [catalogUsedEl, printUsedEl, downloadUsedEl].forEach(function (el) {
+        if (el) el.textContent = '0';
+    });
+    [catalogRemEl, printRemEl, downloadRemEl].forEach(function (el) {
+        if (el) el.textContent = '∞';
+    });
+}
+
+function openPlansModal() {
+    if (typeof showMessage === 'function') {
+        showMessage('Esta versión es completamente gratis; no necesitas ningún plan.', 'info', 6000);
+    }
+    var modal = document.getElementById('plansModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+}
+
+function closePlansModal() {
+    var modal = document.getElementById('plansModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+function openPaymentModal() {
+    if (typeof showMessage === 'function') {
+        showMessage('Los pagos están desactivados: todo es gratis.', 'info', 6000);
+    }
+}
+
+function closePaymentModal() {
+    var modal = document.getElementById('paymentModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+async function setupStripeElements() {
+    // Stripe ya no se usa en modo gratuito.
+    return false;
+}
+
+async function handleConfirmPaymentClick() {
+    if (typeof showMessage === 'function') {
+        showMessage('Los pagos están desactivados: no es necesario pagar.', 'info', 6000);
+    }
+}
+
+function openPayerInfoModal() {
+    if (typeof showMessage === 'function') {
+        showMessage('La app funciona en modo gratis; no se solicitará pago.', 'info', 6000);
+    }
+    var modal = document.getElementById('payerInfoModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+}
+
+function closePayerInfoModal() {
+    var modal = document.getElementById('payerInfoModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+async function startPlanCheckout(planId, emailOverride, nameOverride) {
+    if (typeof showMessage === 'function') {
+        showMessage('No se requiere pago: tu plan es gratis.', 'info', 6000);
+    }
+}
 
 
 (function () {
-    const estiloTitulo = "color:red;font-size:40px;font-weight:bold;";
-    const estiloTexto = "font-size:16px;color:black;";
+  const estiloTitulo = "color:red;font-size:40px;font-weight:bold;";
+  const estiloTexto = "font-size:16px;color:black;";
 
-    console.log("%c¡Detente!", estiloTitulo);
-    console.log(
-        "Si alguien te dijo que pegaras algo aquí para hackear o robar cualquier información,\n" +
-        "es un fraude. Si lo haces, XuNnito podrá robar tu información.\n" +
-        "Mampo,\n",
-        estiloTexto
-    );
+  console.log("%c¡Detente!", estiloTitulo);
+  console.log(
+    "Si alguien te dijo que pegaras algo aquí para hackear o robar cualquier información,\n" +
+    "es un fraude. Si lo haces, XuNnito podrá robar tu información.\n" +
+    "Mampo,\n",
+    estiloTexto
+  );
 })();
+
+
+
