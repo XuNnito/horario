@@ -6227,8 +6227,21 @@ s_back.addEventListener('click', () => {
     openAddModal();
 });
 
+
 // Guardar nueva materia (se anexará al catálogo y se persiste en localStorage)
-s_save.addEventListener('click', () => {
+s_save.addEventListener('click', async (event) => {
+    // Si es una materia nueva (no edición), verificar primero el límite del plan
+    if (editingSubjectId === null || typeof editingSubjectId === 'undefined') {
+        try {
+            await ensureFeatureAllowed('catalog');
+        } catch (e) {
+            if (event && event.preventDefault) event.preventDefault();
+            if (event && event.stopPropagation) event.stopPropagation();
+            // Si el backend indica que no está permitido, no crear la materia
+            return;
+        }
+    }
+
     const materia = m_inputMateria.value.trim();
     const profesor = m_inputProfesor.value.trim(); // opcional
     const grupo = m_inputGrupo.value.trim();
@@ -9188,22 +9201,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Interceptar creación de materias de catálogo (solo nuevas)
-    var saveBtn = document.getElementById('s_save');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', async function (ev) {
-            try {
-                if (typeof editingSubjectId === 'undefined' || editingSubjectId === null) {
-                    await ensureFeatureAllowed('catalog');
-                }
-            } catch (e) {
-                if (ev && ev.preventDefault) ev.preventDefault();
-                if (ev && ev.stopPropagation) ev.stopPropagation();
-                return false;
-            }
-            return true;
-        });
-    }
+    // La validación de límite para creación de materias se hace ahora
+    // directamente dentro del handler principal de s_save.
 });
 
 

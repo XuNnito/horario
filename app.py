@@ -2158,7 +2158,36 @@ def api_create_payment_intent():
 	try:
 		intent = stripe.PaymentIntent.create(**params)  # type: ignore[call-arg]
 	except Exception as exc:  # noqa: BLE001
-		return jsonify({"error": f"No se pudo crear el intento de pago: {exc}"}), 500
+		# Caso típico al cambiar de modo test/live: en la BD queda
+		# guardado un customer de Stripe que pertenece a otro entorno
+		# y Stripe responde "No such customer".
+		msg = str(exc)
+		if customer_id and "No such customer" in msg:
+			conn = None
+			try:
+				conn = get_db_connection()
+				cur = conn.cursor()
+				cur.execute("DELETE FROM stripe_customers WHERE email = ?", (email,))
+				conn.commit()
+			except Exception:
+				# Si falla el borrado, continuamos con el reintento sin customer.
+				pass
+			finally:
+				if conn is not None:
+					try:
+						conn.close()
+					except Exception:
+						pass
+
+			# Reintentar crear el PaymentIntent sin asociar el customer obsoleto
+			params.pop("customer", None)
+			params.pop("setup_future_usage", None)
+			try:
+				intent = stripe.PaymentIntent.create(**params)  # type: ignore[call-arg]
+			except Exception as exc2:  # noqa: BLE001
+				return jsonify({"error": f"No se pudo crear el intento de pago: {exc2}"}), 500
+		else:
+			return jsonify({"error": f"No se pudo crear el intento de pago: {exc}"}), 500
 
 	return jsonify({"clientSecret": intent.client_secret, "publishableKey": STRIPE_PUBLISHABLE_KEY})
 
