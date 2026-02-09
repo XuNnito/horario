@@ -7868,9 +7868,34 @@ async function restoreBackendSessionProfile() {
         var url = apiUrl('/api/session/me');
         if (!url) return null;
         var resp = await fetch(url, { method: 'GET', credentials: 'include' });
-        if (!resp.ok) return null;
+        if (!resp.ok) {
+            // Si el backend responde error, asumimos que no hay sesión válida
+            // y limpiamos cualquier estado local que haga parecer que sí la hay.
+            try {
+                localStorage.removeItem('google_profile');
+                localStorage.removeItem('google_signed_in');
+            } catch (e) { }
+            gUserProfile = null;
+            window.__googleProfile = null;
+            try { onProfileLoaded(); } catch (e) { }
+            try { updateAuthGateState(); } catch (e) { }
+            return null;
+        }
         var data = await resp.json();
-        if (!data || !data.ok || !data.authenticated || !data.email) return null;
+        if (!data || !data.ok || !data.authenticated || !data.email) {
+            // Caso típico: el backend responde 200 pero authenticated=false
+            // (cookie expirada, servidor reiniciado, etc.). Sincronizamos
+            // el frontend para que también considere la sesión cerrada.
+            try {
+                localStorage.removeItem('google_profile');
+                localStorage.removeItem('google_signed_in');
+            } catch (e) { }
+            gUserProfile = null;
+            window.__googleProfile = null;
+            try { onProfileLoaded(); } catch (e) { }
+            try { updateAuthGateState(); } catch (e) { }
+            return null;
+        }
 
         // Si el email de la sesión del backend es distinto al que teníamos
         // guardado en localStorage, asumimos que el usuario cambió de cuenta

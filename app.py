@@ -751,6 +751,8 @@ def auth_google_callback():
 		session["email"] = email
 		if name:
 				session["name"] = name
+		if avatar_url:
+				session["avatar_url"] = avatar_url
 
 		# Registrar login en el historial de visitas
 		_insert_visit(event_type="login", name=name, email=email, path="/auth/google/callback")
@@ -802,6 +804,8 @@ def api_session_login():
 	session["email"] = email
 	if name:
 			session["name"] = name
+	if avatar_url:
+			session["avatar_url"] = avatar_url
 
 	avatar_url: str | None = None
 	if row is not None and "avatar_url" in row.keys():  # type: ignore[operator]
@@ -833,7 +837,13 @@ def api_session_me():
 	if not email:
 			return jsonify({"ok": False, "authenticated": False}), 200
 
+	# Asegurar que el usuario exista en BD incluso si por alguna razón
+	# solo tenemos la sesión de Flask (por ejemplo, tras un cambio de versión
+	# o limpieza parcial de la base de datos).
 	row = _get_user(email)
+	if row is None:
+			_upsert_user(name=name, email=email, avatar_url=session.get("avatar_url"))
+			row = _get_user(email)
 	effective, stored, expires_ts = _calculate_effective_plan(row)
 	avatar_url: str | None = None
 	if row is not None and "avatar_url" in row.keys():  # type: ignore[operator]
