@@ -780,7 +780,7 @@
                 con 10 usos en cada apartado.
             </p>
             <button id="upgradePlanButton" type="button" class="plan-cta-btn hidden" style="width:100%;margin-top:4px;"
-                onclick="(function(){ var btn=document.getElementById('planProCheckout'); if(btn){ btn.click(); } })();">
+                onclick="(function(){ if (typeof openPlansModal === 'function') { openPlansModal('status','upgrade'); } else { var m=document.getElementById('plansModal'); if(m){ m.classList.remove('hidden'); m.setAttribute('aria-hidden','false'); } } })();">
                 Mejorar plan
             </button>
         </div>

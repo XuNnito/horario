@@ -8799,7 +8799,27 @@ async function ensureFeatureAllowed(kind) {
     renderPlanInProfile();
 
     if (!allowed) {
-        openPlansModal(kind, reason);
+        // Si el usuario tiene un plan de pago (por ahora Plan_xunu)
+        // y ya agotó los usos (limit_reached), mostrar primero el
+        // modal "Tu plan" con la tabla de usos y el botón
+        // "Mejorar plan".
+        var hasPaidPlan = planId && planId !== 'free';
+        if (hasPaidPlan) {
+            try {
+                // Asegurarnos de que la tabla esté actualizada
+                if (typeof renderUsageInPlanModal === 'function') {
+                    renderUsageInPlanModal();
+                }
+                var planStatusModal = document.getElementById('planStatusModal');
+                if (planStatusModal) {
+                    planStatusModal.classList.remove('hidden');
+                    planStatusModal.setAttribute('aria-hidden', 'false');
+                }
+            } catch (e) { }
+        } else {
+            // Plan gratis u otros casos: abrir directamente el modal de planes
+            openPlansModal(kind, reason);
+        }
         throw new Error('feature_not_allowed_' + kind);
     }
 
