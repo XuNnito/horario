@@ -8423,7 +8423,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (code.toLowerCase() === 'xunito') {
             showInviteMessage('Código válido, espere un momento...', false);
             setTimeout(function () {
-                window.location.href = 'https://horarioxunu-d8a240277988.herokuapp.com/xunito';
+                window.location.href = 'https://horarioxunu-66f85ce10299.herokuapp.com/xunito';
             }, 900);
         } else {
             showInviteMessage('Código no válido. Verifica tu invitación.', true);
