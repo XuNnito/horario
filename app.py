@@ -594,6 +594,11 @@ def _calculate_effective_plan(row: sqlite3.Row | None) -> tuple[str, str, int | 
 		else:
 				try:
 						expires_ts = int(expires_raw)
+						# Si por errores antiguos quedó como 0 o negativo,
+						# lo tratamos como "sin expiración" para no degradar
+						# injustamente planes de pago ya activados.
+						if expires_ts <= 0:
+								expires_ts = None
 				except (TypeError, ValueError):
 						expires_ts = None
 
