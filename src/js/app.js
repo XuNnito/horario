@@ -4997,6 +4997,15 @@ function setupReinscriptionModal() {
                 if (tutorEmailInput) tutorEmailInput.focus();
                 return;
             }
+
+            // Validar límite de plan antes de generar/descargar el PDF
+            try {
+                await ensureFeatureAllowed('download');
+            } catch (e) {
+                // ensureFeatureAllowed ya muestra el modal de plan / mensaje correspondiente
+                return;
+            }
+
             const originalText = sendEmailBtn.textContent;
             reinscriptionEmailSending = true;
             if (openDraftBtn) openDraftBtn.classList.add('hidden');
@@ -5120,6 +5129,15 @@ function setupReinscriptionModal() {
                 showMessage('Completa al menos el nombre completo, la matrícula y la carrera.', 'warning');
                 return;
             }
+
+            // Validar límite de plan antes de generar/descargar el PDF
+            try {
+                await ensureFeatureAllowed('download');
+            } catch (e) {
+                // ensureFeatureAllowed ya muestra el modal de plan / mensaje correspondiente
+                return;
+            }
+
             showLoader('Generando formato de reinscripción...');
             try {
                 const pdfBytes = await generateReinscriptionPdf(data, { includeSignature: true });
@@ -9273,38 +9291,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (planProCheckoutBtn) {
         planProCheckoutBtn.addEventListener('click', function () {
             openPayerInfoModal();
-        });
-    }
-
-    // Reinscription download (botón "Descargar formato")
-    var downloadBtn = document.getElementById('reinscriptionDownload');
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', async function (ev) {
-            ev = ev || window.event;
-            try {
-                await ensureFeatureAllowed('download');
-            } catch (e) {
-                if (ev.preventDefault) ev.preventDefault();
-                if (ev.stopPropagation) ev.stopPropagation();
-                return false;
-            }
-            return true;
-        });
-    }
-
-    // Botón de enviar al tutor (también descarga un PDF)
-    var sendBtn = document.getElementById('reinscriptionSendEmail');
-    if (sendBtn) {
-        sendBtn.addEventListener('click', async function (ev) {
-            ev = ev || window.event;
-            try {
-                await ensureFeatureAllowed('download');
-            } catch (e) {
-                if (ev.preventDefault) ev.preventDefault();
-                if (ev.stopPropagation) ev.stopPropagation();
-                return false;
-            }
-            return true;
         });
     }
 
