@@ -250,7 +250,7 @@ def add_cors_headers(response):  # type: ignore[override]
 						"https://xunnito.github.io",
 						"http://127.0.0.1:5500",
 						"http://localhost:5500",
-						"http://127.0.0.1:5501",
+						"https://e555796d-c5f4-4a33-a9bf-0678653a736f-00-1abl4mngptsep.picard.replit.dev/",
 				]
 
 		if origin:
