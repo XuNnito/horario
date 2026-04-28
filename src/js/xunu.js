@@ -8337,7 +8337,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (code.toLowerCase() === 'xunito') {
             showInviteMessage('Código válido, espere un momento...', false);
             setTimeout(function () {
-                window.location.href = 'https://e555796d-c5f4-4a33-a9bf-0678653a736f-00-1abl4mngptsep.picard.replit.dev/xunito';
+                window.location.href = 'https://horario--2411045.replit.appxunito';
             }, 900);
         } else {
             showInviteMessage('Código no válido. Verifica tu invitación.', true);
