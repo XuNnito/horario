@@ -661,7 +661,7 @@ body.theme-dark .suggestion-item:hover {
     color: #f9fafb;
 }
 
-.group-7A {
+.group-8A {
     background-color: #00ac42da;
     color: white;
 }
@@ -1482,7 +1482,7 @@ body.theme-dark .reinscription-preview {
         color: #fff !important;
     }
 
-    .group-7A {
+    .group-8A {
         background-color: #28a745 !important;
         color: #fff !important;
     }
@@ -1498,7 +1498,7 @@ body.theme-dark .reinscription-preview {
     }
 
     .subject-card.conflict,
-    .group-7A.conflict,
+    .group-8A.conflict,
     .group-especial.conflict,
     .group-convalidacion.conflict {
         background-color: var(--error-color) !important;

@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="dist/css/styles.css">
     <script src="https://js.stripe.com/v3" defer></script>
     <script src="funcion.js" defer></script>
-    <script src="dist/js/app.js" defer></script>
+    <script src="src/js/xunu.js" defer></script>
 </head>
 
 <div id="mobileMessage" role="status" aria-live="polite">
@@ -216,8 +216,8 @@
         <div id="defaultSchedulePrompt" class="hidden" aria-hidden="true" role="dialog" aria-modal="true"
             aria-labelledby="defaultScheduleTitle">
             <div class="default-schedule__panel" role="document">
-                <h3 id="defaultScheduleTitle">Cargar horario 7A Biomédica</h3>
-                <p>Se cargará automáticamente el horario del grupo 7A de Biomédica y podrás quitar materias después.</p>
+                <h3 id="defaultScheduleTitle">Cargar horario 8A Biomédica</h3>
+                <p>Se cargará automáticamente el horario del grupo 8A de Biomédica y podrás quitar materias después.</p>
                 <div class="default-schedule__actions">
                     <button id="defaultScheduleCancel" type="button">Cancelar</button>
                     <button id="defaultScheduleAccept" type="button">Aceptar</button>
@@ -258,7 +258,7 @@
                     <div id="suggestions" class="suggestions hidden"></div>
                 </div>
                 <div class="group-load-buttons">
-                    <button id="btnLoad7A" type="button">7A</button>
+                    <button id="btnLoad8A" type="button">8A</button>
                     <button id="btnLoad8B" type="button">8B</button>
                     <button id="btnLoad8C" type="button">8C</button>
                     <button id="btnLoad9A" type="button">9A</button>
@@ -408,7 +408,7 @@
 
                 <label>Cuatrimestre y Grupo <span
                         style="color:#f20505bb;border-radius:6px;font-size:9px;">(obligatorio)</span><br>
-                    <input id="m_inputGrupo" type="text" placeholder="Ej. 7A | Especial | Convalidación"
+                    <input id="m_inputGrupo" type="text" placeholder="Ej. 8A | Especial | Convalidación"
                         style="width:50%;">
                 </label>
             </div>
@@ -835,7 +835,7 @@
 <script src="https://apis.google.com/js/api.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
 <script>
-    window.BACKEND_BASE_URL = "https://horario--2411045.replit.app";
+    window.BACKEND_BASE_URL = "https://horario--2411045.replit.app/";
 </script>
 
 </html>

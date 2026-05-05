@@ -1745,7 +1745,7 @@ document.addEventListener('DOMContentLoaded', function () {
 document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('searchInput');
     const suggestions = document.getElementById('suggestions');
-    const btnLoad7A = document.getElementById('btnLoad7A');
+    const btnLoad8A = document.getElementById('btnLoad8A');
     const btnLoad8B = document.getElementById('btnLoad8B');
     const btnLoad8C = document.getElementById('btnLoad8C');
     const btnLoad9A = document.getElementById('btnLoad9A');
@@ -1822,9 +1822,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Botón para cargar horario del grupo 7A de Biomédica
-    if (btnLoad7A) {
-        btnLoad7A.addEventListener('click', function () {
+    // Botón para cargar horario del grupo 8A de Biomédica
+    if (btnLoad8A) {
+        btnLoad8A.addEventListener('click', function () {
             if (!isSessionActive()) {
                 showMessage('Primero inicia sesión con Google para cargar el horario.', 'warning');
                 return;
@@ -1860,93 +1860,97 @@ function loadPredefinedSubjects() {
     catalogSubjects = [
         // Datos completos de los horarios extraídos del PDF
 
-        // =========== GRUPO 7A ===========
+        // =========== GRUPO 8A ===========
         {
             id: 57,
-            name: "Microcontroladores",
-            professor: "G Rosario",
-            group: "7A",
+            name: "Procesamiento de señales Biomedicas ",
+            professor: "---",
+            group: "8A",
             aula: "A210",
             sessions: [
-                { day: "lunes", startTime: "9:00", endTime: "10:45" },
-                { day: "martes", startTime: "11:00", endTime: "12:45" },
-                { day: "miercoles", startTime: "12:00", endTime: "13:45" }
+                { day: "lunes", startTime: "8:00", endTime: "8:45" },
+                { day: "jueves", startTime: "14:00", endTime: "15:45" },
+                { day: "viernes", startTime: "10:00", endTime: "11:45" }
             ]
         },
         {
             id: 58,
-            name: "Gestion de Proyectos",
-            professor: "Urbina Brito Norberto",
-            group: "7A",
+            name: "Protocolo de Interfaces de Comunicación",
+            professor: "---",
+            group: "8A",
             aula: "A210",
             sessions: [
-                { day: "lunes", startTime: "11:00", endTime: "12:45" },
-                { day: "miercoles", startTime: "14:00", endTime: "15:45" },
+                { day: "lunes", startTime: "10:00", endTime: "11:45" },
+                { day: "jueves", startTime: "10:00", endTime: "10:45" },
+                { day: "miercoles", startTime: "12:00", endTime: "13:45" },
             ]
         },
         {
             id: 59,
-            name: "Biomecanica",
-            professor: "Velazquez Hernández Gerardo",
-            group: "7A",
+            name: "Telesalud",
+            professor: "---",
+            group: "8A",
             aula: "A210",
             sessions: [
-                { day: "lunes", startTime: "13:00", endTime: "15:45" },
-                { day: "viernes", startTime: "11:00", endTime: "12:45" },
+                { day: "lunes", startTime: "12:00", endTime: "13:45" },
+                { day: "miercoles", startTime: "8:00", endTime: "9:45" },
+                { day: "jueves", startTime: "13:00", endTime: "13:45" },
             ]
         },
         {
             id: 60,
-            name: "Bioinstrumentacion",
-            professor: "Martínez Cancino Diana Paulina",
-            group: "7A",
+            name: "Diseño Asistido por Computadora",
+            professor: "---",
+            group: "8A",
             aula: "A210",
             sessions: [
-                { day: "martes", startTime: "9:00", endTime: "10:45" },
-                { day: "jueves", startTime: "8:00", endTime: "10:45" },
+                { day: "lunes", startTime: "14:00", endTime: "15:45" },
+                { day: "martes", startTime: "8:00", endTime: "9:45" },
+                { day: "viernes", startTime: "8:00", endTime: "9:45" },
             ]
         },
         {
             id: 61,
-            name: "Inglés VII",
-            professor: "Santiago Eduardo",
-            group: "7A",
+            name: "Inglés VIII",
+            professor: "---",
+            group: "8A",
             aula: "A210",
             sessions: [
-                { day: "martes", startTime: "13:00", endTime: "14:45" },
-                { day: "viernes", startTime: "8:00", endTime: "10:45" }
+                { day: "miercoles", startTime: "14:00", endTime: "14:45" },
+                { day: "jueves", startTime: "8:00", endTime: "9:45" },
+                { day: "viernes", startTime: "12:00", endTime: "13:45" },
             ]
         },
 
         {
             id: 67,
-            name: "Estancia II",
+            name: "Dispositivo Programable",
             professor: "Martínez Cancino Diana Paulina",
-            group: "7A",
+            group: "8A",
             aula: "A210",
             sessions: [
-                { day: "miercoles", startTime: "8:00", endTime: "10:45" },
+                { day: "martes", startTime: "10:00", endTime: "11:45" },
+                { day: "miercoles", startTime: "10:00", endTime: "11:45" },
             ]
         },
         {
             id: 68,
-            name: "Fisica Medica",
-            professor: "Constantino Cortés Eglain",
-            group: "7A",
+            name: "Desarrollo de Sistema Biomédicos",
+            professor: "---",
+            group: "8A",
             aula: "A210",
             sessions: [
-                { day: "jueves", startTime: "12:00", endTime: "14:45" },
-                { day: "viernes", startTime: "13:00", endTime: "14:45" },
+                { day: "martes", startTime: "12:00", endTime: "14:45" },
+                { day: "jueves", startTime: "11:00", endTime: "12:45" },
             ]
         },
         {
             id: 69,
             name: "Tutorías",
             professor: "Vázquez Buenos Aires José Octavio",
-            group: "7A",
+            group: "8A",
             aula: "A210",
             sessions: [
-                { day: "lunes", startTime: "8:00", endTime: "8:45" }
             ]
         },
 
@@ -3830,7 +3834,7 @@ function showScheduleDropPreviewForSubject(subject) {
                         const groupLabel = rawGroupLabel.trim().toLowerCase();
 
                         if (groupLabel === '7a') {
-                            previewCard.classList.add('group-7A');
+                            previewCard.classList.add('group-8A');
                         } else if (groupLabel.includes('convalid')) {
                             previewCard.classList.add('group-convalidacion');
                         } else if (groupLabel.includes('especial')) {
@@ -5788,7 +5792,7 @@ function updateScheduleView() {
 
                     // Aplicar colores según tipo de grupo
                     if (groupLabel === '7a') {
-                        subjectCard.classList.add('group-7A');
+                        subjectCard.classList.add('group-8A');
                     } else if (groupLabel.includes('convalid')) {
                         subjectCard.classList.add('group-convalidacion');
                     } else if (groupLabel.includes('especial')) {
@@ -7546,7 +7550,7 @@ document.addEventListener('DOMContentLoaded', () => {
         defaultAccept.addEventListener('click', async () => {
             defaultSchedulePromptDismissed = false;
             closeDefaultSchedulePrompt();
-            showLoader('Cargando horario del grupo 7A...');
+            showLoader('Cargando horario del grupo 8A...');
             const delay = new Promise(resolve => setTimeout(resolve, 2000));
             try {
                 await Promise.all([
