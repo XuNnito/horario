@@ -8352,7 +8352,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (code.toLowerCase() === 'xunito') {
             showInviteMessage('Código válido, espere un momento...', false);
             setTimeout(function () {
-                window.location.href = 'http://127.0.0.1:5500/xunito';
+                window.location.href = 'http://127.0.0.1:5500xunito';
             }, 900);
         } else {
             showInviteMessage('Código no válido. Verifica tu invitación.', true);
@@ -8487,47 +8487,8 @@ if (typeof document !== 'undefined') {
     });
 }
 
-// ================== INTEGRACIÓN PLANES (GRATIS / 49 MXN) ==================
-
-// URL base del backend. Si el frontend está en otro dominio, define
-// window.BACKEND_BASE_URL en index.html (por ejemplo, "https://tu-backend.com").
-
-var BACKEND_BASE_URL = (typeof window !== 'undefined' && window.BACKEND_BASE_URL)
-    ? String(window.BACKEND_BASE_URL).replace(/\/$/, '')
-    : '';
-
-function apiUrl(path) {
-    if (!path) return '';
-    if (BACKEND_BASE_URL) {
-        if (path.startsWith('http://') || path.startsWith('https://')) return path;
-        return BACKEND_BASE_URL + (path.startsWith('/') ? path : '/' + path);
-    }
-    return path;
-}
-
-// Enviar eventos de tracking al backend (/track) para historial y login_resumen
-function trackEventOnBackend(eventType, payload) {
-    try {
-        var body = {
-            event_type: eventType || 'page_view',
-            name: payload && payload.name ? payload.name : null,
-            email: payload && payload.email ? payload.email : null,
-            path: (payload && payload.path) || (typeof window !== 'undefined' ? window.location.pathname : null)
-        };
-        var url = apiUrl('/track');
-        if (!url) return;
-        fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(body)
-        }).catch(function (e) {
-            console.warn('No se pudo enviar evento de tracking', e);
-        });
-    } catch (e) {
-        console.warn('Error interno en trackEventOnBackend', e);
-    }
-}
+// ================== MODO GRATIS ==================
+// Este archivo no expone ni usa flujo de pago.
 
 var currentPlanState = {
     planId: 'free',
@@ -8542,739 +8503,48 @@ var currentUsageState = {
     download: { used: 0, limit: null, remaining: null }
 };
 
-function describePlan(planId) {
-    if (!planId || planId === 'free') return 'Gratis';
-    // "Plan_xunu" es nuestro plan de 49 MXN basado en usos
-    return 'Plan 49 MXN';
-}
-
-function renderPlanInProfile() {
-    var pmPlan = document.getElementById('pmPlan');
-    if (!pmPlan) return;
-    var label = describePlan(currentPlanState.planId);
-    // El plan de 49 MXN ya no expira por días, solo por límites de uso.
-    pmPlan.textContent = label;
-}
-
-function updateUsageState(kind, payload) {
-    if (!payload) return;
-    var map = currentUsageState[kind];
-    if (!map) return;
-    var used = payload.current_value != null ? Number(payload.current_value) : (payload.current != null ? Number(payload.current) : 0);
-    var limit = payload.active_limit != null ? Number(payload.active_limit) : null;
-    var remaining = null;
-
-    // Si el backend ya envía "remaining", úsalo directamente para evitar
-    // desajustes entre servidor y cliente. Si no viene, lo calculamos.
-    if (payload.remaining != null && !isNaN(Number(payload.remaining))) {
-        remaining = Number(payload.remaining);
-    } else if (limit !== null) {
-        remaining = Math.max(limit - used, 0);
-    }
-    map.used = used;
-    map.limit = limit;
-    map.remaining = remaining;
-}
-
-function renderUsageInPlanModal() {
-    var catalogUsedEl = document.getElementById('planUsageCatalogUsed');
-    var catalogRemEl = document.getElementById('planUsageCatalogRemaining');
-    var printUsedEl = document.getElementById('planUsagePrintUsed');
-    var printRemEl = document.getElementById('planUsagePrintRemaining');
-    var downloadUsedEl = document.getElementById('planUsageDownloadUsed');
-    var downloadRemEl = document.getElementById('planUsageDownloadRemaining');
-    var planLabelEl = document.getElementById('planUsageTitleLabel');
-    var upgradeBtn = document.getElementById('upgradePlanButton');
-    if (planLabelEl) {
-        planLabelEl.textContent = describePlan(currentPlanState.planId);
-    }
-    function fill(kind, usedEl, remEl) {
-        var u = currentUsageState[kind];
-        if (!usedEl || !remEl) return;
-        if (!u) {
-            usedEl.textContent = '-';
-            remEl.textContent = '-';
-            return;
-        }
-        if (u.limit === null) {
-            // No tenemos límite cargado desde el backend. Usamos valores
-            // por defecto según el plan y el tipo de uso para que
-            // "Restantes" empiece en el paquete completo y vaya bajando.
-            usedEl.textContent = u.used != null ? String(u.used) : '0';
-
-            var fallbackLimit = null;
-            var isPaidPlan = currentPlanState.planId && currentPlanState.planId !== 'free';
-
-            if (isPaidPlan) {
-                // Plan de pago actual (Plan_xunu): 10 usos por tipo.
-                fallbackLimit = 10;
-            } else {
-                // Plan gratis: mismos límites que el backend.
-                if (kind === 'catalog') fallbackLimit = 2;
-                else if (kind === 'print' || kind === 'download') fallbackLimit = 1;
-            }
-
-            if (fallbackLimit != null) {
-                var usedVal = u.used != null ? Number(u.used) : 0;
-                var remainingFallback = Math.max(fallbackLimit - usedVal, 0);
-                remEl.textContent = String(remainingFallback);
-            } else {
-                remEl.textContent = '-';
-            }
-            return;
-        }
-        usedEl.textContent = String(u.used != null ? u.used : 0);
-        remEl.textContent = String(u.remaining != null ? u.remaining : Math.max((u.limit || 0) - (u.used || 0), 0));
-    }
-    fill('catalog', catalogUsedEl, catalogRemEl);
-    fill('print', printUsedEl, printRemEl);
-    fill('download', downloadUsedEl, downloadRemEl);
-
-    var hasPaid = currentPlanState.planId && currentPlanState.planId !== 'free';
-    var anyExhausted = false;
-    ['catalog', 'print', 'download'].forEach(function (k) {
-        var u = currentUsageState[k];
-        if (u && u.limit !== null && u.remaining === 0) {
-            anyExhausted = true;
-        }
-    });
-    if (upgradeBtn) {
-        if (hasPaid && anyExhausted) upgradeBtn.classList.remove('hidden'); else upgradeBtn.classList.add('hidden');
-    }
-}
-
-function updatePlanButtonsUI() {
-    var plansBtn = document.getElementById('pmOpenPlans');
-    var planStatusBtn = document.getElementById('planStatusButton');
-    var hasPaid = currentPlanState.planId && currentPlanState.planId !== 'free';
-    var allLimitsKnown = hasPaid && currentUsageState.catalog.limit !== null && currentUsageState.print.limit !== null && currentUsageState.download.limit !== null;
-    var allExhausted = allLimitsKnown && currentUsageState.catalog.remaining === 0 && currentUsageState.print.remaining === 0 && currentUsageState.download.remaining === 0;
-
-    if (hasPaid && !allExhausted) {
-        if (plansBtn) plansBtn.classList.add('hidden');
-        if (planStatusBtn) planStatusBtn.classList.remove('hidden');
-    } else {
-        if (plansBtn) plansBtn.classList.remove('hidden');
-        if (planStatusBtn) planStatusBtn.classList.add('hidden');
-    }
-}
-
-async function fetchPlanStatusFromBackend() {
-    try {
-        var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
-        if (!email) {
-            currentPlanState = { planId: 'free', rawPlan: 'free', expiresAtTs: null, nowTs: null };
-            renderPlanInProfile();
-            return currentPlanState;
-        }
-        var url = apiUrl('/api/plan/status?email=' + encodeURIComponent(email));
-        var res = await fetch(url, { method: 'GET', credentials: 'include' }).catch(function () { return null; });
-        if (!res || !res.ok) {
-            console.warn('No se pudo obtener el estado del plan', res && res.status);
-            return currentPlanState;
-        }
-        var data = await res.json();
-        currentPlanState = {
-            planId: data.plan_id || 'free',
-            rawPlan: data.raw_plan || 'free',
-            expiresAtTs: data.expires_at_ts != null ? Number(data.expires_at_ts) : null,
-            nowTs: data.now_ts != null ? Number(data.now_ts) : null
-        };
-        renderPlanInProfile();
-        updatePlanButtonsUI();
-        return currentPlanState;
-    } catch (e) {
-        console.warn('Error consultando el plan actual', e);
-        return currentPlanState;
-    }
-}
-
-async function ensureFeatureAllowed(kind) {
-    // kind: 'catalog', 'print', 'download'
-    var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
-    if (!email) {
-        if (typeof showMessage === 'function') {
-            showMessage('Debes iniciar sesión con Google para usar esta función.', 'warning');
-        }
-        throw new Error('missing_email');
-    }
-
-    var endpoint;
-    if (kind === 'catalog') endpoint = '/api/usage/catalog-create';
-    else if (kind === 'print') endpoint = '/api/usage/print';
-    else if (kind === 'download') endpoint = '/api/usage/download';
-    else throw new Error('usage_kind_not_supported');
-
-    var url = apiUrl(endpoint);
-    var res;
-    try {
-        res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ email: email })
-        });
-    } catch (e) {
-        console.error('Error conectando con el backend de planes', e);
-        if (typeof showMessage === 'function') {
-            showMessage('No se pudo verificar tu plan. Intenta nuevamente en unos segundos.', 'error');
-        }
-        throw e;
-    }
-
-    var data = await res.json().catch(function () { return {}; });
-    var allowed = !!data.allowed;
-    var reason = data.reason || (allowed ? 'ok' : 'blocked');
-    var planId = data.plan_id || 'free';
-
-    currentPlanState.planId = planId;
-    currentPlanState.rawPlan = data.raw_plan || planId;
-    currentPlanState.expiresAtTs = data.expires_at_ts != null ? Number(data.expires_at_ts) : currentPlanState.expiresAtTs;
-    currentPlanState.nowTs = data.now_ts != null ? Number(data.now_ts) : currentPlanState.nowTs;
-    if (kind === 'catalog' || kind === 'print' || kind === 'download') {
-        updateUsageState(kind, data);
-        renderUsageInPlanModal();
-        updatePlanButtonsUI();
-    }
-    renderPlanInProfile();
-
-    if (!allowed) {
-        openPlansModal(kind, reason);
-        throw new Error('feature_not_allowed_' + kind);
-    }
-
-    return data;
-}
-
-async function fetchUsageStatusFromBackend() {
-    try {
-        var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
-        if (!email) return currentUsageState;
-        var url = apiUrl('/api/usage/status?email=' + encodeURIComponent(email));
-        var res = await fetch(url, { method: 'GET', credentials: 'include' }).catch(function () { return null; });
-        if (!res || !res.ok) {
-            console.warn('No se pudo obtener el estado de usos', res && res.status);
-            return currentUsageState;
-        }
-        var data = await res.json();
-        if (data.plan_id) {
-            currentPlanState.planId = data.plan_id || 'free';
-            currentPlanState.rawPlan = data.raw_plan || currentPlanState.planId;
-            currentPlanState.expiresAtTs = data.expires_at_ts != null ? Number(data.expires_at_ts) : currentPlanState.expiresAtTs;
-            currentPlanState.nowTs = data.now_ts != null ? Number(data.now_ts) : currentPlanState.nowTs;
-        }
-        if (data.usage) {
-            if (data.usage.catalog) updateUsageState('catalog', data.usage.catalog);
-            if (data.usage.print) updateUsageState('print', data.usage.print);
-            if (data.usage.download) updateUsageState('download', data.usage.download);
-        }
-        renderPlanInProfile();
-        renderUsageInPlanModal();
-        updatePlanButtonsUI();
-        return currentUsageState;
-    } catch (e) {
-        console.warn('Error consultando el uso actual', e);
-        return currentUsageState;
-    }
-}
-
-function openPlansModal(kind, reason) {
-    var modal = document.getElementById('plansModal');
-    if (!modal) return;
-    modal.classList.remove('hidden');
-    modal.setAttribute('aria-hidden', 'false');
-}
-
-function closePlansModal() {
-    var modal = document.getElementById('plansModal');
-    if (!modal) return;
-    modal.classList.add('hidden');
-    modal.setAttribute('aria-hidden', 'true');
-}
-
-// --- Integración Stripe Elements: pago embebido en modal ---
-var __stripeInstance = null;
-var __stripeElements = null;
-var __stripePaymentElement = null;
-var __stripeClientSecret = null;
-var __paymentModalInitialized = false;
-var __paymentModalEl = null;
-var __paymentErrorEl = null;
-var __paymentConfirmBtn = null;
-var __payerModalEl = null;
-var __payerNameInput = null;
-var __payerEmailInput = null;
-var __payerErrorEl = null;
-var __payerContinueBtn = null;
-var __payerModalInitialized = false;
-
-function openPayerInfoModal() {
-    if (!__payerModalInitialized) {
-        __payerModalEl = document.getElementById('payerInfoModal');
-        __payerNameInput = document.getElementById('payerNameInput');
-        __payerEmailInput = document.getElementById('payerEmailInput');
-        __payerErrorEl = document.getElementById('payerInfoError');
-        __payerContinueBtn = document.getElementById('payerInfoContinue');
-        var closePayerBtn = document.getElementById('payerInfoClose');
-        if (closePayerBtn && __payerModalEl) {
-            closePayerBtn.addEventListener('click', function () { closePayerInfoModal(); });
-        }
-        if (__payerModalEl) {
-            __payerModalEl.addEventListener('click', function (e) { if (e.target === __payerModalEl) closePayerInfoModal(); });
-        }
-        if (__payerContinueBtn) {
-            __payerContinueBtn.addEventListener('click', async function () {
-                if (!__payerContinueBtn || __payerContinueBtn.disabled) return;
-                var name = __payerNameInput && __payerNameInput.value ? __payerNameInput.value.trim() : '';
-                var email = __payerEmailInput && __payerEmailInput.value ? __payerEmailInput.value.trim() : '';
-                if (!email) {
-                    if (__payerErrorEl) __payerErrorEl.textContent = 'Escribe el correo de la persona que realizará el pago.';
-                    return;
-                }
-                if (__payerErrorEl) __payerErrorEl.textContent = '';
-                var originalText = __payerContinueBtn.textContent;
-                __payerContinueBtn.disabled = true;
-                __payerContinueBtn.textContent = 'Cargando...';
-                try {
-                    await startPlanCheckout('Plan_xunu', email, name);
-                    closePayerInfoModal();
-                } finally {
-                    __payerContinueBtn.disabled = false;
-                    __payerContinueBtn.textContent = originalText;
-                }
-            });
-        }
-        __payerModalInitialized = true;
-    }
-    if (!__payerModalEl) return;
-    if (__payerErrorEl) __payerErrorEl.textContent = '';
-    if (__payerNameInput && typeof getCurrentUserFullName === 'function') {
-        var n = getCurrentUserFullName();
-        if (n && !__payerNameInput.value) __payerNameInput.value = n;
-    }
-    if (__payerEmailInput && typeof getCurrentUserEmail === 'function') {
-        var e = getCurrentUserEmail();
-        if (e && !__payerEmailInput.value) __payerEmailInput.value = e;
-    }
-    __payerModalEl.classList.remove('hidden');
-    __payerModalEl.setAttribute('aria-hidden', 'false');
-}
-
-function closePayerInfoModal() {
-    if (!__payerModalEl) return;
-    __payerModalEl.classList.add('hidden');
-    __payerModalEl.setAttribute('aria-hidden', 'true');
-}
-
-function openPaymentModal() {
-    if (!__paymentModalInitialized) {
-        __paymentModalEl = document.getElementById('paymentModal');
-        __paymentErrorEl = document.getElementById('paymentError');
-        __paymentConfirmBtn = document.getElementById('paymentConfirmButton');
-        var closeBtn = document.getElementById('paymentModalClose');
-        if (closeBtn && __paymentModalEl) {
-            closeBtn.addEventListener('click', function () { closePaymentModal(); });
-        }
-        if (__paymentModalEl) {
-            __paymentModalEl.addEventListener('click', function (e) { if (e.target === __paymentModalEl) closePaymentModal(); });
-        }
-        if (__paymentConfirmBtn) {
-            __paymentConfirmBtn.addEventListener('click', handleConfirmPaymentClick);
-        }
-        __paymentModalInitialized = true;
-    }
-    if (!__paymentModalEl) return;
-    __paymentModalEl.classList.remove('hidden');
-    __paymentModalEl.setAttribute('aria-hidden', 'false');
-}
-
-function closePaymentModal() {
-    if (!__paymentModalEl) return;
-    __paymentModalEl.classList.add('hidden');
-    __paymentModalEl.setAttribute('aria-hidden', 'true');
-}
-
-async function setupStripeElements(clientSecret, publishableKey) {
-    if (typeof Stripe === 'undefined') {
-        if (typeof showMessage === 'function') {
-            showMessage('Stripe no está disponible en esta página.', 'error');
-        }
-        return false;
-    }
-    if (!__stripeInstance || !__stripeInstance.__pk || __stripeInstance.__pk !== publishableKey) {
-        __stripeInstance = Stripe(publishableKey);
-        __stripeInstance.__pk = publishableKey;
-    }
-    var container = document.getElementById('payment-element');
-    if (!container) return false;
-    container.innerHTML = '';
-    __stripeClientSecret = clientSecret;
-    __stripeElements = __stripeInstance.elements({ clientSecret: clientSecret, appearance: { theme: 'stripe' } });
-    // Usar Payment Element en modo "tabs" para una experiencia más clara,
-    // donde Stripe mostrará primero tarjetas guardadas (si existen) y debajo
-    // la opción de agregar una nueva forma de pago.
-    __stripePaymentElement = __stripeElements.create('payment', { layout: 'tabs' });
-    __stripePaymentElement.mount(container);
-    if (__paymentErrorEl) __paymentErrorEl.textContent = '';
-    return true;
-}
-
-async function handleConfirmPaymentClick() {
-    if (!__stripeInstance || !__stripeElements) return;
-    if (!__paymentConfirmBtn) return;
-    if (__paymentConfirmBtn.disabled) return;
-    var originalText = __paymentConfirmBtn.textContent;
-    __paymentConfirmBtn.disabled = true;
-    __paymentConfirmBtn.textContent = 'Procesando...';
-    if (__paymentErrorEl) __paymentErrorEl.textContent = '';
-    var result;
-    try {
-        result = await __stripeInstance.confirmPayment({
-            elements: __stripeElements,
-            confirmParams: { return_url: window.location.href },
-            redirect: 'if_required'
-        });
-    } catch (e) {
-        console.error('Error al confirmar el pago', e);
-        if (typeof showMessage === 'function') {
-            showMessage('No se pudo procesar el pago.', 'error');
-        }
-        __paymentConfirmBtn.disabled = false;
-        __paymentConfirmBtn.textContent = originalText;
-        return;
-    }
-    __paymentConfirmBtn.disabled = false;
-    __paymentConfirmBtn.textContent = originalText;
-    if (result && result.error) {
-        console.warn('Error de Stripe al pagar', result.error);
-        if (__paymentErrorEl) {
-            __paymentErrorEl.textContent = result.error.message || 'No se pudo completar el pago.';
-        }
-        return;
-    }
-    if (result && result.paymentIntent && result.paymentIntent.status === 'succeeded') {
-        if (typeof showMessage === 'function') {
-            showMessage('Pago realizado correctamente. Activando tu plan...', 'success', 6000);
-        }
-        try {
-            // Sabemos que este flujo solo vende el plan de 49 MXN (Plan_xunu)
-            if (typeof currentPlanState !== 'undefined' && currentPlanState) {
-                currentPlanState.planId = 'Plan_xunu';
-                currentPlanState.rawPlan = 'Plan_xunu';
-                if (typeof renderPlanInProfile === 'function') {
-                    renderPlanInProfile();
-                }
-            }
-            // Notificar al backend para activar el plan también en la base de datos
-            try {
-                var sessionEmail = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
-                var sessionName = (typeof getCurrentUserFullName === 'function') ? getCurrentUserFullName() : '';
-                if (sessionEmail) {
-                    var activateUrl = apiUrl('/api/plan/activate-client');
-                    await fetch(activateUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({ email: sessionEmail, name: sessionName, plan_id: 'Plan_xunu' })
-                    }).catch(function (e) { console.warn('No se pudo activar el plan en backend', e); });
-                }
-            } catch (e) {
-                console.warn('Error activando plan en backend tras pago', e);
-            }
-            // Intentar guardar el nuevo estado también en Drive, sin molestar al usuario si falla
-            if (typeof ensureSaveToDrive === 'function') {
-                ensureSaveToDrive({ interactive: false, showSuccess: false, silent: true });
-            }
-        } catch (e) { }
-        closePaymentModal();
-        if (typeof fetchPlanStatusFromBackend === 'function') {
-            setTimeout(function () { fetchPlanStatusFromBackend(); }, 2500);
-        }
-        if (typeof fetchUsageStatusFromBackend === 'function') {
-            setTimeout(function () { fetchUsageStatusFromBackend(); }, 3000);
-        }
-    }
-}
-
-async function startPlanCheckout(planId, emailOverride, nameOverride) {
-    var sessionEmail = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
-    if (!sessionEmail) {
-        if (typeof showMessage === 'function') {
-            showMessage('Debes iniciar sesión con Google antes de comprar un plan.', 'warning');
-        }
-        try {
-            if (typeof requestGoogleSignIn === 'function') {
-                requestGoogleSignIn();
-            }
-        } catch (e) { }
-        return;
-    }
-    var email = emailOverride || sessionEmail;
-    var name = nameOverride || ((typeof getCurrentUserFullName === 'function') ? getCurrentUserFullName() : '');
-
-    var url = apiUrl('/api/payment/create-intent');
-    var res;
-    try {
-        res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ plan_id: planId, email: email, name: name })
-        });
-    } catch (e) {
-        console.error('Error al crear sesión de pago', e);
-        if (typeof showMessage === 'function') {
-            showMessage('No se pudo iniciar el pago. Revisa tu conexión.', 'error');
-        }
-        return;
-    }
-
-    var data = await res.json().catch(function () { return {}; });
-    if (!res.ok || !data.clientSecret || !data.publishableKey) {
-        var msg = data.error || 'No se pudo iniciar el pago. Inténtalo más tarde.';
-        if (typeof showMessage === 'function') {
-            showMessage(msg, 'error');
-        }
-        return;
-    }
-
-    var ok = await setupStripeElements(data.clientSecret, data.publishableKey);
-    if (!ok) return;
-    openPaymentModal();
-}
-
-// Sobrescribir printSchedule para aplicar límite de impresión
-if (typeof printSchedule === 'function') {
-    var __originalPrintSchedule = printSchedule;
-    printSchedule = async function () {
-        try {
-            await ensureFeatureAllowed('print');
-        } catch (e) {
-            return;
-        }
-        __originalPrintSchedule();
-    };
-}
-
-// Envolver onProfileLoaded para refrescar plan al iniciar sesión
-if (typeof onProfileLoaded === 'function') {
-    var __originalOnProfileLoaded = onProfileLoaded;
-    onProfileLoaded = function () {
-        try {
-            __originalOnProfileLoaded.apply(this, arguments);
-        } catch (e) { }
-        try {
-            fetchPlanStatusFromBackend();
-        } catch (e) { }
-        try {
-            fetchUsageStatusFromBackend();
-        } catch (e) { }
-    };
-}
-
-// Interceptar clicks en descarga, impresión y creación de materias
-document.addEventListener('DOMContentLoaded', function () {
-        var plansModal = document.getElementById('plansModal');
-        var plansClose = document.getElementById('plansModalClose');
-        var pmOpenPlans = document.getElementById('pmOpenPlans');
-        var pmPlanPill = document.querySelector('.pm-plan-row');
-        var planProCheckoutBtn = document.getElementById('planProCheckout');
-        var planStatusButton = document.getElementById('planStatusButton');
-        var planStatusModal = document.getElementById('planStatusModal');
-        var planStatusClose = document.getElementById('planStatusClose');
-
-        if (pmOpenPlans) {
-            pmOpenPlans.addEventListener('click', function () {
-                var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
-                if (!email) {
-                    if (typeof showMessage === 'function') {
-                        showMessage('Debes iniciar sesión con Google para ver los planes.', 'warning');
-                    }
-                    // Mostrar el modal de login (authGate) en lugar del flujo antiguo
-                    try {
-                        lockInterface('Debes iniciar sesión para ver los planes.');
-                    } catch (e) {
-                        console.warn('No se pudo mostrar el modal de login desde pmOpenPlans', e);
-                    }
-                    return;
-                }
-                openPlansModal();
-            });
-        }
-        if (pmPlanPill) {
-            pmPlanPill.addEventListener('click', function () {
-                // Cerrar el modal de perfil si está abierto
-                var profileModal = document.getElementById('profileModal');
-                if (profileModal && !profileModal.classList.contains('hidden')) {
-                    profileModal.classList.add('hidden');
-                    profileModal.setAttribute('aria-hidden', 'true');
-                }
-                var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
-                if (!email) {
-                    if (typeof showMessage === 'function') {
-                        showMessage('Debes iniciar sesión con Google para ver los planes.', 'warning');
-                    }
-                    // Mostrar el modal de login (authGate) en lugar del flujo antiguo
-                    try {
-                        lockInterface('Debes iniciar sesión para ver los planes.');
-                    } catch (e) {
-                        console.warn('No se pudo mostrar el modal de login desde pmPlanPill', e);
-                    }
-                    return;
-                }
-                if (currentPlanState && currentPlanState.planId && currentPlanState.planId !== 'free') {
-                    renderUsageInPlanModal();
-                    if (planStatusModal) {
-                        planStatusModal.classList.remove('hidden');
-                        planStatusModal.setAttribute('aria-hidden', 'false');
-                    }
-                } else {
-                    openPlansModal();
-                }
-            });
-        }
-    if (plansClose && plansModal) {
-        plansClose.addEventListener('click', function () { closePlansModal(); });
-        plansModal.addEventListener('click', function (e) { if (e.target === plansModal) closePlansModal(); });
-    }
-    if (planStatusButton && planStatusModal) {
-        planStatusButton.addEventListener('click', function () {
-            var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
-            if (!email) {
-                if (typeof showMessage === 'function') {
-                    showMessage('Debes iniciar sesión con Google para ver tu plan.', 'warning');
-                }
-                // Mostrar el modal de login (authGate) en lugar del flujo antiguo
-                try {
-                    lockInterface('Debes iniciar sesión para ver tu plan.');
-                } catch (e) {
-                    console.warn('No se pudo mostrar el modal de login desde planStatusButton', e);
-                }
-                return;
-            }
-
-            renderUsageInPlanModal();
-            planStatusModal.classList.remove('hidden');
-            planStatusModal.setAttribute('aria-hidden', 'false');
-        });
-    }
-    if (planStatusClose && planStatusModal) {
-        planStatusClose.addEventListener('click', function () {
-            planStatusModal.classList.add('hidden');
-            planStatusModal.setAttribute('aria-hidden', 'true');
-        });
-        planStatusModal.addEventListener('click', function (e) { if (e.target === planStatusModal) { planStatusModal.classList.add('hidden'); planStatusModal.setAttribute('aria-hidden', 'true'); } });
-    }
-    if (planProCheckoutBtn) {
-        planProCheckoutBtn.addEventListener('click', function () {
-            openPayerInfoModal();
-        });
-    }
-
-    // Reinscription download (botón "Descargar formato")
-    var downloadBtn = document.getElementById('reinscriptionDownload');
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', async function (ev) {
-            ev = ev || window.event;
-            try {
-                await ensureFeatureAllowed('download');
-            } catch (e) {
-                if (ev.preventDefault) ev.preventDefault();
-                if (ev.stopPropagation) ev.stopPropagation();
-                return false;
-            }
-            return true;
-        });
-    }
-
-    // Botón de enviar al tutor (también descarga un PDF)
-    var sendBtn = document.getElementById('reinscriptionSendEmail');
-    if (sendBtn) {
-        sendBtn.addEventListener('click', async function (ev) {
-            ev = ev || window.event;
-            try {
-                await ensureFeatureAllowed('download');
-            } catch (e) {
-                if (ev.preventDefault) ev.preventDefault();
-                if (ev.stopPropagation) ev.stopPropagation();
-                return false;
-            }
-            return true;
-        });
-    }
-
-    // Interceptar creación de materias de catálogo (solo nuevas)
-    var saveBtn = document.getElementById('s_save');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', async function (ev) {
-            try {
-                if (typeof editingSubjectId === 'undefined' || editingSubjectId === null) {
-                    await ensureFeatureAllowed('catalog');
-                }
-            } catch (e) {
-                if (ev && ev.preventDefault) ev.preventDefault();
-                if (ev && ev.stopPropagation) ev.stopPropagation();
-                return false;
-            }
-            return true;
-        });
-    }
-});
-
-// ================== MODO GRATUITO: desactivar planes y pagos ==================
-// Este bloque sobrescribe las funciones relacionadas con planes/Stripe para que
-// todo funcione como versión gratuita sin límites ni pagos.
-
-(function setupFreeMode() {
-    try {
-        if (typeof currentPlanState === 'undefined' || !currentPlanState) {
-            window.currentPlanState = {
-                planId: 'free',
-                rawPlan: 'free',
-                expiresAtTs: null,
-                nowTs: null
-            };
-        } else {
-            currentPlanState.planId = 'free';
-            currentPlanState.rawPlan = 'free';
-            currentPlanState.expiresAtTs = null;
-            currentPlanState.nowTs = null;
-        }
-    } catch (e) { }
-})();
-
-function describePlan(planId) {
+function describePlan() {
     return 'Gratis';
 }
 
 function renderPlanInProfile() {
     var pmPlan = document.getElementById('pmPlan');
-    if (!pmPlan) return;
-    pmPlan.textContent = 'Gratis';
+    if (pmPlan) {
+        pmPlan.textContent = 'Gratis';
+    }
 }
 
-async function ensureFeatureAllowed(kind) {
-    // Antes se consultaba al backend para validar límites.
-    // Ahora siempre se permite la acción sin hacer peticiones.
+function updateUsageState(kind, payload) {
+    var map = currentUsageState[kind];
+    if (!map) return;
+    map.used = payload && payload.current_value != null ? Number(payload.current_value) : 0;
+    map.limit = payload && payload.active_limit != null ? Number(payload.active_limit) : null;
+    map.remaining = payload && payload.remaining != null ? Number(payload.remaining) : null;
+}
+
+async function ensureFeatureAllowed() {
     return { allowed: true, plan_id: 'free' };
 }
 
 async function fetchPlanStatusFromBackend() {
-    try {
-        if (typeof currentPlanState !== 'undefined' && currentPlanState) {
-            currentPlanState.planId = 'free';
-            currentPlanState.rawPlan = 'free';
-        }
-        renderPlanInProfile();
-    } catch (e) { }
-    return (typeof currentPlanState !== 'undefined')
-        ? currentPlanState
-        : { planId: 'free', rawPlan: 'free' };
+    currentPlanState.planId = 'free';
+    currentPlanState.rawPlan = 'free';
+    currentPlanState.expiresAtTs = null;
+    currentPlanState.nowTs = null;
+    renderPlanInProfile();
+    updatePlanButtonsUI();
+    return currentPlanState;
 }
 
 async function fetchUsageStatusFromBackend() {
-    // Sin límites ni métricas de uso en modo gratuito.
-    return {};
+    return currentUsageState;
+}
+
+function renderUsageInPlanModal() {
+    var planLabelEl = document.getElementById('planUsageTitleLabel');
+    if (planLabelEl) {
+        planLabelEl.textContent = 'Plan: Gratis';
+    }
 }
 
 function updatePlanButtonsUI() {
@@ -9284,29 +8554,7 @@ function updatePlanButtonsUI() {
     if (planStatusBtn) planStatusBtn.classList.add('hidden');
 }
 
-function renderUsageInPlanModal() {
-    var catalogUsedEl = document.getElementById('planUsageCatalogUsed');
-    var catalogRemEl = document.getElementById('planUsageCatalogRemaining');
-    var printUsedEl = document.getElementById('planUsagePrintUsed');
-    var printRemEl = document.getElementById('planUsagePrintRemaining');
-    var downloadUsedEl = document.getElementById('planUsageDownloadUsed');
-    var downloadRemEl = document.getElementById('planUsageDownloadRemaining');
-    var planLabelEl = document.getElementById('planUsageTitleLabel');
-
-    if (planLabelEl) planLabelEl.textContent = 'Plan: Gratis';
-
-    [catalogUsedEl, printUsedEl, downloadUsedEl].forEach(function (el) {
-        if (el) el.textContent = '0';
-    });
-    [catalogRemEl, printRemEl, downloadRemEl].forEach(function (el) {
-        if (el) el.textContent = '∞';
-    });
-}
-
 function openPlansModal() {
-    if (typeof showMessage === 'function') {
-        showMessage('Esta versión es completamente gratis; no necesitas ningún plan.', 'info', 6000);
-    }
     var modal = document.getElementById('plansModal');
     if (modal) {
         modal.classList.add('hidden');
@@ -9316,39 +8564,13 @@ function openPlansModal() {
 
 function closePlansModal() {
     var modal = document.getElementById('plansModal');
-    if (!modal) return;
-    modal.classList.add('hidden');
-    modal.setAttribute('aria-hidden', 'true');
-}
-
-function openPaymentModal() {
-    if (typeof showMessage === 'function') {
-        showMessage('Los pagos están desactivados: todo es gratis.', 'info', 6000);
-    }
-}
-
-function closePaymentModal() {
-    var modal = document.getElementById('paymentModal');
-    if (!modal) return;
-    modal.classList.add('hidden');
-    modal.setAttribute('aria-hidden', 'true');
-}
-
-async function setupStripeElements() {
-    // Stripe ya no se usa en modo gratuito.
-    return false;
-}
-
-async function handleConfirmPaymentClick() {
-    if (typeof showMessage === 'function') {
-        showMessage('Los pagos están desactivados: no es necesario pagar.', 'info', 6000);
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
     }
 }
 
 function openPayerInfoModal() {
-    if (typeof showMessage === 'function') {
-        showMessage('La app funciona en modo gratis; no se solicitará pago.', 'info', 6000);
-    }
     var modal = document.getElementById('payerInfoModal');
     if (modal) {
         modal.classList.add('hidden');
@@ -9358,30 +8580,39 @@ function openPayerInfoModal() {
 
 function closePayerInfoModal() {
     var modal = document.getElementById('payerInfoModal');
-    if (!modal) return;
-    modal.classList.add('hidden');
-    modal.setAttribute('aria-hidden', 'true');
-}
-
-async function startPlanCheckout(planId, emailOverride, nameOverride) {
-    if (typeof showMessage === 'function') {
-        showMessage('No se requiere pago: tu plan es gratis.', 'info', 6000);
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
     }
 }
 
+function openPaymentModal() {
+    var modal = document.getElementById('paymentModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+}
 
-(function () {
-  const estiloTitulo = "color:red;font-size:40px;font-weight:bold;";
-  const estiloTexto = "font-size:16px;color:black;";
+function closePaymentModal() {
+    var modal = document.getElementById('paymentModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+}
 
-  console.log("%c¡Detente!", estiloTitulo);
-  console.log(
-    "Si alguien te dijo que pegaras algo aquí para hackear o robar cualquier información,\n" +
-    "es un fraude. Si lo haces, XuNnito podrá robar tu información.\n" +
-    "Mampo,\n",
-    estiloTexto
-  );
-})();
+async function setupStripeElements() {
+    return false;
+}
+
+async function handleConfirmPaymentClick() {
+    return;
+}
+
+async function startPlanCheckout() {
+    return;
+}
 
 
 

@@ -313,7 +313,26 @@ button:hover {
     display: none;
 }
 
-.subject-card:hover .remove-from-schedule {
+.edit-from-schedule {
+    position: absolute;
+    top: 2px;
+    right: 20px;
+    width: 16px;
+    height: 16px;
+    background-color: rgba(255, 193, 7, 0.78);
+    color: rgb(0, 0, 0);
+    border: none;
+    border-radius: 50%;
+    font-size: 11px;
+    line-height: 16px;
+    text-align: center;
+    cursor: pointer;
+    display: none;
+    padding: 0;
+}
+
+.subject-card:hover .remove-from-schedule,
+.subject-card:hover .edit-from-schedule {
     display: block;
 }
 
