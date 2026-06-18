@@ -620,6 +620,7 @@ def index():
 		"""Sirve la página principal y registra una visita anónima."""
 		#_insert_visit(event_type="page_view", name=None, email=None, path=request.path)
 		# Envía el archivo index.html existente
+		#reordar q se actuva
 		return app.send_static_file("index.html")
 
 
