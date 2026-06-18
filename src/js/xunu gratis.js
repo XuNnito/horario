@@ -3802,7 +3802,7 @@ function showScheduleDropPreviewForSubject(subject) {
                         const rawGroupLabel = subject.group ? String(subject.group) : '';
                         const groupLabel = rawGroupLabel.trim().toLowerCase();
 
-                        if (groupLabel === '7a') {
+                        if (groupLabel === '8a') {
                             previewCard.classList.add('group-8A');
                         } else if (groupLabel.includes('convalid')) {
                             previewCard.classList.add('group-convalidacion');
@@ -5761,7 +5761,7 @@ function updateScheduleView() {
                     subjectCard.className = `subject-card ${hasConflict ? 'conflict' : ''}`;
 
                     // Aplicar colores según tipo de grupo
-                    if (groupLabel === '7a') {
+                    if (groupLabel === '8a') {
                         subjectCard.classList.add('group-8A');
                     } else if (groupLabel.includes('convalid')) {
                         subjectCard.classList.add('group-convalidacion');
@@ -6019,7 +6019,7 @@ let scheduleHasSaturday = false; // para mostrar loader sólo la primera vez que
 function getCurrentSlotGroupClass() {
     const raw = m_inputGrupo && m_inputGrupo.value ? m_inputGrupo.value.trim().toLowerCase() : '';
     if (!raw) return 'slot-otro';
-    if (raw === '7a') return 'slot-ordinario';
+    if (raw === '8a') return 'slot-ordinario';
     if (raw.includes('convalid')) return 'slot-convalidacion';
     if (raw.includes('especial')) return 'slot-especial';
     return 'slot-otro';
@@ -8352,7 +8352,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (code.toLowerCase() === 'xunito') {
             showInviteMessage('Código válido, espere un momento...', false);
             setTimeout(function () {
-                window.location.href = 'http://127.0.0.1:5500xunito';
+                window.location.href = 'http://127.0.0.1:5500/xunito';
             }, 900);
         } else {
             showInviteMessage('Código no válido. Verifica tu invitación.', true);

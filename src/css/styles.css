@@ -2080,7 +2080,7 @@ body.theme-dark .career-option.is-selected {
 
 .career-create__hint {
     font-size: 0.85rem;
-    color: #56627a;
+    color: #56628A;
     margin: 4px 0 18px;
 }
 
@@ -2897,7 +2897,7 @@ a img {
         radial-gradient(circle at 10% 20%, #e23e3eda 0, #ac0000da 18%, transparent 40%),
         radial-gradient(circle at 80% 15%, #7c0404 0, #930202 20%, transparent 42%),
         radial-gradient(circle at 20% 80%, #000000 0, #ff0000 22%, transparent 45%),
-        radial-gradient(circle at 75% 75%, #963e3e 0, #7a4141 20%, transparent 40%),
+        radial-gradient(circle at 75% 75%, #963e3e 0, #8A4141 20%, transparent 40%),
         radial-gradient(circle at 50% 45%, #d11d1d 0, #d11d1d 18%, transparent 38%),
         radial-gradient(circle at 35% 30%, #383838 0, #ff9ff3 16%, transparent 36%),
         radial-gradient(circle at 60% 60%, #fb4848 0, #48dbfb 18%, transparent 40%),
