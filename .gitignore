@@ -22,3 +22,5 @@ css/styles.css
 css/styles copy.css
 security_logs.db
 xunito/applocal.js
+.vercel
+.env*

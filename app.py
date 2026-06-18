@@ -618,7 +618,7 @@ def _calculate_effective_plan(row: sqlite3.Row | None) -> tuple[str, str, int | 
 @app.route("/")
 def index():
 		"""Sirve la página principal y registra una visita anónima."""
-		_insert_visit(event_type="page_view", name=None, email=None, path=request.path)
+		#_insert_visit(event_type="page_view", name=None, email=None, path=request.path)
 		# Envía el archivo index.html existente
 		return app.send_static_file("index.html")
 

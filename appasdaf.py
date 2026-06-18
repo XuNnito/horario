@@ -16,4 +16,5 @@ data += b"\x00" * 100_000
 with open(salida, "wb") as f:
     f.write(data)
 
+
 print("PDF corrupto creado:", salida)
