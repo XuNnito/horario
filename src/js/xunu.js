@@ -8372,7 +8372,7 @@ document.addEventListener('DOMContentLoaded', function () {
        (function () {
             var link = document.getElementById('whatsappSupportLink');
             if (!link) return;
-            var base = 'https://wa.me/5219601151824?text=';
+            var base = 'https://wa.me/5219612738932?text=';
             
             var msg = window.location.href + '\nHola, tengo un problema con mi horario en la página Horarios Bio';
             link.href = base + encodeURIComponent(msg);
