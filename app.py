@@ -48,8 +48,9 @@ STRIPE_WEBHOOK_SECRET = (os.environ.get("STRIPE_WEBHOOK_SECRET") or "").strip()
 # Código que concede acceso completo temporal. En producción se recomienda
 # definir INVITATION_CODE en Vercel; se conserva "xunito" por compatibilidad.
 INVITATION_CODE = (os.environ.get("INVITATION_CODE") or "xunito").strip()
+# Se mantiene este identificador interno para no romper invitaciones ya guardadas.
 INVITATION_PLAN_ID = "invite_72h"
-INVITATION_DURATION_SECONDS = 72 * 60 * 60
+INVITATION_DURATION_SECONDS = 24 * 60 * 60
 
 # Planes disponibles en la app (ids lógicos internos)
 # En este proyecto usamos un único plan de pago basado en usos:
@@ -2084,7 +2085,7 @@ def actualizar_estado_usuario():
 
 @app.post("/api/invitation/redeem")
 def api_invitation_redeem():
-		"""Canjea una invitación una sola vez y concede 72 horas sin límites."""
+		"""Canjea una invitación una sola vez y concede 24 horas sin límites."""
 
 		data = request.get_json(silent=True) or {}
 		code = str(data.get("code") or "").strip()
@@ -2139,13 +2140,13 @@ def api_invitation_redeem():
 				"plan_id": INVITATION_PLAN_ID,
 				"expires_at_ts": expires_ts,
 				"now_ts": now_ts,
-				"message": "Código activado. Tienes acceso completo gratis durante 72 horas.",
+				"message": "Código activado. Tienes acceso completo gratis durante 24 horas.",
 		})
 
 
 @app.get("/invitaciones")
 def invitaciones_admin():
-		"""Panel de cuentas que canjearon el acceso gratuito de 72 horas."""
+		"""Panel de cuentas que canjearon el acceso gratuito de 24 horas."""
 
 		_require_admin()
 		conn = get_db_connection()
@@ -2182,13 +2183,13 @@ def invitaciones_admin():
 				})
 
 		return render_template_string("""<!doctype html><html lang="es"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>Accesos gratuitos de 72 horas</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Accesos gratuitos de 24 horas</title>
 <style>body{font-family:system-ui,sans-serif;background:#020617;color:#e5e7eb;padding:20px}a{color:#93c5fd}table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px solid #1f2937;text-align:left}.badge{padding:3px 8px;border-radius:999px;font-size:12px}.active{background:#14532d;color:#bbf7d0}.expired{background:#3f3f46;color:#d4d4d8}.cancelled{background:#7f1d1d;color:#fecaca}form{display:inline}button{border:0;border-radius:8px;padding:6px 10px;cursor:pointer;margin:2px}.activate{background:#22c55e}.cancel{background:#ef4444;color:white}</style></head><body>
-<p><a href="/panel">← Volver al panel</a></p><h1>Accesos gratuitos de 72 horas</h1>
+<p><a href="/panel">← Volver al panel</a></p><h1>Accesos gratuitos de 24 horas</h1>
 <p>Aquí aparecen todas las cuentas que utilizaron el código, incluso si su acceso venció o fue cancelado.</p>
 <table><thead><tr><th>Correo</th><th>Nombre</th><th>Activado</th><th>Vence</th><th>Estado</th><th>Control</th></tr></thead><tbody>
 {% for u in invitees %}<tr><td>{{ u.email }}</td><td>{{ u.name or '-' }}</td><td>{{ u.redeemed_at }}</td><td>{{ u.expires_at }}</td><td><span class="badge {{ u.status }}">{{ u.status }}</span></td><td>
-<form method="post" action="/invitaciones/estado"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="email" value="{{ u.email }}"><input type="hidden" name="action" value="activate"><button class="activate">Activar 72 h</button></form>
+<form method="post" action="/invitaciones/estado"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="email" value="{{ u.email }}"><input type="hidden" name="action" value="activate"><button class="activate">Activar 24 h</button></form>
 <form method="post" action="/invitaciones/estado" onsubmit="return confirm('¿Cancelar este acceso gratuito?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="email" value="{{ u.email }}"><input type="hidden" name="action" value="cancel"><button class="cancel">Cancelar</button></form>
 </td></tr>{% else %}<tr><td colspan="6">Nadie ha utilizado todavía el código.</td></tr>{% endfor %}</tbody></table></body></html>""", invitees=invitees, csrf_token=session.get("admin_csrf") or "")
 

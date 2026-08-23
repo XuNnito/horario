@@ -49,7 +49,8 @@
             }
 
             submitBtn.disabled = true;
-            showInviteMessage('Verificando tu código...', false);
+            showInviteMessage('Activando...', false);
+            if (typeof showLoader === 'function') showLoader('Activando...');
             try {
                 var response = await fetch(apiUrl('/api/invitation/redeem'), {
                     method: 'POST',
@@ -77,6 +78,7 @@
                 console.error('No se pudo canjear la invitación', error);
                 showInviteMessage('No se pudo conectar con el servidor. Intenta nuevamente.', true);
             } finally {
+                if (typeof hideLoader === 'function') hideLoader();
                 submitBtn.disabled = false;
             }
         }

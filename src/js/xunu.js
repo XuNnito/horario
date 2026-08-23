@@ -9521,7 +9521,7 @@ var currentUsageState = {
 
 function describePlan(planId) {
     if (!planId || planId === 'free') return 'Gratis';
-    if (planId === 'invite_72h') return 'Acceso gratuito 72 horas';
+    if (planId === 'invite_72h') return 'Acceso gratuito 24 horas';
     // "Plan_xunu" es nuestro plan de 49.99 MXN basado en usos
     return 'Plan $49.99 MXN';
 }

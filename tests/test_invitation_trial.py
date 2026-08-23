@@ -37,12 +37,12 @@ class InvitationTrialTests(unittest.TestCase):
             os.environ["ADMIN_TOKEN"] = self.original_admin_token
         self.temp_dir.cleanup()
 
-    def test_redeem_is_unlimited_for_72_hours_and_cannot_be_reused(self):
+    def test_redeem_is_unlimited_for_24_hours_and_cannot_be_reused(self):
         response = self.client.post("/api/invitation/redeem", json={"code": "xunito"})
         self.assertEqual(response.status_code, 200)
         payload = response.get_json()
         self.assertEqual(payload["plan_id"], "invite_72h")
-        self.assertEqual(payload["expires_at_ts"] - payload["now_ts"], 72 * 60 * 60)
+        self.assertEqual(payload["expires_at_ts"] - payload["now_ts"], 24 * 60 * 60)
 
         usage = self.client.post("/api/usage/print", json={"email": "prueba@example.com"})
         self.assertEqual(usage.status_code, 200)
