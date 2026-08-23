@@ -859,8 +859,10 @@
 <script src="https://apis.google.com/js/api.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
 <script>
-    // En Vercel, frontend y API se sirven desde el mismo dominio.
-    window.BACKEND_BASE_URL = window.location.origin;
+    // GitHub Pages solo sirve el frontend; Flask vive en Vercel.
+    window.BACKEND_BASE_URL = window.location.hostname === "xunnito.github.io"
+        ? "https://horario-sigma-nine.vercel.app"
+        : window.location.origin;
 </script>
 
 </html>

@@ -3,6 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+      // Las rutas administrativas no existen en GitHub Pages: pertenecen a Flask.
+      if (window.location.hostname === "xunnito.github.io") {
+        const adminPaths = [
+          "/historial",
+          "/login_resumen",
+          "/usuarios",
+          "/ips",
+          "/panel",
+          "/admin/login"
+        ];
+        const path = window.location.pathname.replace(/\/$/, "") || "/";
+        const matchedPath = adminPaths.find((item) => path === item || path === `/horario${item}`);
+        if (matchedPath) {
+          window.location.replace("https://horario-sigma-nine.vercel.app/admin/login");
+        }
+      }
+    </script>
     
     <title>404</title>
     

@@ -1,6 +1,13 @@
 <!doctype html>
 <html lang="es">
 <head>
+  <script>
+    // panel.html también queda publicado como archivo estático en GitHub Pages.
+    // El panel real debe abrirse en Flask para conservar la sesión administrativa.
+    if (window.location.hostname === "xunnito.github.io") {
+      window.location.replace("https://horario-sigma-nine.vercel.app/admin/login");
+    }
+  </script>
   <meta charset="utf-8">
   <title>Panel de control - Horarios Bio</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
