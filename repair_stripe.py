@@ -76,8 +76,8 @@ def api_create_payment_intent():
 	if not email:
 		return jsonify({"error": "Debes iniciar sesión antes de comprar un plan."}), 401
 
-	# Monto fijo para el plan Plan_xunu: 49 MXN
-	amount = 4900  # en centavos de MXN
+	# Monto fijo para el plan Plan_xunu: 49.99 MXN
+	amount = 4999  # en centavos de MXN
 
 	# Intentar asociar un Customer para que Stripe pueda recordar métodos de pago
 	customer_id = _get_or_create_stripe_customer(email=email, name=name)
@@ -90,7 +90,7 @@ def api_create_payment_intent():
 					"email": email,
 					"name": name or "",
 			},
-			"description": "Plan Horarios Bio 49 MXN (10 usos)",
+			"description": "Plan Horarios Bio 49.99 MXN (10 usos)",
 			# Habilita métodos automáticos (tarjeta y otros compatibles en MX)
 			"automatic_payment_methods": {"enabled": True},
 	}

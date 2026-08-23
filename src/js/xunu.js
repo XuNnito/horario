@@ -9548,7 +9548,7 @@ if (typeof document !== 'undefined') {
     });
 }
 
-// ================== INTEGRACIÓN PLANES (GRATIS / 49 MXN) ==================
+// ================== INTEGRACIÓN PLANES (GRATIS / 49.99 MXN) ==================
 
 // URL base del backend. Si el frontend está en otro dominio, define
 // window.BACKEND_BASE_URL en index.html (por ejemplo, "https://tu-backend.com").
@@ -9605,15 +9605,15 @@ var currentUsageState = {
 
 function describePlan(planId) {
     if (!planId || planId === 'free') return 'Gratis';
-    // "Plan_xunu" es nuestro plan de 49 MXN basado en usos
-    return 'Plan 49 MXN';
+    // "Plan_xunu" es nuestro plan de 49.99 MXN basado en usos
+    return 'Plan $49.99 MXN';
 }
 
 function renderPlanInProfile() {
     var pmPlan = document.getElementById('pmPlan');
     if (!pmPlan) return;
     var label = describePlan(currentPlanState.planId);
-    // El plan de 49 MXN ya no expira por días, solo por límites de uso.
+    // El plan de 49.99 MXN ya no expira por días, solo por límites de uso.
     pmPlan.textContent = label;
 }
 
@@ -9954,7 +9954,7 @@ async function handleConfirmPaymentClick() {
             showMessage('Pago realizado correctamente. Activando tu plan...', 'success', 6000);
         }
         try {
-            // Sabemos que este flujo solo vende el plan de 49 MXN (Plan_xunu)
+            // Sabemos que este flujo solo vende el plan de 49.99 MXN (Plan_xunu)
             if (typeof currentPlanState !== 'undefined' && currentPlanState) {
                 currentPlanState.planId = 'Plan_xunu';
                 currentPlanState.rawPlan = 'Plan_xunu';

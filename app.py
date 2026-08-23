@@ -47,13 +47,13 @@ STRIPE_WEBHOOK_SECRET = (os.environ.get("STRIPE_WEBHOOK_SECRET") or "").strip()
 
 # Planes disponibles en la app (ids lógicos internos)
 # En este proyecto usamos un único plan de pago basado en usos:
-#   Plan_xunu -> 49 MXN, sin fecha de expiración (se limita por número de usos).
+#   Plan_xunu -> 49.99 MXN, sin fecha de expiración (se limita por número de usos).
 PLAN_DURATIONS_DAYS = {
 		"Plan_xunu": None,
 }
 
 # Ids de precios de Stripe (rellenar con tu price_xxx real)
-# "Plan_xunu" será el plan de 49 MXN, sin renovación automática.
+# "Plan_xunu" será el plan de 49.99 MXN, sin renovación automática.
 STRIPE_PRICE_IDS = {
 		"Plan_xunu": os.environ.get("STRIPE_PRICE_Plan_xunu"),
 }
@@ -2313,8 +2313,8 @@ def api_create_payment_intent():
 	if not email:
 		return jsonify({"error": "Debes iniciar sesión antes de comprar un plan."}), 401
 
-	# Monto fijo para el plan Plan_xunu: 49 MXN
-	amount = 4900  # en centavos de MXN
+	# Monto fijo para el plan Plan_xunu: 49.99 MXN
+	amount = 4999  # en centavos de MXN
 
 	# Intentar asociar un Customer para que Stripe pueda recordar métodos de pago
 	customer_id = _get_or_create_stripe_customer(email=email, name=name)
@@ -2327,7 +2327,7 @@ def api_create_payment_intent():
 					"email": email,
 					"name": name or "",
 			},
-			"description": "Plan Horarios Bio 49 MXN (10 usos)",
+			"description": "Plan Horarios Bio 49.99 MXN (10 usos)",
 			# Habilita métodos automáticos (tarjeta y otros compatibles en MX)
 			"automatic_payment_methods": {"enabled": True},
 	}
