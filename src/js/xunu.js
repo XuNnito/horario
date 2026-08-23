@@ -1,3 +1,13 @@
+// Si venimos de una eliminación, limpiar antes de que cualquier inicializador
+// pueda restaurar datos desde localStorage.
+try {
+    if (new URLSearchParams(window.location.search).has('account_deleted')) {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.__accountDeletionReset = true;
+    }
+} catch (error) { }
+
 (function () {
     const profileCircle = document.getElementById('googleProfileCircle');
     const modal = document.getElementById('profileModal');
@@ -53,6 +63,7 @@
             pmEmail.textContent = email || 'Sin correo';
         }
         pmDate.textContent = formatDate(new Date());
+        updateStudyGroupProfileUI();
         modal.classList.remove('hidden');
         modal.setAttribute('aria-hidden', 'false');
         // focus for keyboard users
@@ -147,6 +158,26 @@
             }
 
             showLoader('Eliminando tu cuenta...');
+
+            // La intención ya fue confirmada: limpiar inmediatamente la vista y
+            // detener cualquier proceso capaz de restaurar el horario.
+            try {
+                if (window.__driveAutoSyncIntervalId) {
+                    clearInterval(window.__driveAutoSyncIntervalId);
+                    window.__driveAutoSyncIntervalId = null;
+                }
+                clearLocalScheduleAndCatalogOnSignOut();
+                selectedSubjects = [];
+                selectedSlots = new Set();
+                localStorage.clear();
+                sessionStorage.clear();
+                updateScheduleView();
+                updateSelectedSubjectsList();
+                updateCatalogSubjects();
+            } catch (error) {
+                console.warn('No se pudo completar la limpieza inmediata', error);
+            }
+
             try {
                 const url = (typeof apiUrl === 'function') ? apiUrl('/api/account/delete') : '/api/account/delete';
                 const resp = await fetch(url, {
@@ -171,14 +202,40 @@
                     console.warn('No se pudo limpiar todos los datos locales tras eliminar la cuenta', e);
                 }
 
-                // Cerrar sesión de Google en el cliente sin volver a notificar al backend
+                // Reiniciar directamente el estado. El cierre normal puede intentar
+                // volver a sincronizar el horario que acabamos de eliminar.
                 try {
-                    await signOutGoogle({ skipLoader: true, loaderMessage: 'Cerrando sesión...' });
+                    selectedSubjects = [];
+                    selectedSlots = new Set();
+                    customCareerOptions = [];
+                    catalogBrowseGroup = null;
+                    showAllCatalogSubjects = false;
+                    gAccessToken = null;
+                    gUserProfile = null;
+                    window.__googleProfile = null;
+                    driveLastRemoteModifiedTime = null;
+                    if (window.__driveAutoSyncIntervalId) {
+                        clearInterval(window.__driveAutoSyncIntervalId);
+                        window.__driveAutoSyncIntervalId = null;
+                    }
+                    if (window.gapi && gapi.client) gapi.client.setToken(null);
                 } catch (e) {
-                    console.warn('Error al cerrar sesión de Google tras eliminar la cuenta', e);
+                    console.warn('No se pudo reiniciar todo el estado en memoria', e);
+                }
+
+                try {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                } catch (e) {
+                    console.warn('No se pudo vaciar el almacenamiento del navegador', e);
                 }
 
                 showMessage('Tu cuenta y datos guardados se eliminaron de este sistema.', 'success');
+                updateGoogleButtons(false);
+                updateAuthGateState();
+                setTimeout(() => {
+                    window.location.replace(window.location.pathname + '?account_deleted=' + Date.now());
+                }, 900);
             } catch (error) {
                 console.error('delete account error', error);
                 showMessage('No se pudo eliminar la cuenta. Vuelve a intentarlo.', 'error');
@@ -289,6 +346,86 @@ let selectedSubjects = []; // Materias seleccionadas para el horario
 
 // NUEVO: copia de las materias predefinidas para reconstruir el catálogo
 let predefinedSubjects = [];
+let showAllCatalogSubjects = false;
+let catalogBrowseGroup = null;
+let catalogBrowseEquivalences = false;
+let catalogBrowseCareerId = null;
+
+function getCareerCurriculum(careerId, planCode = getStudentAcademicPlan()) {
+    const curriculaByPlan = (typeof window !== 'undefined' && window.UPCHIAPAS_CURRICULA_PLANS) || {};
+    const effectivePlan = planCode === '003' && careerId === 'biomedica' ? '003' : '004';
+    const curricula = curriculaByPlan[effectivePlan] ||
+        ((typeof window !== 'undefined' && window.UPCHIAPAS_CURRICULA) || {});
+    return curricula[careerId] || null;
+}
+
+function getActiveCatalogGroup() {
+    return normalizeAcademicGroup(catalogBrowseGroup) || getStudentStudyGroup();
+}
+
+function getCatalogSubjectsForCurrentView() {
+    const savedCustoms = loadCustomSubjects();
+    const userCreatedOrder = new Map();
+    savedCustoms.forEach((subject, index) => {
+        if (!subject.isCurriculumSubject && !subject.careerId) {
+            userCreatedOrder.set(String(subject.id), index);
+        }
+    });
+    const userCreatedSubjects = catalogSubjects
+        .filter(subject => userCreatedOrder.has(String(subject.id)))
+        .sort((a, b) => userCreatedOrder.get(String(b.id)) - userCreatedOrder.get(String(a.id)));
+    const userCreatedIds = new Set(userCreatedSubjects.map(subject => String(subject.id)));
+    const selectedCareer = getSelectedCareerOption();
+    if (!selectedCareer || !getCareerCurriculum(selectedCareer.id)) {
+        return [
+            ...userCreatedSubjects,
+            ...catalogSubjects.filter(subject => !userCreatedIds.has(String(subject.id)))
+        ];
+    }
+    const currentGroup = getActiveCatalogGroup();
+    const browseCareerId = catalogBrowseCareerId || selectedCareer.id;
+    const currentMatch = currentGroup.match(/^(1[0-2]|[1-9])([A-E])$/);
+    const currentLetter = currentMatch ? currentMatch[2] : 'A';
+    const filteredOfficialSubjects = catalogSubjects.filter(subject => {
+        if (userCreatedIds.has(String(subject.id))) return false;
+        if (subject.careerId && subject.careerId !== browseCareerId) return false;
+        if (getStudentAcademicPlan() === '003' && subject.isEquivalence) {
+            if (showAllCatalogSubjects) return true;
+            return catalogBrowseEquivalences && normalizeAcademicGroup(subject.group) === currentGroup;
+        }
+        if (getStudentAcademicPlan() === '003' && catalogBrowseEquivalences) return false;
+        const subjectGroup = normalizeAcademicGroup(subject.group);
+        if (!subjectGroup) return false;
+        if (!showAllCatalogSubjects) return subjectGroup === currentGroup;
+        const subjectMatch = subjectGroup.match(/^(1[0-2]|[1-9])([A-E])$/);
+        return Boolean(subjectMatch && subjectMatch[2] === currentLetter);
+    });
+    return [...userCreatedSubjects, ...filteredOfficialSubjects];
+}
+
+function updateCatalogScopeControls() {
+    const toggle = document.getElementById('catalogScopeToggle');
+    const summary = document.getElementById('catalogScopeSummary');
+    const selectedCareer = getSelectedCareerOption();
+    const browseCareer = getCareerById(catalogBrowseCareerId) || selectedCareer;
+    const hasOfficialCurriculum = Boolean(selectedCareer && getCareerCurriculum(selectedCareer.id));
+    const activeCatalogGroup = getActiveCatalogGroup();
+    const groupMatch = activeCatalogGroup.match(/^(1[0-2]|[1-9])([A-E])$/);
+    const groupLetter = groupMatch ? groupMatch[2] : 'A';
+    if (toggle) {
+        toggle.classList.toggle('hidden', !hasOfficialCurriculum);
+        toggle.textContent = showAllCatalogSubjects
+            ? `Mostrar solo ${activeCatalogGroup}`
+            : 'Mostrar todas las materias';
+        toggle.setAttribute('aria-pressed', showAllCatalogSubjects ? 'true' : 'false');
+    }
+    if (summary) {
+        summary.classList.toggle('hidden', !hasOfficialCurriculum);
+        summary.textContent = showAllCatalogSubjects
+            ? `${getCatalogSubjectsForCurrentView().length} materias de ${browseCareer ? browseCareer.name : 'la carrera'} · grupo ${groupLetter}`
+            : `Materias de ${browseCareer ? browseCareer.name : 'la carrera'} · ${activeCatalogGroup}`;
+    }
+}
 
 const REINSCRIPTION_TEMPLATE_PATH = 'SOLIC_REINSCRIPCION.pdf';
 // Ajusta los porcentajes si necesitas reposicionar el texto dentro del PDF.
@@ -454,25 +591,104 @@ const DEFAULT_BIOMEDICA_SUBJECT_IDS = [57, 58, 59, 60, 61, 67, 68, 69];
 const CAREER_STORAGE_KEY = 'profile_career_option_v2';
 const CAREER_LEGACY_KEY = 'profile_career';
 const CUSTOM_CAREERS_KEY = 'profile_custom_careers_v1';
+const STUDY_GROUP_STORAGE_KEY = 'profile_study_group_v1';
+const ACADEMIC_PLAN_STORAGE_KEY = 'profile_academic_plan_v1';
+
+function getStudentAcademicPlan() {
+    try {
+        return localStorage.getItem(ACADEMIC_PLAN_STORAGE_KEY) === '003' ? '003' : '004';
+    } catch (error) {
+        return '004';
+    }
+}
+
+function setStudentAcademicPlan(planCode, careerId = 'biomedica') {
+    const value = planCode === '003' && careerId === 'biomedica' ? '003' : '004';
+    try { localStorage.setItem(ACADEMIC_PLAN_STORAGE_KEY, value); } catch (error) { }
+    return value;
+}
+
+function normalizeAcademicGroup(value) {
+    const match = String(value || '').toUpperCase().replace(/\s+/g, '').match(/^(1[0-2]|[1-9])([A-E])$/);
+    return match ? `${match[1]}${match[2]}` : '';
+}
+
+function getStudentStudyGroup() {
+    try {
+        return normalizeAcademicGroup(localStorage.getItem(STUDY_GROUP_STORAGE_KEY)) || '8A';
+    } catch (error) {
+        return '8A';
+    }
+}
+
+function setStudentStudyGroup(quarter, group) {
+    const value = normalizeAcademicGroup(`${quarter}${group}`) || '8A';
+    try { localStorage.setItem(STUDY_GROUP_STORAGE_KEY, value); } catch (error) { }
+    showAllCatalogSubjects = false;
+    catalogBrowseGroup = value;
+    catalogBrowseEquivalences = false;
+    catalogBrowseCareerId = null;
+    const catalogSearchInput = document.getElementById('searchInput');
+    const catalogSuggestions = document.getElementById('suggestions');
+    if (catalogSearchInput) catalogSearchInput.value = '';
+    if (catalogSuggestions) {
+        catalogSuggestions.innerHTML = '';
+        catalogSuggestions.classList.add('hidden');
+    }
+    if (predefinedSubjects.length && typeof rebuildCatalogFromPredefinedAndCustoms === 'function') {
+        rebuildCatalogFromPredefinedAndCustoms();
+        if (typeof updateCatalogSubjects === 'function') updateCatalogSubjects();
+    }
+    return value;
+}
+
+function updateStudyGroupProfileUI() {
+    const value = getStudentStudyGroup();
+    const match = value.match(/^(1[0-2]|[1-9])([A-E])$/);
+    if (!match) return;
+    const ordinalLabels = {
+        1: '1ro', 2: '2do', 3: '3ro', 4: '4to', 5: '5to',
+        6: '6to', 7: '7mo', 8: '8vo', 9: '9no', 10: '10mo', 11: '11vo', 12: '12vo'
+    };
+    const quarterSelect = document.getElementById('pmQuarterSelect');
+    const groupSelect = document.getElementById('pmGroupSelect');
+    const currentLabel = document.getElementById('pmStudyLevelCurrent');
+    if (quarterSelect) quarterSelect.value = match[1];
+    if (groupSelect) groupSelect.value = match[2];
+    if (currentLabel) currentLabel.textContent = `${ordinalLabels[match[1]] || match[1]} ${match[2]}`;
+    document.querySelectorAll('.group-load-buttons button[data-group]').forEach(button => {
+        button.classList.toggle('is-current-group', button.dataset.group === getActiveCatalogGroup());
+    });
+}
+
+function applySubjectGroupClass(element, groupValue) {
+    const groupLabel = String(groupValue || '').trim().toLowerCase();
+    if (groupLabel.includes('convalid')) {
+        element.classList.add('group-convalidacion');
+    } else if (groupLabel.includes('especial')) {
+        element.classList.add('group-especial');
+    } else if (normalizeAcademicGroup(groupValue) === getStudentStudyGroup()) {
+        element.classList.add('group-ordinary');
+    }
+}
 
 
-const CAREER_ICON_BASE_PATH = 'https://xunnito.github.io/horario/';
-const fallbackIconimg = 'https://xunnito.github.io/horario/';
-const DEFAULT_CAREER_ICON_SRC = `biomedica.png`;
+const CAREER_ICON_BASE_PATH = new URL('./', document.baseURI).href;
+const fallbackIconimg = CAREER_ICON_BASE_PATH;
+const DEFAULT_CAREER_ICON_SRC = new URL('biomedica.png', document.baseURI).href;
 
 
 const BASE_CAREER_OPTIONS = [
     { id: 'biomedica',        name: 'Biomédica',           icon: `${CAREER_ICON_BASE_PATH}biomedica.png`,        fallbackIcon: `${fallbackIconimg}biomedica.png` },
     { id: 'mecatronica',      name: 'Mecatrónica',         icon: `${CAREER_ICON_BASE_PATH}meca.png`,             fallbackIcon: `${fallbackIconimg}meca.png` },
-    { id: 'ambiental',        name: 'Ambiental',           icon: `${CAREER_ICON_BASE_PATH}ambiental.png`,        fallbackIcon: `${fallbackIconimg}ambiental.png` },
-    { id: 'manufactura',      name: 'Manufactura',         icon: `${CAREER_ICON_BASE_PATH}manu.png`,             fallbackIcon: `${fallbackIconimg}manu.png` },
-    { id: 'software',         name: 'Software',            icon: `${CAREER_ICON_BASE_PATH}sofware.png`,          fallbackIcon: `${fallbackIconimg}sofware.png` },
-    { id: 'industrial',       name: 'Industrial',          icon: `${CAREER_ICON_BASE_PATH}industrial.png`,       fallbackIcon: `${fallbackIconimg}industrial.png` },
+    { id: 'ambiental',        name: 'Ambiental y Sustentabilidad', icon: `${CAREER_ICON_BASE_PATH}ambiental.png`, fallbackIcon: `${fallbackIconimg}ambiental.png` },
+    { id: 'manufactura',      name: 'Manufactura Avanzada', icon: `${CAREER_ICON_BASE_PATH}manu.png`,             fallbackIcon: `${fallbackIconimg}manu.png` },
+    { id: 'software',         name: 'Tecnologías de la Información', icon: `${CAREER_ICON_BASE_PATH}sofware.png`, fallbackIcon: `${fallbackIconimg}sofware.png` },
+    { id: 'energia',          name: 'Energía y Desarrollo Sostenible', icon: `${CAREER_ICON_BASE_PATH}industrial.png`, fallbackIcon: `${fallbackIconimg}industrial.png` },
     { id: 'petrolera',        name: 'Petrolera',           icon: `${CAREER_ICON_BASE_PATH}petro.png`,            fallbackIcon: `${fallbackIconimg}petro.png` },
-    { id: 'nanotecnologia',   name: 'Nanotecnologia',      icon: `${CAREER_ICON_BASE_PATH}nano.png`,             fallbackIcon: `${fallbackIconimg}nano.png` },
-    { id: 'robotica',         name: 'Robótica',            icon: `${CAREER_ICON_BASE_PATH}robotica.png`,         fallbackIcon: `${fallbackIconimg}robotica.png` },
+    { id: 'nanotecnologia',   name: 'Nanotecnología',      icon: `${CAREER_ICON_BASE_PATH}nano.png`,             fallbackIcon: `${fallbackIconimg}nano.png` },
     { id: 'alimentos',        name: 'Alimentos',           icon: `${CAREER_ICON_BASE_PATH}alimentos.png`,        fallbackIcon: `${fallbackIconimg}alimentos.png` },
-    { id: 'gestionempresarial', name: 'Gestión Empresarial', icon: `${CAREER_ICON_BASE_PATH}gestionempresarial.png`, fallbackIcon: `${fallbackIconimg}gestionempresarial.png` },
+    { id: 'gestionempresarial', name: 'Administración', icon: `${CAREER_ICON_BASE_PATH}gestionempresarial.png`, fallbackIcon: `${fallbackIconimg}gestionempresarial.png` },
 ];
 
 
@@ -732,6 +948,10 @@ function applyCareerSelection(career, options = {}) {
     if (!career) return;
     const { persistLocal = true } = options;
     selectedCareerOption = career;
+    showAllCatalogSubjects = false;
+    catalogBrowseGroup = getStudentStudyGroup();
+    catalogBrowseEquivalences = false;
+    catalogBrowseCareerId = career.id;
 
     const iconSrc = resolveCareerIcon(career);
     const iconFallback = resolveCareerIconFallback(career);
@@ -778,6 +998,10 @@ function applyCareerSelection(career, options = {}) {
     if (career.isCustom) {
         saveCustomCareers(customCareerOptions);
         syncCareerOptions(true);
+    }
+    if (predefinedSubjects.length && typeof rebuildCatalogFromPredefinedAndCustoms === 'function') {
+        rebuildCatalogFromPredefinedAndCustoms();
+        if (typeof updateCatalogSubjects === 'function') updateCatalogSubjects();
     }
 }
 
@@ -1745,10 +1969,8 @@ document.addEventListener('DOMContentLoaded', function () {
 document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('searchInput');
     const suggestions = document.getElementById('suggestions');
-    const btnLoad8A = document.getElementById('btnLoad8A');
-    const btnLoad8B = document.getElementById('btnLoad8B');
-    const btnLoad8C = document.getElementById('btnLoad8C');
-    const btnLoad9A = document.getElementById('btnLoad9A');
+    const groupLoadButtons = document.getElementById('groupLoadButtons');
+    const catalogScopeToggle = document.getElementById('catalogScopeToggle');
 
     const groupNotAvailableModal = document.getElementById('groupNotAvailableModal');
     const groupNotAvailableMessage = document.getElementById('groupNotAvailableMessage');
@@ -1777,21 +1999,47 @@ document.addEventListener('DOMContentLoaded', function () {
         groupNotAvailableClose.addEventListener('click', closeGroupNotAvailableModal);
     }
 
-    // Evento para buscar mientras se escribe
+    if (catalogScopeToggle) {
+        catalogScopeToggle.addEventListener('click', () => {
+            showAllCatalogSubjects = !showAllCatalogSubjects;
+            if (searchInput) searchInput.value = '';
+            if (suggestions) {
+                suggestions.innerHTML = '';
+                suggestions.classList.add('hidden');
+            }
+            updateCatalogSubjects();
+        });
+    }
+
+    const normalizeCatalogSearch = value => String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
+    // Evento para buscar por materia, profesor, grupo o cuatrimestre
     searchInput.addEventListener('input', function () {
-        const query = searchInput.value.toLowerCase().trim();
+        const query = normalizeCatalogSearch(searchInput.value);
         if (query === '') {
             suggestions.classList.add('hidden');
             suggestions.innerHTML = '';
+            document.querySelectorAll('#catalogSubjects .subject-item').forEach(item => item.classList.remove('hidden'));
             return;
         }
 
         // Filtrar materias, grupos o profesores
-        const results = catalogSubjects.filter(subject =>
-            subject.name.toLowerCase().includes(query) ||
-            subject.group.toLowerCase().includes(query) ||
-            subject.professor.toLowerCase().includes(query)
-        );
+        const results = getCatalogSubjectsForCurrentView().filter(subject => normalizeCatalogSearch([
+            subject.name,
+            subject.group,
+            subject.professor,
+            subject.searchTerms,
+            subject.quarter ? `${subject.quarter}° ${subject.quarter} cuatrimestre` : ''
+        ].join(' ')).includes(query));
+
+        const resultIds = new Set(results.map(subject => String(subject.id)));
+        document.querySelectorAll('#catalogSubjects .subject-item').forEach(item => {
+            item.classList.toggle('hidden', !resultIds.has(String(item.dataset.subjectId)));
+        });
 
         // Mostrar sugerencias
         suggestions.innerHTML = '';
@@ -1799,12 +2047,17 @@ document.addEventListener('DOMContentLoaded', function () {
             results.forEach(subject => {
                 const item = document.createElement('div');
                 item.className = 'suggestion-item';
-                item.textContent = `${subject.name} (Grupo ${subject.group}) - ${subject.professor}`;
+                item.textContent = `${subject.name} (Grupo ${subject.group}) - ${subject.professor || 'Por definir'}${subject.isEquivalence ? ' · Equivalencia Plan 004' : ''}${subject.isOtherCareer ? ` · ${subject.originCareerName || 'Otra carrera'}` : ''}`;
                 item.addEventListener('click', function () {
-                    // Acción al hacer clic en una sugerencia
-                    addSubjectToSchedule(subject.id);
-                    searchInput.value = '';
+                    // Localizar la materia; agregarla al horario requiere arrastrarla.
+                    searchInput.value = subject.name;
                     suggestions.classList.add('hidden');
+                    const catalogItem = document.querySelector(`.subject-item[data-subject-id="${subject.id}"]`);
+                    if (catalogItem) {
+                        catalogItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        catalogItem.classList.add('subject-item--located');
+                        setTimeout(() => catalogItem.classList.remove('subject-item--located'), 1400);
+                    }
                 });
                 suggestions.appendChild(item);
             });
@@ -1822,38 +2075,445 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Botón para cargar horario del grupo 8A de Biomédica
-    if (btnLoad8A) {
-        btnLoad8A.addEventListener('click', function () {
-            if (!isSessionActive()) {
-                showMessage('Primero inicia sesión con Google para cargar el horario.', 'warning');
-                return;
+    const quarterSelectModal = document.getElementById('quarterSelectModal');
+    const quarterSelectCancel = document.getElementById('quarterSelectCancel');
+    const quarterSelectClose = document.getElementById('quarterSelectClose');
+    const allAcademicGroups = document.getElementById('allAcademicGroups');
+    const catalogCareerFilter = document.getElementById('catalogCareerFilter');
+    const academicSettingsBtn = document.getElementById('academicSettingsBtn');
+    const quarterSelectTitle = document.getElementById('quarterSelectTitle');
+    const quarterSelectDescription = document.getElementById('quarterSelectDescription');
+    let academicGroupModalMode = 'browse';
+
+    function renderCatalogCareerFilter() {
+        if (!catalogCareerFilter) return;
+        catalogCareerFilter.classList.toggle('hidden', academicGroupModalMode !== 'browse');
+        if (academicGroupModalMode !== 'browse') return;
+        const selectedCareer = getSelectedCareerOption();
+        const activeCareerId = catalogBrowseCareerId || (selectedCareer && selectedCareer.id) || 'biomedica';
+        catalogCareerFilter.innerHTML = '';
+        const iconsRow = document.createElement('div');
+        iconsRow.className = 'catalog-career-filter__icons';
+        const selectedName = document.createElement('div');
+        selectedName.className = 'catalog-career-filter__selected-name';
+        BASE_CAREER_OPTIONS.filter(option => getCareerCurriculum(option.id, '004')).forEach(option => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `catalog-career-filter__option${option.id === activeCareerId ? ' is-selected' : ''}`;
+            button.dataset.careerId = option.id;
+            button.title = option.name;
+            button.setAttribute('aria-label', `Filtrar por ${option.name}`);
+            const icon = document.createElement('img');
+            icon.alt = '';
+            setImageSource(icon, resolveCareerIcon(option), resolveCareerIconFallback(option));
+            button.appendChild(icon);
+            if (option.id === activeCareerId) selectedName.textContent = option.name;
+            button.addEventListener('click', () => {
+                catalogBrowseCareerId = option.id;
+                catalogBrowseEquivalences = getStudentAcademicPlan() === '003' && option.id === 'biomedica';
+                iconsRow.querySelectorAll('button').forEach(item => item.classList.toggle('is-selected', item === button));
+                selectedName.textContent = option.name;
+                refreshAcademicModalQuarters(getActiveCatalogGroup());
+            });
+            iconsRow.appendChild(button);
+        });
+        catalogCareerFilter.append(iconsRow, selectedName);
+    }
+
+    function refreshAcademicModalQuarters(selectedGroup) {
+        if (!allAcademicGroups) return 12;
+        const profileCareer = getSelectedCareerOption();
+        const activeCareer = academicGroupModalMode === 'browse'
+            ? getCareerById(catalogBrowseCareerId) || profileCareer
+            : profileCareer;
+        const browsePlan004 = academicGroupModalMode === 'browse' &&
+            activeCareer && (activeCareer.id !== (profileCareer && profileCareer.id) || getStudentAcademicPlan() === '003');
+        const curriculum = activeCareer ? getCareerCurriculum(activeCareer.id, browsePlan004 ? '004' : getStudentAcademicPlan()) : null;
+        const availableQuarters = curriculum ? Object.keys(curriculum).map(Number) : [];
+        const maxQuarter = availableQuarters.length ? Math.max(...availableQuarters) : 12;
+        allAcademicGroups.querySelectorAll('.academic-group-row[data-quarter]').forEach(row => {
+            row.classList.toggle('hidden', curriculum && !availableQuarters.includes(Number(row.dataset.quarter)));
+        });
+        allAcademicGroups.querySelectorAll('[data-group]').forEach(button => {
+            const plan003GroupUnavailable = academicGroupModalMode === 'settings' &&
+                getStudentAcademicPlan() === '003' && button.dataset.group !== '9A';
+            button.classList.toggle('hidden', plan003GroupUnavailable);
+            button.classList.toggle('is-selected', button.dataset.group === selectedGroup);
+        });
+        return maxQuarter;
+    }
+
+    function saveUserAcademicGroup(groupName) {
+        if (!isSessionActive()) {
+            showMessage('Primero inicia sesión con Google para guardar tu configuración.', 'warning');
+            return;
+        }
+        const match = groupName.match(/^(1[0-2]|[1-9])([A-E])$/);
+        if (match) setStudentStudyGroup(match[1], match[2]);
+        selectedSubjects = selectedSubjects.filter(subject => !(
+            subject && subject.isCurriculumSubject &&
+            (!Array.isArray(subject.sessions) || subject.sessions.length === 0)
+        ));
+        saveSelectedSubjects();
+        updateStudyGroupProfileUI();
+        updateScheduleView();
+        updateSelectedSubjectsList();
+        updateCatalogSubjects();
+        refreshReinscriptionDefaultsAfterScheduleChange();
+        updateReinscriptionLoadedSubjectsList();
+        ensureSaveToDrive({ interactive: false, silent: true });
+        showMessage(`Tu grado ordinario ahora es ${groupName}.`, 'success');
+    }
+
+    function filterCatalogByGroup(groupName, browseEquivalences = catalogBrowseEquivalences) {
+        catalogBrowseGroup = normalizeAcademicGroup(groupName) || getStudentStudyGroup();
+        catalogBrowseEquivalences = Boolean(browseEquivalences);
+        showAllCatalogSubjects = false;
+        if (searchInput) searchInput.value = '';
+        suggestions.innerHTML = '';
+        suggestions.classList.add('hidden');
+        updateCatalogSubjects();
+        renderCurrentQuarterButtons();
+        showMessage(`Mostrando materias de ${catalogBrowseGroup}.`, 'info');
+    }
+
+    function openAcademicGroupModal(mode) {
+        academicGroupModalMode = mode === 'settings' ? 'settings' : 'browse';
+        const selectedGroup = academicGroupModalMode === 'settings'
+            ? getStudentStudyGroup()
+            : getActiveCatalogGroup();
+        if (quarterSelectTitle) {
+            quarterSelectTitle.textContent = academicGroupModalMode === 'settings'
+                ? 'Configuración académica'
+                : 'Buscar por cuatrimestre y grupo';
+        }
+        if (quarterSelectDescription) {
+            if (academicGroupModalMode === 'settings') {
+                quarterSelectDescription.textContent = 'Elige tu grado. Esta opción define cuáles materias aparecen en verde como ordinarias.';
+            } else if (getStudentAcademicPlan() === '003') {
+                quarterSelectDescription.innerHTML = 'cuatrimestres y grupos del <strong>Plan 004</strong>. Las materias se cargarán como equivalencias.';
+            } else {
+                quarterSelectDescription.textContent = 'Selecciona el cuatrimestre y grupo.';
             }
-            // Permitir que el modal se muestre aunque antes se haya cancelado
-            defaultSchedulePromptDismissed = false;
-            showDefaultSchedulePrompt();
-        });
+        }
+        renderCatalogCareerFilter();
+        refreshAcademicModalQuarters(selectedGroup);
+        quarterSelectModal.style.display = 'flex';
+        quarterSelectModal.classList.remove('hidden');
+        quarterSelectModal.setAttribute('aria-hidden', 'false');
     }
 
-    // Botones para grupos aún no disponibles (8B, 8C, 9A)
-    if (btnLoad8B) {
-        btnLoad8B.addEventListener('click', function () {
-            openGroupNotAvailableModal('8B');
+    function renderCurrentQuarterButtons() {
+        if (!groupLoadButtons) return;
+        const match = getActiveCatalogGroup().match(/^(1[0-2]|[1-9])([A-E])$/);
+        const quarter = match ? match[1] : '8';
+        groupLoadButtons.innerHTML = '';
+        const groupLetters = getStudentAcademicPlan() === '003' && !catalogBrowseEquivalences
+            ? ['A']
+            : ['A', 'B', 'C', 'D', 'E'];
+        groupLetters.forEach(letter => {
+            const groupName = `${quarter}${letter}`;
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = groupName;
+            button.dataset.group = groupName;
+            button.classList.toggle('is-current-group', groupName === getActiveCatalogGroup());
+            button.addEventListener('click', () => filterCatalogByGroup(groupName, catalogBrowseEquivalences));
+            groupLoadButtons.appendChild(button);
         });
+        const moreButton = document.createElement('button');
+        moreButton.type = 'button';
+        moreButton.className = 'group-load-more';
+        moreButton.textContent = 'Más cuatrimestre';
+        moreButton.addEventListener('click', () => {
+            showLoader('Cargando cuatrimestres...');
+            setTimeout(() => {
+                hideLoader();
+                openAcademicGroupModal('browse');
+            }, 650);
+        });
+        groupLoadButtons.appendChild(moreButton);
     }
 
-    if (btnLoad8C) {
-        btnLoad8C.addEventListener('click', function () {
-            openGroupNotAvailableModal('8C');
-        });
+    if (academicSettingsBtn) {
+        academicSettingsBtn.addEventListener('click', () => window.dispatchEvent(new CustomEvent('academic-settings:open')));
     }
 
-    if (btnLoad9A) {
-        btnLoad9A.addEventListener('click', function () {
-            openGroupNotAvailableModal('9A');
-        });
+    const closeQuarterModal = () => {
+        quarterSelectModal.style.display = 'none';
+        quarterSelectModal.classList.add('hidden');
+        quarterSelectModal.setAttribute('aria-hidden', 'true');
+    };
+    if (quarterSelectCancel) quarterSelectCancel.addEventListener('click', closeQuarterModal);
+    if (quarterSelectClose) quarterSelectClose.addEventListener('click', closeQuarterModal);
+    if (quarterSelectModal) quarterSelectModal.addEventListener('click', event => {
+        if (event.target === quarterSelectModal) closeQuarterModal();
+    });
+    if (allAcademicGroups) {
+        for (let quarter = 1; quarter <= 12; quarter += 1) {
+            const row = document.createElement('div');
+            row.className = 'academic-group-row';
+            row.dataset.quarter = String(quarter);
+            const label = document.createElement('span');
+            label.className = 'academic-group-row__label';
+            label.textContent = `${quarter}.º`;
+            row.appendChild(label);
+            ['A', 'B', 'C', 'D', 'E'].forEach(letter => {
+                const groupName = `${quarter}${letter}`;
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.dataset.group = groupName;
+                button.textContent = groupName;
+                button.classList.toggle('is-selected', groupName === getActiveCatalogGroup());
+                button.addEventListener('click', () => {
+                    closeQuarterModal();
+                    if (academicGroupModalMode === 'settings') {
+                        saveUserAcademicGroup(groupName);
+                    } else {
+                        const profileCareer = getSelectedCareerOption();
+                        const browseCareerId = catalogBrowseCareerId || (profileCareer && profileCareer.id);
+                        const browseEquivalences = getStudentAcademicPlan() === '003' && browseCareerId === 'biomedica';
+                        filterCatalogByGroup(groupName, browseEquivalences);
+                    }
+                });
+                row.appendChild(button);
+            });
+            allAcademicGroups.appendChild(row);
+        }
     }
+    renderCurrentQuarterButtons();
 });
+
+document.addEventListener('DOMContentLoaded', function initializeAcademicOnboarding() {
+    const modal = document.getElementById('academicOnboardingModal');
+    const closeButton = document.getElementById('academicOnboardingClose');
+    const saveButton = document.getElementById('academicOnboardingSave');
+    const careerGrid = document.getElementById('onboardingCareerGrid');
+    const academicPlanSelect = document.getElementById('onboardingAcademicPlan');
+    const quarterSelect = document.getElementById('onboardingQuarter');
+    const groupButtons = document.getElementById('onboardingGroupButtons');
+    if (!modal || !careerGrid || !quarterSelect || !groupButtons) return;
+
+    let selectedCareerId = 'biomedica';
+    let selectedAcademicPlan = getStudentAcademicPlan();
+    let selectedGroupLetter = 'A';
+
+    const onboardingStorageKey = () => {
+        let email = '';
+        try { email = getCurrentUserEmail() || ''; } catch (error) { }
+        return `academic_onboarding_seen_v1:${email.toLowerCase() || 'local'}`;
+    };
+
+    const refreshQuarterOptions = () => {
+        const curriculum = getCareerCurriculum(selectedCareerId, selectedAcademicPlan) || {};
+        const quarters = Object.keys(curriculum).map(Number).filter(Number.isFinite).sort((a, b) => a - b);
+        const previous = Number(quarterSelect.value) || 1;
+        quarterSelect.innerHTML = '';
+        quarters.forEach(quarter => {
+            quarterSelect.add(new Option(`${quarter}.º cuatrimestre`, String(quarter)));
+        });
+        quarterSelect.value = String(quarters.includes(previous) ? previous : (quarters[0] || 1));
+    };
+
+    const refreshAcademicPlanOptions = () => {
+        if (!academicPlanSelect) return;
+        const supportsPlan003 = selectedCareerId === 'biomedica';
+        if (!supportsPlan003) selectedAcademicPlan = '004';
+        academicPlanSelect.innerHTML = '';
+        if (supportsPlan003) academicPlanSelect.add(new Option('Plan 003', '003'));
+        academicPlanSelect.add(new Option('Plan 004', '004'));
+        academicPlanSelect.value = selectedAcademicPlan;
+        if (selectedAcademicPlan === '003') selectedGroupLetter = 'A';
+        groupButtons.querySelectorAll('button').forEach(button => {
+            button.disabled = selectedAcademicPlan === '003' && button.textContent !== 'A';
+            button.classList.toggle('is-selected', button.textContent === selectedGroupLetter);
+        });
+    };
+
+    BASE_CAREER_OPTIONS.filter(option => getCareerCurriculum(option.id)).forEach(option => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.careerId = option.id;
+        button.className = option.id === selectedCareerId ? 'is-selected' : '';
+        const image = document.createElement('img');
+        image.alt = '';
+        image.loading = 'lazy';
+        setImageSource(image, resolveCareerIcon(option), resolveCareerIconFallback(option));
+        const label = document.createElement('span');
+        label.textContent = option.name;
+        button.append(image, label);
+        button.addEventListener('click', () => {
+            selectedCareerId = option.id;
+            refreshAcademicPlanOptions();
+            careerGrid.querySelectorAll('button').forEach(item => item.classList.toggle('is-selected', item === button));
+            refreshQuarterOptions();
+        });
+        careerGrid.appendChild(button);
+    });
+
+    ['A', 'B', 'C', 'D', 'E'].forEach(letter => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = letter;
+        button.className = letter === selectedGroupLetter ? 'is-selected' : '';
+        button.addEventListener('click', () => {
+            selectedGroupLetter = letter;
+            groupButtons.querySelectorAll('button').forEach(item => item.classList.toggle('is-selected', item === button));
+        });
+        groupButtons.appendChild(button);
+    });
+    if (academicPlanSelect) {
+        academicPlanSelect.addEventListener('change', () => {
+            selectedAcademicPlan = academicPlanSelect.value === '003' ? '003' : '004';
+            if (selectedAcademicPlan === '003') selectedGroupLetter = 'A';
+            groupButtons.querySelectorAll('button').forEach(button => {
+                button.disabled = selectedAcademicPlan === '003' && button.textContent !== 'A';
+                button.classList.toggle('is-selected', button.textContent === selectedGroupLetter);
+            });
+            refreshQuarterOptions();
+        });
+    }
+    refreshAcademicPlanOptions();
+    refreshQuarterOptions();
+
+    const closeOnboarding = (remember = true) => {
+        modal.classList.add('hidden');
+        modal.classList.remove('academic-onboarding--settings');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('academic-onboarding-open');
+        if (remember) {
+            try { localStorage.setItem(onboardingStorageKey(), '1'); } catch (error) { }
+        }
+    };
+
+    const maybeOpenOnboarding = () => {
+        if (!isSessionActive()) return;
+        try { if (localStorage.getItem(onboardingStorageKey()) === '1') return; } catch (error) { }
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('academic-onboarding-open');
+    };
+
+    const openAcademicSettings = () => {
+        const currentCareer = getSelectedCareerOption();
+        const currentGroup = getStudentStudyGroup().match(/^(1[0-2]|[1-9])([A-E])$/);
+        selectedCareerId = currentCareer && getCareerCurriculum(currentCareer.id) ? currentCareer.id : 'biomedica';
+        selectedAcademicPlan = selectedCareerId === 'biomedica' ? getStudentAcademicPlan() : '004';
+        selectedGroupLetter = currentGroup ? currentGroup[2] : 'A';
+        careerGrid.querySelectorAll('button').forEach(button => {
+            button.classList.toggle('is-selected', button.dataset.careerId === selectedCareerId);
+        });
+        groupButtons.querySelectorAll('button').forEach(button => {
+            button.classList.toggle('is-selected', button.textContent === selectedGroupLetter);
+        });
+        refreshAcademicPlanOptions();
+        if (selectedAcademicPlan === '003') selectedGroupLetter = 'A';
+        groupButtons.querySelectorAll('button').forEach(button => {
+            button.disabled = selectedAcademicPlan === '003' && button.textContent !== 'A';
+            button.classList.toggle('is-selected', button.textContent === selectedGroupLetter);
+        });
+        refreshQuarterOptions();
+        if (currentGroup) {
+            const availableQuarters = Array.from(quarterSelect.options).map(option => Number(option.value));
+            quarterSelect.value = String(Math.min(Number(currentGroup[1]), Math.max(...availableQuarters)));
+        }
+        modal.classList.add('academic-onboarding--settings');
+        modal.querySelector('.quarter-select-modal__eyebrow').textContent = 'Tu información académica';
+        document.getElementById('academicOnboardingTitle').textContent = 'Carrera, cuatrimestre y grupo';
+        saveButton.textContent = 'Guardar cambios';
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('academic-onboarding-open');
+    };
+
+    if (closeButton) closeButton.addEventListener('click', () => closeOnboarding(true));
+    if (saveButton) saveButton.addEventListener('click', () => {
+        const career = getCareerById(selectedCareerId) || getCareerById('biomedica');
+        const savedAcademicPlan = setStudentAcademicPlan(selectedAcademicPlan, selectedCareerId);
+        if (career) applyCareerSelection(career, { persistLocal: true });
+        setStudentStudyGroup(quarterSelect.value, savedAcademicPlan === '003' ? 'A' : selectedGroupLetter);
+        const predefinedIds = new Set(predefinedSubjects.map(subject => String(subject.id)));
+        selectedSubjects = selectedSubjects.filter(subject => {
+            if (!subject) return false;
+            if (savedAcademicPlan === '003' && predefinedIds.has(String(subject.id))) return false;
+            if (!subject.isCurriculumSubject) return true;
+            const subjectPlan = subject.academicPlan || '004';
+            const retainedEquivalence = savedAcademicPlan === '003' && subjectPlan === '004' && subject.isEquivalence;
+            const retainedOtherCareer = Boolean(subject.isOtherCareer);
+            return retainedOtherCareer || (subject.careerId === selectedCareerId &&
+                (subjectPlan === savedAcademicPlan || retainedEquivalence));
+        });
+        saveSelectedSubjects();
+        updateStudyGroupProfileUI();
+        updateScheduleView();
+        updateCatalogSubjects();
+        ensureSaveToDrive({ interactive: false, silent: true });
+        closeOnboarding(true);
+        showMessage(`Tu carrera, Plan ${savedAcademicPlan} y grupo quedaron configurados.`, 'success');
+    });
+
+    window.addEventListener('academic-settings:open', openAcademicSettings);
+    window.addEventListener('profile:loaded', maybeOpenOnboarding);
+    setTimeout(maybeOpenOnboarding, 1800);
+});
+
+const BIOMEDICAL_CURRICULUM = {
+    1: ['INGLÉS I', 'DESARROLLO HUMANO Y VALORES', 'FUNDAMENTOS MATEMÁTICOS', 'FÍSICA', 'INTRODUCCIÓN A LA INGENIERÍA BIOMÉDICA', 'QUÍMICA APLICADA A LA INGENIERÍA', 'COMUNICACIÓN Y HABILIDADES DIGITALES'],
+    2: ['INGLÉS II', 'HABILIDADES SOCIOEMOCIONALES Y MANEJO DE CONFLICTOS', 'CÁLCULO DIFERENCIAL', 'FUNDAMENTOS DE ELECTRÓNICA', 'TECNOLOGÍA HOSPITALARIA', 'BIOQUÍMICA', 'PROBABILIDAD Y ESTADÍSTICA'],
+    3: ['INGLÉS III', 'PENSAMIENTO Y TOMA DE DECISIONES', 'CÁLCULO INTEGRAL', 'ELECTRÓNICA PARA INGENIERÍA', 'FUNDAMENTOS DE INGENIERÍA CLÍNICA', 'FUNDAMENTOS ANATOMÍA Y FISIOLOGÍA', 'ADMINISTRACIÓN DE RECURSOS HOSPITALARIOS'],
+    4: ['INGLÉS IV', 'ÉTICA PROFESIONAL', 'CÁLCULO DE VARIAS VARIABLES', 'ELECTRÓNICA ANALÓGICA', 'INGENIERÍA CLÍNICA', 'ANATOMÍA Y FISIOLOGÍA PARA INGENIERÍA', 'ELECTRÓNICA DIGITAL'],
+    5: ['INGLÉS V', 'LIDERAZGO DE EQUIPOS DE ALTO DESEMPEÑO', 'ECUACIONES DIFERENCIALES', 'PROGRAMACIÓN ESTRUCTURADA', 'ESCENARIOS CLÍNICOS', 'PRÁCTICAS CLÍNICAS', 'PROYECTO INTEGRADOR I'],
+    6: ['INGLÉS VI', 'HABILIDADES GERENCIALES', 'SERIES Y TRANSFORMADAS', 'ELECTRÓNICA DE POTENCIA', 'METROLOGÍA', 'PROGRAMACIÓN ORIENTADA A OBJETOS', 'BASE DE DATOS'],
+    7: ['INGLÉS VII', 'REGULACIÓN SANITARIA', 'SENSORES Y ACTUADORES', 'SISTEMAS DE CONTROL', 'MANTENIMIENTO DE EQUIPO MÉDICO', 'ANÁLISIS DE DATOS'],
+    8: ['INGLÉS VIII', 'ESCENARIOS DE MANTENIMIENTO', 'PRÁCTICAS DE MANTENIMIENTO', 'INSTALACIONES ELÉCTRICAS EN SALUD', 'PROCESAMIENTO DE SEÑALES BIOMÉDICAS', 'SISTEMAS EMBEBIDOS', 'PROYECTO INTEGRADOR II'],
+    9: ['INGLÉS TÉCNICO', 'INNOVACIÓN TECNOLÓGICA EN SALUD', 'INVESTIGACIÓN BIOMÉDICA', 'PROTOCOLOS E INTERFACES DE COMUNICACIÓN', 'FUNDAMENTOS DE BIOINSTRUMENTACIÓN', 'MANUFACTURA ASISTIDA POR COMPUTADORA', 'PROCESAMIENTO DE IMÁGENES MÉDICAS'],
+    10: ['EMPRENDIMIENTO Y DESARROLLO DE NEGOCIOS', 'FÍSICA MÉDICA', 'DESARROLLO DE SISTEMAS BIOMÉDICOS', 'TELESALUD', 'BIOINSTRUMENTACIÓN', 'BIOMECÁNICA', 'BIOMATERIALES'],
+    11: ['ESCENARIO DE PRÁCTICAS', 'MERCADOTECNIA EN SALUD', 'INGENIERÍA DE REHABILITACIÓN', 'PROYECTO INTEGRADOR III'],
+    12: ['ESTADÍA', 'LICENCIATURA EN INGENIERÍA BIOMÉDICA']
+};
+
+const QUARTER_SEARCH_LABELS = {
+    1: '1ro primero', 2: '2do segundo', 3: '3ro tercero', 4: '4to cuarto',
+    5: '5to quinto', 6: '6to sexto', 7: '7mo septimo séptimo', 8: '8vo octavo',
+    9: '9no noveno', 10: '10mo decimo décimo', 11: '11vo onceavo', 12: '12vo doceavo'
+};
+
+function getOfficialCurriculumSubjects(careerId, planCode = getStudentAcademicPlan(), options = {}) {
+    const curriculum = getCareerCurriculum(careerId, planCode) || (careerId === 'biomedica' ? BIOMEDICAL_CURRICULUM : null);
+    if (!curriculum) return [];
+    const academicPlan = planCode === '003' && careerId === 'biomedica' ? '003' : '004';
+    const careerOrder = ['biomedica', 'mecatronica', 'ambiental', 'manufactura', 'software', 'energia', 'petrolera', 'nanotecnologia', 'alimentos', 'gestionempresarial'];
+    const careerIndex = Math.max(0, careerOrder.indexOf(careerId));
+    const planIdOffset = academicPlan === '003' ? 5000000 : 0;
+    const careerBaseId = (careerId === 'biomedica' ? 10000 : 100000 + (careerIndex * 100000)) + planIdOffset;
+    const availableGroupLetters = options.groupLetters ||
+        (academicPlan === '003' && careerId === 'biomedica' ? ['A'] : ['A', 'B', 'C', 'D', 'E']);
+    const subjects = [];
+    Object.entries(curriculum).forEach(([quarterValue, names]) => {
+        const quarter = Number(quarterValue);
+        availableGroupLetters.forEach((groupLetter, letterIndex) => {
+            names.forEach((name, index) => {
+                subjects.push({
+                    id: careerBaseId + (letterIndex * 2000) + (quarter * 100) + index,
+                    name,
+                    professor: '',
+                    group: `${quarter}${groupLetter}`,
+                    aula: '',
+                    sessions: [],
+                    quarter,
+                    careerId,
+                    academicPlan,
+                    isEquivalence: Boolean(options.isEquivalence),
+                    isOtherCareer: Boolean(options.isOtherCareer),
+                    originCareerName: options.originCareerName || '',
+                    isCurriculumSubject: true,
+                    searchTerms: `${quarter}° ${quarter} ${quarter}${groupLetter} ${QUARTER_SEARCH_LABELS[quarter] || ''} cuatrimestre ${careerId}`
+                });
+            });
+        });
+    });
+    return subjects;
+}
 
 // Cargar materias predefinidas en el catálogo
 function loadPredefinedSubjects() {
@@ -1957,6 +2617,10 @@ function loadPredefinedSubjects() {
 
     ];
 
+    if (getSelectedCareerOption() && getCareerCurriculum(getSelectedCareerOption().id)) {
+        catalogSubjects.push(...getOfficialCurriculumSubjects(getSelectedCareerOption().id));
+    }
+
     // Modificar las sesiones para ajustar las horas que terminan en ":45"
     catalogSubjects.forEach(subject => {
         subject.sessions.forEach(session => {
@@ -1993,6 +2657,11 @@ function loadSelectedSubjects() {
         const savedSubjects = localStorage.getItem('selectedSubjects');
         if (savedSubjects) {
             selectedSubjects = JSON.parse(savedSubjects);
+            selectedSubjects = selectedSubjects.filter(subject => !(
+                subject && subject.isCurriculumSubject &&
+                (!Array.isArray(subject.sessions) || subject.sessions.length === 0)
+            ));
+            saveSelectedSubjects();
         }
     } catch (err) {
         console.warn('loadSelectedSubjects error', err);
@@ -3432,6 +4101,8 @@ function generateScheduleTable() {
             // Modificado para trabajar con el nuevo formato de hora
             const hourKey = hour.split('-')[0]; // Obtener solo la hora de inicio
             dayCell.id = `${day}-${hourKey.replace(':', '')}`;
+            dayCell.dataset.day = day;
+            dayCell.dataset.startTime = hourKey;
             row.appendChild(dayCell);
         });
 
@@ -3440,6 +4111,8 @@ function generateScheduleTable() {
             const hourKey = hour.split('-')[0];
             const saturdayCell = document.createElement('td');
             saturdayCell.id = `sabado-${hourKey.replace(':', '')}`;
+            saturdayCell.dataset.day = 'sabado';
+            saturdayCell.dataset.startTime = hourKey;
             row.appendChild(saturdayCell);
         }
 
@@ -3455,33 +4128,57 @@ function updateCatalogSubjects() {
     const catalogDiv = document.getElementById('catalogSubjects');
     if (!catalogDiv) return;
     catalogDiv.innerHTML = '';
+    updateCatalogScopeControls();
 
     // obtener ids de custom guardadas para mostrar el botón eliminar sólo en esas
     const customs = loadCustomSubjects();
     const customIds = new Set(customs.map(c => c.id));
 
     // NUEVO: ocultar del catálogo las materias que ya están cargadas en el horario
-    const selectedIds = new Set(selectedSubjects.map(s => s.id));
+    const selectedIds = new Set(selectedSubjects
+        .filter(subject => Array.isArray(subject.sessions) && subject.sessions.length > 0)
+        .map(subject => subject.id));
 
-    catalogSubjects.forEach(subject => {
+    getCatalogSubjectsForCurrentView().forEach(subject => {
         // Si la materia ya está en el horario, no la mostramos en el catálogo
         if (selectedIds.has(subject.id)) {
             return;
         }
 
         const subjectItem = document.createElement('div');
-        subjectItem.className = 'subject-item';
+        subjectItem.className = `subject-item${subject.isEquivalence ? ' subject-item--equivalence' : ''}`;
         subjectItem.setAttribute('data-subject-id', subject.id);
+
+        if (subject.isEquivalence) {
+            const equivalenceBadge = document.createElement('span');
+            equivalenceBadge.className = 'subject-equivalence-badge';
+            equivalenceBadge.textContent = 'Equivalencia · Plan 004';
+            subjectItem.appendChild(equivalenceBadge);
+        }
+        if (subject.isOtherCareer) {
+            const otherCareerBadge = document.createElement('span');
+            otherCareerBadge.className = 'subject-other-career-badge';
+            const originCareer = getCareerById(subject.careerId);
+            if (originCareer) {
+                const icon = document.createElement('img');
+                icon.alt = '';
+                setImageSource(icon, resolveCareerIcon(originCareer), resolveCareerIconFallback(originCareer));
+                otherCareerBadge.appendChild(icon);
+            }
+            otherCareerBadge.appendChild(document.createTextNode(subject.originCareerName || 'Otra carrera'));
+            subjectItem.appendChild(otherCareerBadge);
+        }
 
         const name = document.createElement('h3');
         name.textContent = `${subject.name} (Grupo ${subject.group})`;
 
         const professor = document.createElement('p');
-        professor.textContent = `Profesor: ${subject.professor}`;
+        professor.textContent = `Profesor: ${subject.professor || 'Por definir'}`;
 
         const sessionsDiv = document.createElement('div');
         sessionsDiv.className = 'multiday';
-        sessionsDiv.textContent = 'Horarios: ';
+        sessionsDiv.textContent = subject.sessions.length ? 'Horarios: ' : 'Horario por definir';
+        if (!subject.sessions.length) sessionsDiv.classList.add('multiday--empty');
 
         subject.sessions.forEach((session, index) => {
             const sessionBadge = document.createElement('span');
@@ -3498,27 +4195,46 @@ function updateCatalogSubjects() {
         subjectItem.appendChild(professor);
         subjectItem.appendChild(sessionsDiv);
 
-        // Manejar click/drag personalizado desde el catálogo
-        subjectItem.addEventListener('mousedown', function (event) {
-            handleCatalogSubjectMouseDown(event, subject, subjectItem);
-        });
+        // Las materias sin sesiones deben configurarse antes de poder arrastrarlas.
+        if (subject.sessions.length) {
+            subjectItem.addEventListener('mousedown', function (event) {
+                handleCatalogSubjectMouseDown(event, subject, subjectItem);
+            });
+        } else {
+            subjectItem.classList.add('subject-item--needs-schedule');
+            if (subject.isCurriculumSubject) {
+                subjectItem.setAttribute('role', 'button');
+                subjectItem.setAttribute('tabindex', '0');
+                subjectItem.setAttribute('aria-label', `Configurar ${subject.name}, grupo ${subject.group}`);
+                const openSubjectSetup = event => {
+                    if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+                    if (event.target.closest('.catalog-schedule-setup')) return;
+                    event.preventDefault();
+                    openCustomSubjectEditor(subject.id);
+                };
+                subjectItem.addEventListener('click', openSubjectSetup);
+                subjectItem.addEventListener('keydown', openSubjectSetup);
+            }
+        }
 
-        // si la materia está en customIds mostramos botón X para eliminarla del catálogo
-        if (customIds.has(subject.id)) {
+        // Las materias curriculares de Biomédica permiten completar y editar su horario.
+        if (customIds.has(subject.id) || subject.isCurriculumSubject) {
             // BOTÓN EDITAR
             const editBtn = document.createElement('button');
-            editBtn.className = 'catalog-edit';
+            editBtn.className = subject.sessions.length ? 'catalog-edit' : 'catalog-schedule-setup';
             editBtn.type = 'button'; // evitar submit por accidente
-            editBtn.setAttribute('aria-label', 'Editar materia');
-            editBtn.title = 'Editar materia';
-            editBtn.textContent = '✎';
+            editBtn.setAttribute('aria-label', subject.sessions.length ? 'Editar materia' : 'Agregar horario');
+            editBtn.title = subject.sessions.length ? 'Editar materia' : 'Agregar horario';
+            editBtn.textContent = subject.sessions.length ? '✎' : 'Agregar horario';
+            editBtn.addEventListener('mousedown', e => e.stopPropagation());
             editBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 openCustomSubjectEditor(subject.id);
             });
             subjectItem.appendChild(editBtn);
 
-            const delBtn = document.createElement('button');
+            if (customIds.has(subject.id) && !subject.isCurriculumSubject) {
+              const delBtn = document.createElement('button');
             delBtn.className = 'catalog-delete';
             delBtn.title = 'Eliminar materia del catálogo';
             delBtn.textContent = '×';
@@ -3551,7 +4267,8 @@ function updateCatalogSubjects() {
                 updateCatalogSubjects();
                 showMessage(`Materia "${subject.name}" eliminada del catálogo.`, 'success');
             });
-            subjectItem.appendChild(delBtn);
+              subjectItem.appendChild(delBtn);
+            }
         }
 
         catalogDiv.appendChild(subjectItem);
@@ -3572,12 +4289,16 @@ function setupFloatingPreview() {
             preview.style.left = `${e.pageX + 15}px`;
             preview.style.top = `${e.pageY + 15}px`;
         }
+        const dragHint = document.getElementById('dragHintBar');
+        if (dragHint && !dragHint.classList.contains('hidden')) {
+            positionDragHintBar(e);
+        }
     });
 
     // Configurar eventos de hover en los elementos del catálogo
     const catalogs = document.querySelectorAll('.subject-item');
     catalogs.forEach(item => {
-        item.addEventListener('mouseenter', function () {
+        item.addEventListener('mouseenter', function (event) {
             const subjectId = parseInt(this.getAttribute('data-subject-id'));
             const subject = catalogSubjects.find(s => s.id === subjectId);
 
@@ -3595,7 +4316,7 @@ function setupFloatingPreview() {
                 preview.classList.remove('hidden');
                 // Mostrar también la barra de ayuda básica al hacer hover
                 if (typeof showDragHintBar === 'function') {
-                    showDragHintBar('drag');
+                    showDragHintBar('drag', event);
                 }
             }
         });
@@ -3648,7 +4369,7 @@ function handleCatalogSubjectMouseDown(event, subject, sourceEl) {
     }
 
     // Mostrar mensaje inicial mientras se empieza a arrastrar la materia
-    showDragHintBar('drag');
+    showDragHintBar('drag', event);
 
     document.addEventListener('mousemove', handleCatalogSubjectMouseMove);
     document.addEventListener('mouseup', handleCatalogSubjectMouseUp);
@@ -3675,6 +4396,8 @@ function updateCatalogDragGhostPosition(event) {
 
 function handleCatalogSubjectMouseMove(event) {
     if (!catalogDragState.isActive || !catalogDragState.subject) return;
+
+    positionDragHintBar(event);
 
     const dx = event.clientX - catalogDragState.startX;
     const dy = event.clientY - catalogDragState.startY;
@@ -3747,9 +4470,6 @@ function handleCatalogSubjectMouseUp(event) {
     if (ghostEl && subject && droppedOnSchedule) {
         // Drop válido dentro del horario
         addSubjectToSchedule(subject.id);
-    } else if (subject && !droppedOnSchedule && !catalogDragState.hasMoved) {
-        // No hubo arrastre real: tratar como click rápido en el catálogo
-        addSubjectToSchedule(subject.id);
     }
 
     if (ghostEl && ghostEl.parentNode) {
@@ -3799,16 +4519,7 @@ function showScheduleDropPreviewForSubject(subject) {
                         previewCard = document.createElement('div');
                         previewCard.className = 'subject-card subject-card-drop-preview';
 
-                        const rawGroupLabel = subject.group ? String(subject.group) : '';
-                        const groupLabel = rawGroupLabel.trim().toLowerCase();
-
-                        if (groupLabel === '8a') {
-                            previewCard.classList.add('group-8A');
-                        } else if (groupLabel.includes('convalid')) {
-                            previewCard.classList.add('group-convalidacion');
-                        } else if (groupLabel.includes('especial')) {
-                            previewCard.classList.add('group-especial');
-                        }
+                        applySubjectGroupClass(previewCard, subject.group);
 
                         previewCard.textContent = subject.name;
                         cell.appendChild(previewCard);
@@ -3831,14 +4542,25 @@ function clearScheduleDropPreview() {
     });
 }
 
-function showDragHintBar(mode) {
+function positionDragHintBar(event) {
+    const bar = document.getElementById('dragHintBar');
+    if (!bar || !event) return;
+    const margin = 12;
+    const x = Math.max(120, Math.min(window.innerWidth - 120, event.clientX));
+    const y = Math.max(54, event.clientY - margin);
+    bar.style.left = `${x}px`;
+    bar.style.top = `${y}px`;
+}
+
+function showDragHintBar(mode, event) {
     const bar = document.getElementById('dragHintBar');
     if (!bar) return;
     if (mode === 'drop') {
-        bar.textContent = 'Suéltala sobre el horario para agregarla.';
+        bar.textContent = 'Suéltala aquí para agregarla.';
     } else {
-        bar.textContent = 'Arrastra la materia hasta el horario y suéltala para agregarla o simplemente haga click.';
+        bar.textContent = 'Arrastra esta materia y llévala hasta tu horario.';
     }
+    positionDragHintBar(event);
     bar.classList.remove('hidden');
 }
 
@@ -5482,6 +6204,12 @@ function addSubjectToSchedule(id) {
 
     if (!subject) return;
 
+    if (!Array.isArray(subject.sessions) || subject.sessions.length === 0) {
+        showMessage(`Primero agrega el horario de "${subject.name}".`, 'warning');
+        if (subject.isCurriculumSubject) openCustomSubjectEditor(subject.id);
+        return;
+    }
+
     // Verificar si ya está seleccionada
     if (selectedSubjects.some(s => s.id === id)) {
         showMessage(`La materia "${subject.name}" ya está en tu horario`, 'warning');
@@ -5644,6 +6372,152 @@ function parseTime(time) {
     return hours * 60 + minutes;
 }
 
+function formatScheduleTime(totalMinutes) {
+    const safeMinutes = Math.max(0, Math.min(24 * 60, totalMinutes));
+    const hour = Math.floor(safeMinutes / 60);
+    const minute = safeMinutes % 60;
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+let scheduleMoveState = null;
+
+function clearScheduleMoveTarget() {
+    if (scheduleMoveState && scheduleMoveState.targetCell) {
+        scheduleMoveState.targetCell.classList.remove('schedule-move-target');
+        scheduleMoveState.targetCell = null;
+    }
+}
+
+function finishScheduleCardMove(commitMove) {
+    const state = scheduleMoveState;
+    if (!state) return;
+
+    if (state.pressTimer) clearTimeout(state.pressTimer);
+    clearScheduleMoveTarget();
+    document.body.classList.remove('schedule-card-moving');
+    if (state.sourceCard) state.sourceCard.classList.remove('subject-card--moving');
+    if (state.ghost) state.ghost.remove();
+
+    document.removeEventListener('pointermove', handleScheduleCardPointerMove);
+    document.removeEventListener('pointerup', handleScheduleCardPointerUp);
+    document.removeEventListener('pointercancel', handleScheduleCardPointerCancel);
+    scheduleMoveState = null;
+
+    if (!commitMove || !state.dropDay || !state.dropStartTime) return;
+
+    const duration = parseTime(state.session.endTime) - parseTime(state.session.startTime);
+    const newStart = parseTime(state.dropStartTime);
+    const newEnd = newStart + duration;
+    const scheduleEnd = Math.max(...hours.map(hour => parseTime(hour.split('-')[1])));
+    if (duration <= 0 || newEnd > scheduleEnd) {
+        showMessage('La materia no cabe completa en esa hora.', 'warning');
+        return;
+    }
+
+    state.session.day = state.dropDay;
+    state.session.startTime = formatScheduleTime(newStart);
+    state.session.endTime = formatScheduleTime(newEnd);
+
+    saveSelectedSubjects();
+    updateScheduleView();
+    updateSelectedSubjectsList();
+    refreshReinscriptionDefaultsAfterScheduleChange();
+    updateReinscriptionLoadedSubjectsList();
+    ensureSaveToDrive({ interactive: false, silent: true });
+    showMessage(`Materia movida a ${capitalizeFirstLetter(state.dropDay)} ${state.session.startTime}.`, 'success');
+}
+
+function startScheduleCardMove() {
+    const state = scheduleMoveState;
+    if (!state || state.active) return;
+
+    state.active = true;
+    state.sourceCard.classList.add('subject-card--moving');
+    document.body.classList.add('schedule-card-moving');
+    const preview = document.getElementById('floatingPreview');
+    if (preview) preview.classList.add('hidden');
+
+    const ghost = state.sourceCard.cloneNode(true);
+    ghost.querySelectorAll('.remove-from-schedule, .edit-from-schedule').forEach(button => button.remove());
+    ghost.classList.remove('subject-card--moving');
+    ghost.classList.add('schedule-move-ghost');
+    document.body.appendChild(ghost);
+    state.ghost = ghost;
+    ghost.style.left = `${state.lastX}px`;
+    ghost.style.top = `${state.lastY}px`;
+    if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function handleScheduleCardPointerMove(event) {
+    const state = scheduleMoveState;
+    if (!state || event.pointerId !== state.pointerId) return;
+    state.lastX = event.clientX;
+    state.lastY = event.clientY;
+
+    if (!state.active) {
+        if (Math.hypot(event.clientX - state.startX, event.clientY - state.startY) > 10) {
+            clearTimeout(state.pressTimer);
+            state.pressTimer = null;
+        }
+        return;
+    }
+
+    event.preventDefault();
+    state.ghost.style.left = `${event.clientX}px`;
+    state.ghost.style.top = `${event.clientY}px`;
+    const element = document.elementFromPoint(event.clientX, event.clientY);
+    const targetCell = element && element.closest('.schedule-table td[data-day][data-start-time]');
+    if (targetCell !== state.targetCell) {
+        clearScheduleMoveTarget();
+        if (targetCell) {
+            targetCell.classList.add('schedule-move-target');
+            state.targetCell = targetCell;
+        }
+    }
+    state.dropDay = targetCell ? targetCell.dataset.day : null;
+    state.dropStartTime = targetCell ? targetCell.dataset.startTime : null;
+}
+
+function handleScheduleCardPointerUp(event) {
+    if (!scheduleMoveState || event.pointerId !== scheduleMoveState.pointerId) return;
+    finishScheduleCardMove(scheduleMoveState.active && Boolean(scheduleMoveState.targetCell));
+}
+
+function handleScheduleCardPointerCancel(event) {
+    if (!scheduleMoveState || event.pointerId !== scheduleMoveState.pointerId) return;
+    finishScheduleCardMove(false);
+}
+
+function attachScheduleCardMove(subjectCard, subject, session) {
+    subjectCard.classList.add('subject-card--movable');
+    subjectCard.setAttribute('aria-label', `${subject.name}. Mantén presionado para moverla.`);
+    subjectCard.addEventListener('pointerdown', event => {
+        if (event.button !== undefined && event.button !== 0) return;
+        if (event.target.closest('.remove-from-schedule, .edit-from-schedule')) return;
+        if (scheduleMoveState) finishScheduleCardMove(false);
+
+        scheduleMoveState = {
+            pointerId: event.pointerId,
+            subject,
+            session,
+            sourceCard: subjectCard,
+            startX: event.clientX,
+            startY: event.clientY,
+            lastX: event.clientX,
+            lastY: event.clientY,
+            active: false,
+            targetCell: null,
+            dropDay: null,
+            dropStartTime: null,
+            ghost: null,
+            pressTimer: setTimeout(startScheduleCardMove, 450)
+        };
+        document.addEventListener('pointermove', handleScheduleCardPointerMove, { passive: false });
+        document.addEventListener('pointerup', handleScheduleCardPointerUp);
+        document.addEventListener('pointercancel', handleScheduleCardPointerCancel);
+    });
+}
+
 // Función para añadir una sesión a la matriz de slots de tiempo
 function addSessionToTimeSlots(subject, session, timeSlots) {
     // Intentar asignar directamente al slot exacto (p.ej. "08:00-08:45")
@@ -5756,17 +6630,12 @@ function updateScheduleView() {
                 subjectsInSlot.forEach(item => {
                     const subjectCard = document.createElement('div');
                     const rawGroupLabel = (item.subject && item.subject.group) ? String(item.subject.group) : '';
-                    const groupLabel = rawGroupLabel.trim().toLowerCase();
 
-                    subjectCard.className = `subject-card ${hasConflict ? 'conflict' : ''}`;
+                    subjectCard.className = `subject-card ${hasConflict ? 'conflict' : ''}${item.subject.isEquivalence ? ' subject-card--equivalence' : ''}`;
 
-                    // Aplicar colores según tipo de grupo
-                    if (groupLabel === '8a') {
-                        subjectCard.classList.add('group-8A');
-                    } else if (groupLabel.includes('convalid')) {
-                        subjectCard.classList.add('group-convalidacion');
-                    } else if (groupLabel.includes('especial')) {
-                        subjectCard.classList.add('group-especial');
+                    // El grupo configurado en el perfil se muestra como ordinario.
+                    if (!item.subject.isEquivalence && !item.subject.isOtherCareer) {
+                        applySubjectGroupClass(subjectCard, rawGroupLabel);
                     }
 
                     // Mostrar nombre en la tarjeta
@@ -5833,6 +6702,7 @@ function updateScheduleView() {
                     });
                     // --- FIN NUEVO ---
 
+                    attachScheduleCardMove(subjectCard, item.subject, item.session);
                     cell.appendChild(subjectCard);
 
                 });
@@ -5853,12 +6723,24 @@ function updateSelectedSubjectsList() {
 
     selectedSubjects.forEach((subject, index) => {
         const subjectDiv = document.createElement('div');
-        subjectDiv.className = 'selected-subject-card';
+        subjectDiv.className = `selected-subject-card${subject.isEquivalence ? ' selected-subject-card--equivalence' : ''}`;
 
         const number = index + 1;
         const subjectInfo = document.createElement('div');
         subjectInfo.className = 'selected-subject-card__info';
         subjectInfo.innerHTML = `<strong class="selected-subject-card__title">${number}. ${subject.name}</strong> <span class="selected-subject-card__meta">(${subject.group}, Prof: ${subject.professor})</span>`;
+        if (subject.isEquivalence) {
+            const badge = document.createElement('span');
+            badge.className = 'selected-subject-card__equivalence';
+            badge.textContent = 'Equivalencia · Plan 004';
+            subjectInfo.appendChild(badge);
+        }
+        if (subject.isOtherCareer) {
+            const badge = document.createElement('span');
+            badge.className = 'selected-subject-card__other-career';
+            badge.textContent = `Materia de otra carrera · ${subject.originCareerName || 'Otra carrera'}`;
+            subjectInfo.appendChild(badge);
+        }
 
         // agregar sesiones (con aula)
         const subjectAula = subject.aula ?? (catalogSubjects.find(cs => cs.id === subject.id) || {}).aula ?? '-';
@@ -6019,7 +6901,7 @@ let scheduleHasSaturday = false; // para mostrar loader sólo la primera vez que
 function getCurrentSlotGroupClass() {
     const raw = m_inputGrupo && m_inputGrupo.value ? m_inputGrupo.value.trim().toLowerCase() : '';
     if (!raw) return 'slot-otro';
-    if (raw === '8a') return 'slot-ordinario';
+    if (normalizeAcademicGroup(raw) === getStudentStudyGroup()) return 'slot-ordinario';
     if (raw.includes('convalid')) return 'slot-convalidacion';
     if (raw.includes('especial')) return 'slot-especial';
     return 'slot-otro';
@@ -6243,7 +7125,7 @@ s_back.addEventListener('click', () => {
 });
 
 // Guardar nueva materia (se anexará al catálogo y se persiste en localStorage)
-s_save.addEventListener('click', () => {
+s_save.addEventListener('click', async () => {
     const materia = m_inputMateria.value.trim();
     const profesor = m_inputProfesor.value.trim(); // opcional
     const grupo = m_inputGrupo.value.trim();
@@ -6253,6 +7135,32 @@ s_save.addEventListener('click', () => {
     if (!materia || !grupo) {
         alert('Debes indicar al menos la materia y el cuatrimestre/grupo.');
         return;
+    }
+
+    const subjectBeingEdited = catalogSubjects.find(subject => subject.id === editingSubjectId);
+    if (subjectBeingEdited && subjectBeingEdited.isCurriculumSubject && selectedSlots.size === 0) {
+        showMessage('Selecciona al menos un día y una hora para esta materia.', 'warning');
+        return;
+    }
+
+    // Verificar el plan antes de modificar el catálogo. Esta validación debe
+    // ocurrir una sola vez y antes de guardar la materia en localStorage.
+    const isCreatingNewSubject = editingSubjectId === null || typeof editingSubjectId === 'undefined';
+    if (isCreatingNewSubject) {
+        const originalSaveText = s_save.textContent;
+        s_save.disabled = true;
+        s_save.textContent = 'Verificando...';
+        try {
+            await ensureFeatureAllowed('catalog');
+        } catch (error) {
+            s_save.disabled = false;
+            s_save.textContent = originalSaveText;
+            closeAddModal();
+            closeSlotsModal();
+            return;
+        }
+        s_save.disabled = false;
+        s_save.textContent = originalSaveText;
     }
 
     // construir sesiones a partir de selectedSlots
@@ -6277,6 +7185,16 @@ s_save.addEventListener('click', () => {
                 customs[i].group = grupo;
                 customs[i].aula = aula;
                 customs[i].sessions = sesiones;
+                if (subjectBeingEdited && subjectBeingEdited.isCurriculumSubject) {
+                    customs[i].isCurriculumSubject = true;
+                    customs[i].careerId = subjectBeingEdited.careerId;
+                    customs[i].quarter = subjectBeingEdited.quarter;
+                    customs[i].academicPlan = subjectBeingEdited.academicPlan || '004';
+                    customs[i].isEquivalence = Boolean(subjectBeingEdited.isEquivalence);
+                    customs[i].isOtherCareer = Boolean(subjectBeingEdited.isOtherCareer);
+                    customs[i].originCareerName = subjectBeingEdited.originCareerName || '';
+                    customs[i].searchTerms = subjectBeingEdited.searchTerms;
+                }
                 found = true;
                 break;
             }
@@ -6289,7 +7207,17 @@ s_save.addEventListener('click', () => {
                 professor: profesor,
                 group: grupo,
                 aula: aula,
-                sessions: sesiones
+                sessions: sesiones,
+                ...(subjectBeingEdited && subjectBeingEdited.isCurriculumSubject ? {
+                    isCurriculumSubject: true,
+                    careerId: subjectBeingEdited.careerId,
+                    quarter: subjectBeingEdited.quarter,
+                    academicPlan: subjectBeingEdited.academicPlan || '004',
+                    isEquivalence: Boolean(subjectBeingEdited.isEquivalence),
+                    isOtherCareer: Boolean(subjectBeingEdited.isOtherCareer),
+                    originCareerName: subjectBeingEdited.originCareerName || '',
+                    searchTerms: subjectBeingEdited.searchTerms
+                } : {})
             });
         }
         saveCustomSubjects(customs);
@@ -6316,7 +7244,8 @@ s_save.addEventListener('click', () => {
             professor: profesor,
             group: grupo,
             aula: aula,
-            sessions: sesiones
+            sessions: sesiones,
+            isUserCreated: true
         };
 
         // guardar en custom subjects persistentes
@@ -6582,6 +7511,11 @@ async function fetchGoogleProfile() {
                                 email: gUserProfile.email || null,
                                 avatar_url: gUserProfile.picture || null
                             })
+                        }).then(async function (response) {
+                            var sessionData = await response.json().catch(function () { return {}; });
+                            if (response.status === 403 && sessionData.blocked) {
+                                handleBlockedAccount(sessionData.status || 'suspended');
+                            }
                         }).catch(function (e) {
                             console.warn('No se pudo registrar sesión en backend', e);
                         });
@@ -6614,12 +7548,52 @@ function updateGoogleButtons(signedIn) {
     }
 }
 
+let blockedAccountHandled = false;
+function handleBlockedAccount(status) {
+    if (blockedAccountHandled) return;
+    blockedAccountHandled = true;
+    const modal = document.getElementById('accountSuspendedModal');
+    const title = modal ? modal.querySelector('h3') : null;
+    const message = modal ? modal.querySelector('p') : null;
+    const countdown = document.getElementById('suspensionCountdown');
+    if (title) title.textContent = status === 'deleted' ? 'Cuenta eliminada' : 'Cuenta suspendida';
+    if (message) message.textContent = status === 'deleted'
+        ? 'Tu cuenta fue eliminada por el administrador.'
+        : 'Tu cuenta ha sido suspendida por el administrador.';
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+    let remaining = 8;
+    if (countdown) countdown.textContent = String(remaining);
+    const timer = setInterval(function () {
+        remaining -= 1;
+        if (countdown) countdown.textContent = String(Math.max(remaining, 0));
+        if (remaining <= 0) {
+            clearInterval(timer);
+            if (typeof signOutWithLoader === 'function') signOutWithLoader();
+        }
+    }, 1000);
+}
+
+async function checkCurrentAccountAccess() {
+    try {
+        if (localStorage.getItem('google_signed_in') !== '1') return;
+        const response = await fetch(apiUrl('/api/session/me'), { credentials: 'include' });
+        const data = await response.json().catch(function () { return {}; });
+        if (response.status === 403 && data.blocked) {
+            handleBlockedAccount(data.status || 'suspended');
+        }
+    } catch (e) {
+        // Los fallos temporales de red no deben cerrar la sesión.
+    }
+}
+
 function onProfileLoaded() {
     const circle = document.getElementById('googleProfileCircle');
     const nameSpan = document.getElementById('googleUserName');
     const signInBtn = document.getElementById('googleSignIn');
     const signOutBtn = document.getElementById('googleSignOut');
-    const profileHat = document.getElementById('profileHat');
 
     if (!circle || !nameSpan) return;
 
@@ -6644,9 +7618,6 @@ function onProfileLoaded() {
         updateGoogleButtons(false);
         // borrar flag si no hay perfil válido
         try { localStorage.removeItem('google_signed_in'); } catch (e) { }
-        if (profileHat) {
-            profileHat.style.display = 'none';
-        }
         return;
     }
 
@@ -6661,10 +7632,6 @@ function onProfileLoaded() {
     }
     nameSpan.textContent = gUserProfile.name || '';
     circle.title = gUserProfile.email || '';
-    if (profileHat) {
-        profileHat.style.display = 'block';
-    }
-
     // marcar como conectado en almacenamiento (persistencia entre pestañas)
     try {
         localStorage.setItem('google_profile', JSON.stringify(gUserProfile));
@@ -6837,6 +7804,8 @@ async function saveToDrive(options = {}) {
         careerFallbackIcon: selectedCareerIconFallback,
         careerBackground: selectedCareerBackground,
         careerBackgroundFallback: selectedCareerBackgroundFallback,
+        academicPlan: getStudentAcademicPlan(),
+        studyGroup: getStudentStudyGroup(),
         customCareers: serializeCustomCareers(customCareerOptions)
     };
     const content = JSON.stringify(payload, null, 2);
@@ -7047,7 +8016,26 @@ async function ensureSaveToDrive(options = {}) {
 // isAuto: true cuando se llama en segundo plano (sin mensajes ni loaders visibles).
 // options.backendOnly: si es true, solo usa el backend (/api/drive/load) y
 //   NO intenta el flujo gapi (para no disparar inicios de sesión automáticos).
-async function loadFromDrive(isAuto = false, options = {}) {
+let backendDriveLoadInFlight = null;
+
+function loadFromDrive(isAuto = false, options = {}) {
+    const backendOnly = Boolean(options && options.backendOnly);
+    if (isAuto && backendOnly && backendDriveLoadInFlight) {
+        return backendDriveLoadInFlight;
+    }
+
+    const operation = loadFromDriveInternal(isAuto, options);
+    if (isAuto && backendOnly) {
+        backendDriveLoadInFlight = operation.finally(() => {
+            backendDriveLoadInFlight = null;
+        });
+        return backendDriveLoadInFlight;
+    }
+    return operation;
+}
+
+async function loadFromDriveInternal(isAuto = false, options = {}) {
+    if (window.__accountDeletionReset) return false;
     const { backendOnly = false } = options;
     if (!isAuto) {
         showLoader('Espere...');
@@ -7088,8 +8076,9 @@ async function loadFromDrive(isAuto = false, options = {}) {
                     const errCode = body && body.error;
                     // Si el backend aún no tiene sesión o tokens, simplemente
                     // hacemos fallback silencioso al flujo gapi (sin molestar al usuario).
-                    if (!(resp.status === 401 || resp.status === 403) ||
-                        !(errCode === 'no_drive_token' || errCode === 'not_authenticated')) {
+                    const expectedEmptyState = resp.status === 404 && errCode === 'not_found';
+                    if (!expectedEmptyState && (!(resp.status === 401 || resp.status === 403) ||
+                        !(errCode === 'no_drive_token' || errCode === 'not_authenticated'))) {
                         console.warn('Error al cargar desde backend Drive:', errCode || ('HTTP ' + resp.status));
                     }
                     // En todos los casos de error dejamos data en null para que se use el flujo gapi.
@@ -7146,9 +8135,24 @@ async function loadFromDrive(isAuto = false, options = {}) {
             syncCareerOptions(false);
         }
 
-        // 6) Materias seleccionadas
+        // 6) Plan de estudios, cuatrimestre y grupo configurados en el perfil
+        if (data.academicPlan) {
+            const restoredCareerId = (data.career && data.career.id) || data.careerId || 'biomedica';
+            setStudentAcademicPlan(data.academicPlan, restoredCareerId);
+        }
+        if (data.studyGroup && normalizeAcademicGroup(data.studyGroup)) {
+            const group = normalizeAcademicGroup(data.studyGroup);
+            const match = group.match(/^(1[0-2]|[1-9])([A-E])$/);
+            if (match) setStudentStudyGroup(match[1], match[2]);
+            updateStudyGroupProfileUI();
+        }
+
+        // 7) Materias seleccionadas
         if (Array.isArray(data.selectedSubjects)) {
-            selectedSubjects = data.selectedSubjects;
+            selectedSubjects = data.selectedSubjects.filter(subject => !(
+                subject && subject.isCurriculumSubject &&
+                (!Array.isArray(subject.sessions) || subject.sessions.length === 0)
+            ));
             saveSelectedSubjects();
             updateScheduleView();
             updateSelectedSubjectsList();
@@ -7157,23 +8161,26 @@ async function loadFromDrive(isAuto = false, options = {}) {
             }
         }
 
-        // 7) Materias personalizadas
+        // 8) Materias personalizadas
         if (Array.isArray(data.customSubjects)) {
             saveCustomSubjects(data.customSubjects);
             rebuildCatalogFromPredefinedAndCustoms();
             updateCatalogSubjects();
         }
 
-        // 8) Slots seleccionados
+        // 9) Slots seleccionados
         if (Array.isArray(data.selectedSlots)) {
             selectedSlots = new Set(data.selectedSlots);
             buildSlotsTable();
         }
 
-        // 9) Carrera seleccionada (formatos nuevo y legado)
+        // 10) Carrera seleccionada (formatos nuevo y legado)
         if (data.career) {
             const option = getCareerById(data.career.id) || getCareerByName(data.career.name);
             if (option) {
+                // Las carreras oficiales siempre usan los recursos locales.
+                // Solo las carreras creadas por el usuario restauran imágenes remotas.
+                if (option.isCustom) {
                 const remoteIcon = data.career.icon || data.careerIcon;
                 if (remoteIcon) {
                     option.icon = remoteIcon;
@@ -7190,11 +8197,13 @@ async function loadFromDrive(isAuto = false, options = {}) {
                 if (remoteBackgroundFallback) {
                     option.backgroundFallback = remoteBackgroundFallback;
                 }
+                }
                 applyCareerSelection(option, { persistLocal: true });
             }
         } else if (data.careerId || data.careerName) {
             const option = getCareerById(data.careerId) || getCareerByName(data.careerName);
             if (option) {
+                if (option.isCustom) {
                 const legacyIcon = data.careerIcon;
                 if (legacyIcon) {
                     option.icon = legacyIcon;
@@ -7210,6 +8219,7 @@ async function loadFromDrive(isAuto = false, options = {}) {
                 const legacyBackgroundFallback = data.careerBackgroundFallback;
                 if (legacyBackgroundFallback) {
                     option.backgroundFallback = legacyBackgroundFallback;
+                }
                 }
                 applyCareerSelection(option, { persistLocal: true });
             }
@@ -7648,7 +8658,7 @@ function testDriveAPI() {
 window.testDriveAPI = testDriveAPI;
 
 async function signOutGoogle(options = {}) {
-    const { skipLoader = false, loaderMessage = 'Cerrando sesión...' } = options;
+    const { skipLoader = false, skipPersist = false, loaderMessage = 'Cerrando sesión...' } = options;
     unlockInterface();
     driveAuthRetryPending = false;
     gmailApiReady = false;
@@ -7659,7 +8669,7 @@ async function signOutGoogle(options = {}) {
         showLoader(loaderMessage);
     }
     try {
-        await persistScheduleBeforeSignOut();
+        if (!skipPersist) await persistScheduleBeforeSignOut();
         clearLocalScheduleAndCatalogOnSignOut();
 
         try {
@@ -7822,8 +8832,13 @@ async function restoreBackendSessionProfile() {
         var url = apiUrl('/api/session/me');
         if (!url) return null;
         var resp = await fetch(url, { method: 'GET', credentials: 'include' });
+        var data = await resp.json().catch(function () { return {}; });
+        if (resp.status === 403 && data.blocked) {
+            handleBlockedAccount(data.status || 'suspended');
+            return null;
+        }
+
         if (!resp.ok) return null;
-        var data = await resp.json();
         if (!data || !data.ok || !data.authenticated || !data.email) return null;
 
         // Si el email de la sesión del backend es distinto al que teníamos
@@ -7895,6 +8910,11 @@ async function restoreBackendSessionProfile() {
         return null;
     }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(checkCurrentAccountAccess, 2500);
+    setInterval(checkCurrentAccountAccess, 30000);
+});
 
 // Banner discreto para reconectar Drive sin molestar constantemente
 function showDriveReconnectBanner() {
@@ -8072,11 +9092,52 @@ function handleAuthError(err) {
 function rebuildCatalogFromPredefinedAndCustoms() {
     try {
         const customs = loadCustomSubjects() || [];
-        // evitar mutar predefinedSubjects por accidente
-        catalogSubjects = JSON.parse(JSON.stringify(predefinedSubjects));
-        // añadir customs (si hay ids duplicados, los customs sobrescriben)
+        const baseSubjects = predefinedSubjects.filter(subject => !subject.isCurriculumSubject);
+        const selectedCareer = getSelectedCareerOption();
+        const selectedCareerId = selectedCareer ? selectedCareer.id : 'biomedica';
+        const academicPlan = getStudentAcademicPlan();
+        catalogSubjects = selectedCareerId === 'biomedica' && academicPlan === '004'
+            ? JSON.parse(JSON.stringify(baseSubjects))
+            : [];
+        if (getCareerCurriculum(selectedCareerId)) {
+            catalogSubjects.push(...getOfficialCurriculumSubjects(selectedCareerId));
+        }
+        if (selectedCareerId === 'biomedica' && academicPlan === '003') {
+            catalogSubjects.push(...getOfficialCurriculumSubjects('biomedica', '004', {
+                groupLetters: ['A', 'B', 'C', 'D', 'E'],
+                isEquivalence: true
+            }));
+        }
+        BASE_CAREER_OPTIONS.forEach(option => {
+            if (option.id === selectedCareerId || !getCareerCurriculum(option.id, '004')) return;
+            catalogSubjects.push(...getOfficialCurriculumSubjects(option.id, '004', {
+                isOtherCareer: true,
+                originCareerName: option.name
+            }));
+        });
+        // añadir customs (si hay ids duplicados, conservan los metadatos de la materia base)
         const existing = new Map(catalogSubjects.map(s => [s.id, s]));
-        customs.forEach(c => existing.set(c.id, c));
+        customs.forEach(c => {
+            let normalizedCustom = c;
+            let numericId = Number(c.id);
+            const customGroup = normalizeAcademicGroup(c.group);
+            const customGroupMatch = customGroup.match(/^(1[0-2]|[1-9])([A-E])$/);
+            if (c.isCurriculumSubject && numericId >= 10100 && numericId < 11300 && customGroupMatch) {
+                const letterOffset = ['A', 'B', 'C', 'D', 'E'].indexOf(customGroupMatch[2]) * 2000;
+                if (letterOffset > 0) {
+                    numericId += letterOffset;
+                    normalizedCustom = { ...c, id: numericId };
+                }
+            }
+            const looksLikeCurriculum = c.isCurriculumSubject || Boolean(c.careerId) ||
+                (numericId >= 10100 && numericId < 11300);
+            const customCareerId = c.careerId || ((numericId >= 10100 && numericId < 11300) ? 'biomedica' : null);
+            const customPlan = c.academicPlan || '004';
+            const isPlan004Equivalence = academicPlan === '003' && customPlan === '004' && c.isEquivalence;
+            const isOtherCareerSubject = Boolean(c.isOtherCareer || (customCareerId && customCareerId !== selectedCareerId));
+            if (looksLikeCurriculum && customPlan !== academicPlan && !isPlan004Equivalence && !isOtherCareerSubject) return;
+            existing.set(normalizedCustom.id, { ...(existing.get(normalizedCustom.id) || {}), ...normalizedCustom });
+        });
         catalogSubjects = Array.from(existing.values());
     } catch (e) {
         console.warn('rebuildCatalogFromPredefinedAndCustoms error', e);
@@ -8801,70 +9862,6 @@ var __paymentModalInitialized = false;
 var __paymentModalEl = null;
 var __paymentErrorEl = null;
 var __paymentConfirmBtn = null;
-var __payerModalEl = null;
-var __payerNameInput = null;
-var __payerEmailInput = null;
-var __payerErrorEl = null;
-var __payerContinueBtn = null;
-var __payerModalInitialized = false;
-
-function openPayerInfoModal() {
-    if (!__payerModalInitialized) {
-        __payerModalEl = document.getElementById('payerInfoModal');
-        __payerNameInput = document.getElementById('payerNameInput');
-        __payerEmailInput = document.getElementById('payerEmailInput');
-        __payerErrorEl = document.getElementById('payerInfoError');
-        __payerContinueBtn = document.getElementById('payerInfoContinue');
-        var closePayerBtn = document.getElementById('payerInfoClose');
-        if (closePayerBtn && __payerModalEl) {
-            closePayerBtn.addEventListener('click', function () { closePayerInfoModal(); });
-        }
-        if (__payerModalEl) {
-            __payerModalEl.addEventListener('click', function (e) { if (e.target === __payerModalEl) closePayerInfoModal(); });
-        }
-        if (__payerContinueBtn) {
-            __payerContinueBtn.addEventListener('click', async function () {
-                if (!__payerContinueBtn || __payerContinueBtn.disabled) return;
-                var name = __payerNameInput && __payerNameInput.value ? __payerNameInput.value.trim() : '';
-                var email = __payerEmailInput && __payerEmailInput.value ? __payerEmailInput.value.trim() : '';
-                if (!email) {
-                    if (__payerErrorEl) __payerErrorEl.textContent = 'Escribe el correo de la persona que realizará el pago.';
-                    return;
-                }
-                if (__payerErrorEl) __payerErrorEl.textContent = '';
-                var originalText = __payerContinueBtn.textContent;
-                __payerContinueBtn.disabled = true;
-                __payerContinueBtn.textContent = 'Cargando...';
-                try {
-                    await startPlanCheckout('Plan_xunu', email, name);
-                    closePayerInfoModal();
-                } finally {
-                    __payerContinueBtn.disabled = false;
-                    __payerContinueBtn.textContent = originalText;
-                }
-            });
-        }
-        __payerModalInitialized = true;
-    }
-    if (!__payerModalEl) return;
-    if (__payerErrorEl) __payerErrorEl.textContent = '';
-    if (__payerNameInput && typeof getCurrentUserFullName === 'function') {
-        var n = getCurrentUserFullName();
-        if (n && !__payerNameInput.value) __payerNameInput.value = n;
-    }
-    if (__payerEmailInput && typeof getCurrentUserEmail === 'function') {
-        var e = getCurrentUserEmail();
-        if (e && !__payerEmailInput.value) __payerEmailInput.value = e;
-    }
-    __payerModalEl.classList.remove('hidden');
-    __payerModalEl.setAttribute('aria-hidden', 'false');
-}
-
-function closePayerInfoModal() {
-    if (!__payerModalEl) return;
-    __payerModalEl.classList.add('hidden');
-    __payerModalEl.setAttribute('aria-hidden', 'true');
-}
 
 function openPaymentModal() {
     if (!__paymentModalInitialized) {
@@ -8966,21 +9963,7 @@ async function handleConfirmPaymentClick() {
                 }
             }
             // Notificar al backend para activar el plan también en la base de datos
-            try {
-                var sessionEmail = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
-                var sessionName = (typeof getCurrentUserFullName === 'function') ? getCurrentUserFullName() : '';
-                if (sessionEmail) {
-                    var activateUrl = apiUrl('/api/plan/activate-client');
-                    await fetch(activateUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({ email: sessionEmail, name: sessionName, plan_id: 'Plan_xunu' })
-                    }).catch(function (e) { console.warn('No se pudo activar el plan en backend', e); });
-                }
-            } catch (e) {
-                console.warn('Error activando plan en backend tras pago', e);
-            }
+            // El webhook firmado de Stripe activa el plan en el servidor.
             // Intentar guardar el nuevo estado también en Drive, sin molestar al usuario si falla
             if (typeof ensureSaveToDrive === 'function') {
                 ensureSaveToDrive({ interactive: false, showSuccess: false, silent: true });
@@ -9166,8 +10149,24 @@ document.addEventListener('DOMContentLoaded', function () {
         planStatusModal.addEventListener('click', function (e) { if (e.target === planStatusModal) { planStatusModal.classList.add('hidden'); planStatusModal.setAttribute('aria-hidden', 'true'); } });
     }
     if (planProCheckoutBtn) {
-        planProCheckoutBtn.addEventListener('click', function () {
-            openPayerInfoModal();
+        planProCheckoutBtn.addEventListener('click', async function () {
+            if (planProCheckoutBtn.disabled) return;
+            var originalText = planProCheckoutBtn.textContent;
+            planProCheckoutBtn.disabled = true;
+            planProCheckoutBtn.textContent = 'Preparando pago...';
+            closePlansModal();
+            if (typeof showLoader === 'function') {
+                showLoader('Preparando pago...');
+            }
+            try {
+                await startPlanCheckout('Plan_xunu');
+            } finally {
+                if (typeof hideLoader === 'function') {
+                    hideLoader();
+                }
+                planProCheckoutBtn.disabled = false;
+                planProCheckoutBtn.textContent = originalText;
+            }
         });
     }
 
@@ -9204,27 +10203,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Interceptar creación de materias de catálogo (solo nuevas)
-    var saveBtn = document.getElementById('s_save');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', async function (ev) {
-            try {
-                if (typeof editingSubjectId === 'undefined' || editingSubjectId === null) {
-                    await ensureFeatureAllowed('catalog');
-                }
-            } catch (e) {
-                if (ev && ev.preventDefault) ev.preventDefault();
-                if (ev && ev.stopPropagation) ev.stopPropagation();
-                return false;
-            }
-            return true;
-        });
-    }
 });
 
 // ================== MODO GRATUITO: desactivar planes y pagos ==================
 // Este bloque sobrescribe las funciones relacionadas con planes/Stripe para que
 // todo funcione como versión gratuita sin límites ni pagos.
 
+/* El modo gratuito temporal queda conservado como referencia, pero desactivado.
 (function setupFreeMode() {
     try {
         if (typeof currentPlanState === 'undefined' || !currentPlanState) {
@@ -9370,18 +10355,39 @@ async function startPlanCheckout(planId, emailOverride, nameOverride) {
 }
 
 
+*/
 (function () {
-  const estiloTitulo = "color:red;font-size:40px;font-weight:bold;";
-  const estiloTexto = "font-size:16px;color:black;";
+  const titulo = [
+    "color:#ff0000",
+    "font-size:42px",
+    "font-weight:bold",
+    "text-shadow:2px 2px 0 #000"
+  ].join(";");
 
-  console.log("%c¡Detente!", estiloTitulo);
+  const texto = [
+    "font-size:16px",
+    "color:#555",
+    "font-weight:bold"
+  ].join(";");
+
+  const mampo = [
+    "font-size:20px",
+    "color:#ff0000",
+    "font-weight:bold"
+  ].join(";");
+
+  console.log("%c¡MAMPO!", titulo);
+
   console.log(
-    "Si alguien te dijo que pegaras algo aquí para hackear o robar cualquier información,\n" +
-    "es un fraude. Si lo haces, XuNnito podrá robar tu información.\n" +
-    "Mampo,\n",
-    estiloTexto
+    "%c¿Qué haces aquí? 👀\n%cMampo...",
+    texto,
+    mampo
+  );
+
+  console.log(
+    "%c¿no tienes nada mejor que hacer? JAJAJA",
+    "font-size:14px;color:#777;font-style:italic;"
   );
 })();
-
 
 

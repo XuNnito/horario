@@ -24,10 +24,11 @@
     <link rel="icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="48x48" href="icono.png">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="stylesheet" href="src/css/styles.css">
+    <link rel="stylesheet" href="src/css/styles.css?v=20260822-5">
     <script src="https://js.stripe.com/v3" defer></script>
     <script src="funcion.js" defer></script>
-    <script src="src/js/xunu.js" defer></script>
+    <script src="dist/js/upchiapas-curricula.js?v=20260823-1" defer></script>
+    <script src="dist/js/xunu.js?v=20260823-1" defer></script>
 </head>
 
 <div id="mobileMessage" role="status" aria-live="polite">
@@ -36,16 +37,20 @@
 </div>
 <body>
     <div id="dragHintBar" class="drag-hint-bar hidden" role="status" aria-live="polite">
-        Arrastra la materia hasta el horario y suéltala para agregarla o simplemente haga click.
+        Arrastra la materia y llévala hasta tu horario.
     </div>
     <div id="topBar">
         <div class="profile-wrapper">
-            <img src="gorrito-navidad.png" alt="Gorro navideño" id="profileHat" class="profile-hat" aria-hidden="true">
             <div id="googleProfileCircle" class="profile-circle" title="Iniciar sesión" role="button" tabindex="0"
                 aria-label="Perfil"></div>
         </div>
         <span id="googleUserName" class="user-name"></span>
         <div class="google-btns">
+            <button id="academicSettingsBtn" type="button" class="academic-settings-btn" aria-label="Editar grado y grupo" title="Editar grado y grupo">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M19.4 13a7.7 7.7 0 0 0 .05-1 7.7 7.7 0 0 0-.05-1l2.1-1.65-2-3.46-2.55 1.03a8.1 8.1 0 0 0-1.73-1L14.83 3h-4l-.39 2.92a8.1 8.1 0 0 0-1.73 1L6.16 5.89l-2 3.46L6.26 11a7.7 7.7 0 0 0-.05 1 7.7 7.7 0 0 0 .05 1l-2.1 1.65 2 3.46 2.55-1.03a8.1 8.1 0 0 0 1.73 1l.39 2.92h4l.39-2.92a8.1 8.1 0 0 0 1.73-1l2.55 1.03 2 3.46L19.4 13ZM12.83 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" />
+                </svg>
+            </button>
             <button id="themeToggle" type="button" class="theme-toggle-btn" aria-label="Cambiar tema">
                 <svg id="themeToggleIcon" class="theme-toggle-icon" viewBox="0 0 24 24" aria-hidden="true"
                     focusable="false">
@@ -85,7 +90,6 @@
     <div id="profileModal" class="profile-modal hidden" aria-hidden="true">
         <div class="profile-backdrop" data-close="true"></div>
         <div class="profile-panel" role="dialog" aria-modal="true" aria-labelledby="pmName">
-            <img src="gorrito-navidad.png" alt="Decoración navideña" class="profile-modal-hat" aria-hidden="true">
             <button type="button" class="pm-close" id="pmClose" aria-label="Cerrar">&times;</button>
             <div class="pm-avatar" id="pmAvatar" aria-hidden="true"></div>
             <h3 id="pmName">Sin sesión</h3>
@@ -102,6 +106,9 @@
                         <span class="pm-career-select__hint">Toca para cambiar tu carrera</span>
                     </div>
                 </button>
+                <div class="pm-study-level pm-study-level--compact" aria-label="Grado actual">
+                    <strong id="pmStudyLevelCurrent">8vo A</strong>
+                </div>
                 <button id="pmInviteCodeToggle" class="pm-career-select" type="button"
                     aria-label="Ingresar código de invitación">
                     <div class="pm-career-select__text">
@@ -251,18 +258,17 @@
 
                     </div>
                 </h2>
-                <p>Haga clic en una materia para agregarla a su horario y con el boton +mas crea mas horarios de otra
-                    grupos, carrera, covalidaciones o grupos especiles</p>
+                <p>Arrastra una materia hasta el horario. Con el botón “Más +” puedes crear materias de otros grupos,
+                    carreras, convalidaciones o grupos especiales.</p>
                 <div class="search-container">
                     <input type="text" id="searchInput" placeholder="Buscar materias, grupos o profesores..." />
                     <div id="suggestions" class="suggestions hidden"></div>
                 </div>
-                <div class="group-load-buttons">
-                    <button id="btnLoad8A" type="button">8A</button>
-                    <button id="btnLoad8B" type="button">8B</button>
-                    <button id="btnLoad8C" type="button">8C</button>
-                    <button id="btnLoad9A" type="button">9A</button>
-
+                <p class="group-load-title">Filtrar Busquedas Grupos y cuatrimestres</p>
+                <div id="groupLoadButtons" class="group-load-buttons" aria-label="Grupos disponibles"></div>
+                <div class="catalog-scope-controls">
+                    <span id="catalogScopeSummary" class="catalog-scope-summary"></span>
+                    <button id="catalogScopeToggle" type="button" class="catalog-scope-toggle">Mostrar todas las materias</button>
                 </div>
                 <div id="catalogSubjects" class="catalog-subjects"></div>
             </div>
@@ -347,6 +353,11 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="schedule-move-help" role="note" aria-label="Cómo mover una materia">
+                    <span class="schedule-move-help__icon" aria-hidden="true">↔</span>
+                    <span><strong>¿Te equivocaste de hora?</strong> Mantén presionada una materia, arrástrala a otra
+                        hora o día y suéltala cuando la celda se marque en verde.</span>
+                </div>
 
                 <div id="printFooterName" class="print-footer" aria-hidden="true"></div>
 
@@ -388,6 +399,46 @@
             <div class="modal-actions" style="justify-content:center;margin-top:14px;">
                 <button id="groupNotAvailableClose" type="button">Cerrar</button>
             </div>
+        </div>
+    </div>
+
+    <div id="quarterSelectModal" class="modal hidden" aria-hidden="true" role="dialog" aria-modal="true"
+        aria-labelledby="quarterSelectTitle">
+        <div class="panel-modal quarter-select-modal">
+            <button id="quarterSelectClose" type="button" class="quarter-select-close" aria-label="Cerrar">×</button>
+            <h3 id="quarterSelectTitle">Elige tu cuatrimestre y grupo</h3>
+            <p id="quarterSelectDescription">Selecciona tu grado actual. Ese grupo se identificará en verde como ordinario.</p>
+            <div id="catalogCareerFilter" class="catalog-career-filter hidden" aria-label="Filtrar materias por carrera"></div>
+            <div id="allAcademicGroups" class="all-academic-groups" aria-label="Cuatrimestres y grupos"></div>
+            <div class="modal-actions">
+                <button id="quarterSelectCancel" type="button" class="btn-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="academicOnboardingModal" class="academic-onboarding hidden" aria-hidden="true" role="dialog"
+        aria-modal="true" aria-labelledby="academicOnboardingTitle">
+        <div class="academic-onboarding__card">
+            <button id="academicOnboardingClose" type="button" class="quarter-select-close" aria-label="Cerrar">×</button>
+            <span class="quarter-select-modal__eyebrow">Configura tu experiencia</span>
+            <h2 id="academicOnboardingTitle">¿Qué estás estudiando?</h2>
+            <p>Selecciona tu carrera, cuatrimestre y grupo para mostrarte las materias correctas.</p>
+            <div id="onboardingCareerGrid" class="onboarding-career-grid" aria-label="Seleccionar carrera"></div>
+            <div class="onboarding-academic-fields">
+                <label for="onboardingAcademicPlan">Plan de estudios
+                    <select id="onboardingAcademicPlan">
+                        <option value="004">Plan 004</option>
+                    </select>
+                </label>
+                <label for="onboardingQuarter">Cuatrimestre
+                    <select id="onboardingQuarter"></select>
+                </label>
+                <fieldset>
+                    <legend>Grupo</legend>
+                    <div id="onboardingGroupButtons" class="onboarding-group-buttons"></div>
+                </fieldset>
+            </div>
+            <button id="academicOnboardingSave" type="button" class="academic-onboarding__save">Guardar y comenzar</button>
         </div>
     </div>
 
@@ -771,33 +822,6 @@
         </div>
     </div>
 
-    <div id="payerInfoModal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
-        <div class="modal-container payer-modal" role="document">
-            <button id="payerInfoClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
-            <h3 style="margin-top:0; text-align:center;">Datos de la persona que paga</h3>
-            <p style="font-size:14px;color:#6b7280;margin-bottom:12px; text-align:center;">
-                Usaremos estos datos para asociar el plan y poder identificar tu compra.
-            </p>
-            <label for="payerNameInput"
-                style="display:block;margin-bottom:6px;text-align:left;font-weight:600;font-size:14px;">Nombre
-                completo</label>
-            <input id="payerNameInput" type="text" placeholder="Nombre de la persona que realiza el pago"
-                style="width:90%;padding:8px 10px;margin-bottom:10px;border-radius:6px;border:1px solid #d1d5db;">
-            <label for="payerEmailInput"
-                style="display:block;margin-bottom:6px;text-align:left;font-weight:600;font-size:14px;">Correo
-                electrónico</label>
-            <input id="payerEmailInput" type="email" placeholder="correo@ejemplo.com"
-                style="width:90%;padding:8px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #d1d5db;">
-            <p style="font-size:12px;color:#6b7280;margin-bottom:12px; text-align:left;">
-                Este correo se usará para activar el plan y consultar tu estado más adelante.
-            </p>
-            <div id="payerInfoError" style="min-height:18px;font-size:13px;color:#b91c1c;margin-bottom:8px;"></div>
-            <button id="payerInfoContinue" type="button" class="plan-cta-btn" style="width:100%;">
-                Continuar con el pago
-            </button>
-        </div>
-    </div>
-
     <div id="paymentModal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
         <div class="modal-container payment-modal" role="document">
             <button id="paymentModalClose" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
@@ -814,7 +838,7 @@
 
 </body>
 <footer class="footer">
-    <p>&copy; 2025 XuNnito</p>
+    <p>&copy; Desarrollado por xunito 2024</p>
 
     <a href="https://www.facebook.com/XuNnitohz" target="_blank" rel="noopener noreferrer" aria-label="Facebook"
         class="icon fb">
@@ -835,7 +859,8 @@
 <script src="https://apis.google.com/js/api.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js" defer></script>
 <script>
-    window.BACKEND_BASE_URL = "https://horario-sigma-nine.vercel.app/";
+    // En Vercel, frontend y API se sirven desde el mismo dominio.
+    window.BACKEND_BASE_URL = window.location.origin;
 </script>
 
 </html>

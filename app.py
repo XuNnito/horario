@@ -3,7 +3,10 @@ from __future__ import annotations
 import os
 import sqlite3
 import json
-from datetime import datetime, timedelta
+import hmac
+import secrets
+from datetime import datetime, timedelta, timezone
+from typing import Any
 
 import requests
 from flask import (
@@ -29,10 +32,8 @@ except Exception:
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-if os.environ.get("VERCEL"):
-    DB_PATH = "/tmp/security_logs.db"
-else:
-    DB_PATH = os.path.join(BASE_DIR, "security_logs.db")
+DB_PATH = os.path.join(BASE_DIR, "security_logs.db")
+DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL")
 
 # Configuración OAuth de Google para Drive (lado servidor)
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
@@ -40,9 +41,9 @@ GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 # El redirect_uri se calcula dinámicamente según el host actual.
 
 # Configuración de Stripe (claves y planes)
-STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
-STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY")
-STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
+STRIPE_SECRET_KEY = (os.environ.get("STRIPE_SECRET_KEY") or "").strip()
+STRIPE_PUBLISHABLE_KEY = (os.environ.get("STRIPE_PUBLISHABLE_KEY") or "").strip()
+STRIPE_WEBHOOK_SECRET = (os.environ.get("STRIPE_WEBHOOK_SECRET") or "").strip()
 
 # Planes disponibles en la app (ids lógicos internos)
 # En este proyecto usamos un único plan de pago basado en usos:
@@ -57,6 +58,7 @@ STRIPE_PRICE_IDS = {
 		"Plan_xunu": os.environ.get("STRIPE_PRICE_Plan_xunu"),
 }
 
+
 try:
 		import stripe  # type: ignore[import]
 
@@ -66,7 +68,50 @@ except ImportError:  # Stripe no instalado aún
 		stripe = None  # type: ignore[assignment]
 
 
-def get_db_connection() -> sqlite3.Connection:
+def _has_valid_stripe_secret_key() -> bool:
+		return bool(STRIPE_SECRET_KEY and STRIPE_SECRET_KEY.startswith(("sk_test_", "sk_live_")))
+
+
+class PostgresCursor:
+		"""Compatibility layer for the existing SQLite-style queries."""
+
+		def __init__(self, cursor: Any) -> None:
+				self._cursor = cursor
+
+		def execute(self, query: str, params: tuple[Any, ...] | list[Any] | None = None) -> Any:
+				return self._cursor.execute(query.replace("?", "%s"), params or ())
+
+		def fetchone(self) -> Any:
+				return self._cursor.fetchone()
+
+		def fetchall(self) -> Any:
+				return self._cursor.fetchall()
+
+
+class PostgresConnection:
+		def __init__(self, connection: Any) -> None:
+				self._connection = connection
+
+		def cursor(self) -> PostgresCursor:
+				return PostgresCursor(self._connection.cursor())
+
+		def commit(self) -> None:
+				self._connection.commit()
+
+		def close(self) -> None:
+				self._connection.close()
+
+
+def get_db_connection() -> Any:
+		if DATABASE_URL:
+				try:
+						import psycopg
+						from psycopg.rows import dict_row
+				except ImportError as exc:
+						raise RuntimeError("DATABASE_URL requiere instalar psycopg") from exc
+				url = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+				return PostgresConnection(psycopg.connect(url, row_factory=dict_row))
+
 		conn = sqlite3.connect(DB_PATH)
 		conn.row_factory = sqlite3.Row
 		return conn
@@ -75,12 +120,14 @@ def get_db_connection() -> sqlite3.Connection:
 def init_db() -> None:
 		conn = get_db_connection()
 		cur = conn.cursor()
+		is_postgres = bool(DATABASE_URL)
+		visit_id = "BIGSERIAL PRIMARY KEY" if is_postgres else "INTEGER PRIMARY KEY AUTOINCREMENT"
 
 		# Tabla de visitas (tanto anónimas como con sesión)
 		cur.execute(
-				"""
+				f"""
 				CREATE TABLE IF NOT EXISTS visits (
-						id INTEGER PRIMARY KEY AUTOINCREMENT,
+						id {visit_id},
 						ts TEXT NOT NULL,
 						ip TEXT,
 						user_agent TEXT,
@@ -107,36 +154,35 @@ def init_db() -> None:
 
 		# Columnas adicionales para planes de pago
 		try:
-				cur.execute("ALTER TABLE users ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'")
+				clause = "IF NOT EXISTS " if is_postgres else ""
+				cur.execute(f"ALTER TABLE users ADD COLUMN {clause}plan TEXT NOT NULL DEFAULT 'free'")
 		except sqlite3.OperationalError:
 				# Ya existe la columna
 				pass
 
 		try:
-				cur.execute("ALTER TABLE users ADD COLUMN plan_expires_at TEXT")  # epoch en segundos o NULL
+				clause = "IF NOT EXISTS " if is_postgres else ""
+				cur.execute(f"ALTER TABLE users ADD COLUMN {clause}plan_expires_at TEXT")  # epoch en segundos o NULL
 		except sqlite3.OperationalError:
 				# Ya existe la columna
 				pass
 
 		# Columnas para contar usos (límites del plan gratuito)
 		try:
-				cur.execute(
-						"ALTER TABLE users ADD COLUMN catalog_created_count INTEGER NOT NULL DEFAULT 0",
-				)
+				clause = "IF NOT EXISTS " if is_postgres else ""
+				cur.execute(f"ALTER TABLE users ADD COLUMN {clause}catalog_created_count INTEGER NOT NULL DEFAULT 0")
 		except sqlite3.OperationalError:
 				pass
 
 		try:
-				cur.execute(
-						"ALTER TABLE users ADD COLUMN print_count INTEGER NOT NULL DEFAULT 0",
-				)
+				clause = "IF NOT EXISTS " if is_postgres else ""
+				cur.execute(f"ALTER TABLE users ADD COLUMN {clause}print_count INTEGER NOT NULL DEFAULT 0")
 		except sqlite3.OperationalError:
 				pass
 
 		try:
-				cur.execute(
-						"ALTER TABLE users ADD COLUMN download_count INTEGER NOT NULL DEFAULT 0",
-				)
+				clause = "IF NOT EXISTS " if is_postgres else ""
+				cur.execute(f"ALTER TABLE users ADD COLUMN {clause}download_count INTEGER NOT NULL DEFAULT 0")
 		except sqlite3.OperationalError:
 				pass
 
@@ -170,11 +216,16 @@ def init_db() -> None:
 
 		# Columna opcional para guardar la URL del avatar/foto de perfil
 		try:
-				cur.execute(
-						"ALTER TABLE users ADD COLUMN avatar_url TEXT",
-				)
+				clause = "IF NOT EXISTS " if is_postgres else ""
+				cur.execute(f"ALTER TABLE users ADD COLUMN {clause}avatar_url TEXT")
 		except sqlite3.OperationalError:
 				# Ya existe la columna
+				pass
+
+		try:
+				clause = "IF NOT EXISTS " if is_postgres else ""
+				cur.execute(f"ALTER TABLE users ADD COLUMN {clause}last_payment_event_id TEXT")
+		except sqlite3.OperationalError:
 				pass
 
 		# Tabla para guardar un snapshot del horario por usuario
@@ -199,7 +250,7 @@ app = Flask(__name__, static_folder=BASE_DIR, static_url_path="")
 
 # Clave de sesión para firmar cookies seguras.
 # En producción, define FLASK_SECRET_KEY con un valor largo y aleatorio.
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-change-me")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY") or os.environ.get("SESSION_SECRET") or "dev-change-me"
 
 # Duración máxima de la sesión de la app: ~4 meses (120 días).
 app.permanent_session_lifetime = timedelta(days=120)
@@ -273,12 +324,12 @@ def add_cors_headers(response):  # type: ignore[override]
 
 
 def _now_iso() -> str:
-		return datetime.utcnow().isoformat(timespec="seconds") + "Z"
+		return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 def _now_ts() -> int:
 		"""Devuelve timestamp UTC en segundos (entero)."""
-		return int(datetime.utcnow().timestamp())
+		return int(datetime.now(timezone.utc).timestamp())
 
 
 def _format_ts_for_display(raw: str | None) -> str:
@@ -531,7 +582,10 @@ def _get_or_create_stripe_customer(email: str, name: str | None = None) -> str |
 		return None
 
 	cur.execute(
-			"INSERT OR REPLACE INTO stripe_customers (email, customer_id) VALUES (?, ?)",
+			"""
+			INSERT INTO stripe_customers (email, customer_id) VALUES (?, ?)
+			ON CONFLICT(email) DO UPDATE SET customer_id = excluded.customer_id
+			""",
 			(email, str(customer_id)),
 	)
 	conn.commit()
@@ -539,7 +593,12 @@ def _get_or_create_stripe_customer(email: str, name: str | None = None) -> str |
 	return str(customer_id)
 
 
-def _activate_plan_for_user(email: str | None, plan_id: str | None, name: str | None = None) -> None:
+def _activate_plan_for_user(
+		email: str | None,
+		plan_id: str | None,
+		name: str | None = None,
+		payment_event_id: str | None = None,
+) -> None:
 		"""Activa un plan para un usuario concreto, calculando la expiración.
 
 		Se usa desde el webhook de Stripe.
@@ -559,6 +618,12 @@ def _activate_plan_for_user(email: str | None, plan_id: str | None, name: str | 
 
 		conn = get_db_connection()
 		cur = conn.cursor()
+		if payment_event_id:
+				cur.execute("SELECT last_payment_event_id FROM users WHERE email = ?", (email,))
+				payment_row = cur.fetchone()
+				if payment_row and payment_row["last_payment_event_id"] == payment_event_id:
+						conn.close()
+						return
 		# Al activar un plan de pago, reiniciamos los contadores de uso para que
 		# el usuario vuelva a tener el paquete completo de usos (no se acumulan).
 		cur.execute(
@@ -568,10 +633,11 @@ def _activate_plan_for_user(email: str | None, plan_id: str | None, name: str | 
 						plan_expires_at = ?,
 						catalog_created_count = 0,
 						print_count = 0,
-						download_count = 0
+						download_count = 0,
+						last_payment_event_id = ?
 				WHERE email = ?
 				""",
-				(plan_id, expires_ts, email),
+				(plan_id, expires_ts, payment_event_id, email),
 		)
 		conn.commit()
 		conn.close()
@@ -736,6 +802,11 @@ def auth_google_callback():
 		if not email:
 				return "Google no devolvió un correo electrónico válido.", 500
 
+		existing_user = _get_user(str(email))
+		if existing_user is not None and existing_user["status"] in {"suspended", "deleted"}:
+				session.clear()
+				return "Esta cuenta fue suspendida o eliminada por el administrador.", 403
+
 		# Guardar/actualizar usuario en nuestra tabla local, incluyendo avatar si existe
 		avatar_url = ui_data.get("picture")
 		_upsert_user(name=name, email=email, avatar_url=avatar_url)
@@ -846,6 +917,10 @@ def api_session_me():
 	# solo tenemos la sesión de Flask (por ejemplo, tras un cambio de versión
 	# o limpieza parcial de la base de datos).
 	row = _get_user(email)
+	if row is not None and row["status"] in {"suspended", "deleted"}:
+			suspended_status = row["status"]
+			session.clear()
+			return jsonify({"ok": False, "authenticated": False, "blocked": True, "status": suspended_status}), 403
 	if row is None:
 			_upsert_user(name=name, email=email, avatar_url=session.get("avatar_url"))
 			row = _get_user(email)
@@ -880,7 +955,13 @@ def _require_app_session() -> str | None:
 		"""Devuelve el email de la sesión actual o None si no hay sesión."""
 
 		email = session.get("email")
-		return str(email) if email else None
+		if not email:
+				return None
+		user = _get_user(str(email))
+		if user is not None and user["status"] in {"suspended", "deleted"}:
+				session.clear()
+				return None
+		return str(email)
 
 
 def _delete_account_completely(email: str) -> None:
@@ -897,10 +978,7 @@ def _delete_account_completely(email: str) -> None:
 		conn = get_db_connection()
 		cur = conn.cursor()
 		# Anonimizar historial para que no quede correo asociado
-		cur.execute(
-				"UPDATE visits SET email = NULL, name = NULL WHERE email = ?",
-				(email,),
-		)
+		cur.execute("DELETE FROM visits WHERE email = ?", (email,))
 		# Eliminar datos ligados a la cuenta
 		cur.execute("DELETE FROM schedules WHERE email = ?", (email,))
 		cur.execute("DELETE FROM google_tokens WHERE email = ?", (email,))
@@ -1012,10 +1090,41 @@ def api_account_delete():
 				# No bloquear la eliminación si el log falla
 				pass
 
+		# Eliminar también el archivo privado creado por esta aplicación en Drive
+		# antes de borrar el token de Google de la base de datos.
+		drive_deleted = False
+		try:
+				access_token = _get_fresh_google_access_token(email)
+				if access_token:
+						headers = {"Authorization": f"Bearer {access_token}"}
+						list_resp = requests.get(
+								"https://www.googleapis.com/drive/v3/files",
+								params={
+										"spaces": "appDataFolder",
+										"q": "name='horario_data.json' and trashed=false",
+										"fields": "files(id)",
+										"pageSize": 100,
+								},
+								headers=headers,
+								timeout=10,
+						)
+						list_resp.raise_for_status()
+						files = (list_resp.json() or {}).get("files") or []
+						for drive_file in files:
+								delete_resp = requests.delete(
+										f"https://www.googleapis.com/drive/v3/files/{drive_file['id']}",
+										headers=headers,
+										timeout=10,
+								)
+								delete_resp.raise_for_status()
+						drive_deleted = True
+		except Exception as exc:  # noqa: BLE001
+				app.logger.warning("No se pudo eliminar horario_data.json de Drive: %s", exc)
+
 		_delete_account_completely(email)
 		# Cerrar sesión de la app (cookie firmada)
 		session.clear()
-		return jsonify({"ok": True})
+		return jsonify({"ok": True, "drive_deleted": drive_deleted})
 
 
 @app.post("/api/schedule/save")
@@ -1061,7 +1170,7 @@ def api_schedule_save() -> "flask.Response":  # type: ignore[name-defined]
 def api_schedule_load() -> "flask.Response":  # type: ignore[name-defined]
 		"""Devuelve el último snapshot del horario guardado en la BD.
 
-		Si no existe registro para ese usuario devuelve 404.
+		Si no existe registro devuelve una respuesta vacía normal.
 		"""
 
 		email = _require_app_session()
@@ -1074,7 +1183,7 @@ def api_schedule_load() -> "flask.Response":  # type: ignore[name-defined]
 		row = cur.fetchone()
 		conn.close()
 		if row is None:
-				return jsonify({"ok": False, "error": "not_found"}), 404
+				return jsonify({"ok": True, "found": False, "data": None}), 200
 
 		try:
 				data = json.loads(row["data"])
@@ -1124,7 +1233,7 @@ def api_drive_load():
 				list_data = list_resp.json()
 				files = list_data.get("files") or []
 				if not files:
-						return jsonify({"ok": False, "error": "not_found"}), 404
+						return jsonify({"ok": True, "found": False, "data": None}), 200
 
 				file_id = files[0]["id"]
 				content_resp = requests.get(
@@ -1152,6 +1261,8 @@ def panel_control():
 	Se sirve como un HTML estático (panel.html) en la raíz del proyecto.
 	"""
 
+	if not session.get("admin_authenticated"):
+		return redirect("/admin/login")
 	return app.send_static_file("panel.html")
 
 
@@ -1234,6 +1345,13 @@ def _increment_usage_counter(email: str, field: str, free_limit: int | None) -> 
 			(email,),
 	)
 	row = cur.fetchone()
+	if row is not None and row["status"] in {"suspended", "deleted"}:
+		conn.close()
+		return False, {
+				"allowed": False,
+				"blocked": True,
+				"reason": row["status"],
+		}
 	effective, stored, expires_ts = _calculate_effective_plan(row)
 
 	current_value = 0
@@ -1283,11 +1401,60 @@ def _increment_usage_counter(email: str, field: str, free_limit: int | None) -> 
 
 
 def _require_admin() -> None:
-		token_req = request.args.get("token")
-		expected = os.environ.get("ADMIN_TOKEN", "xunito")
-		if token_req != expected:
-				# 401 simple. Puedes cambiarlo a una plantilla bonita si quieres.
+		expected = os.environ.get("ADMIN_TOKEN")
+		if not expected:
+				return abort(503, "ADMIN_TOKEN no esta configurado")
+		if session.get("admin_authenticated"):
+				return
+		token_req = request.headers.get("X-Admin-Token") or request.args.get("token") or ""
+		if not hmac.compare_digest(str(token_req), str(expected)):
 				return abort(401)
+
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+		expected = os.environ.get("ADMIN_TOKEN")
+		error = None
+		if request.method == "POST":
+				password = request.form.get("password") or ""
+				if not expected:
+						error = "Configura ADMIN_TOKEN en el archivo .env y reinicia el servidor."
+				elif hmac.compare_digest(password, expected):
+						session["admin_authenticated"] = True
+						session["admin_csrf"] = secrets.token_urlsafe(24)
+						return redirect("/panel")
+				else:
+						error = "Contraseña incorrecta."
+
+		return render_template_string(
+				"""<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Acceso administrativo</title><style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#020617;color:#e5e7eb;font-family:system-ui,sans-serif}
+.login{width:min(380px,calc(100vw - 40px));box-sizing:border-box;padding:30px;border:1px solid #1e293b;border-radius:20px;background:#0f172a;box-shadow:0 24px 60px #0008}
+h1{margin:0 0 8px;font-size:1.55rem}p{margin:0 0 20px;color:#94a3b8}label{display:block;margin-bottom:7px;font-weight:700}
+input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #334155;border-radius:10px;background:#020617;color:#fff;font-size:1rem}
+button{width:100%;margin-top:14px;padding:12px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:800;cursor:pointer}.error{margin-top:12px;color:#fca5a5}
+</style></head><body><form class="login" method="post"><h1>Panel administrativo</h1><p>Introduce tu contraseña de administrador.</p>
+<label for="password">Contraseña</label><input id="password" name="password" type="password" required autofocus autocomplete="current-password">
+<button type="submit">Entrar al panel</button>{% if error %}<div class="error">{{ error }}</div>{% endif %}</form></body></html>""",
+				error=error,
+		)
+
+
+@app.get("/admin/logout")
+def admin_logout():
+		session.pop("admin_authenticated", None)
+		session.pop("admin_csrf", None)
+		return redirect("/admin/login")
+
+
+def _require_admin_csrf() -> None:
+		_require_admin()
+		expected = session.get("admin_csrf") or ""
+		received = request.form.get("csrf_token") or request.headers.get("X-CSRF-Token") or ""
+		if not expected or not hmac.compare_digest(str(received), str(expected)):
+				return abort(403)
 
 
 @app.post("/api/plan/debug-activate")
@@ -1434,7 +1601,8 @@ def historial():
 	</style>
 </head>
 <body>
-	<form method="post" action="/historial/clear{% if token_param %}?token={{ token_param }}{% endif %}" style="margin-bottom:1rem;" onsubmit="return confirm('Esto borrará TODO el historial de visitas (incluye logins y vistas anónimas). ¿Quieres continuar?');">
+	<form method="post" action="/historial/clear" style="margin-bottom:1rem;" onsubmit="return confirm('Esto borrará TODO el historial de visitas (incluye logins y vistas anónimas). ¿Quieres continuar?');">
+		<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 		<button type="submit" style="background:#b91c1c;color:#f9fafb;border:none;border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;">Borrar todo el historial</button>
 	</form>
 	<h1>Resumen de inicios de sesión</h1>
@@ -1545,7 +1713,7 @@ def historial():
 			login_rows=login_rows,
 			anon_device_rows=anon_device_rows,
 			page_rows=page_rows,
-			token_param=request.args.get("token") or "",
+			csrf_token=session.get("admin_csrf") or "",
 		)
 		return html
 
@@ -1557,7 +1725,7 @@ def historial_clear():
 		Protegido con ADMIN_TOKEN mediante _require_admin.
 		"""
 
-		_require_admin()
+		_require_admin_csrf()
 		conn = get_db_connection()
 		cur = conn.cursor()
 		cur.execute("DELETE FROM visits")
@@ -1565,9 +1733,6 @@ def historial_clear():
 		conn.close()
 
 		# Mantener el mismo token en la redirección, si existe
-		token_req = request.args.get("token") or ""
-		if token_req:
-				return redirect(f"/historial?token={token_req}")
 		return redirect("/historial")
 
 
@@ -1575,8 +1740,7 @@ def historial_clear():
 def usuarios():
 		"""Listado de usuarios que han iniciado sesión y su estado."""
 
-		# Opcional: proteger con token
-		# _require_admin()
+		_require_admin()
 
 		conn = get_db_connection()
 		cur = conn.cursor()
@@ -1671,16 +1835,19 @@ def usuarios():
 				</td>
 				<td>
 					<form method="post" action="/usuarios/estado">
+						<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 						<input type="hidden" name="email" value="{{ u['email'] }}">
 						<input type="hidden" name="status" value="active">
 						<button type="submit" class="btn-activate">Activar</button>
 					</form>
 					<form method="post" action="/usuarios/estado">
+						<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 						<input type="hidden" name="email" value="{{ u['email'] }}">
 						<input type="hidden" name="status" value="suspended">
 						<button type="submit" class="btn-suspend">Suspender</button>
 					</form>
 					<form method="post" action="/usuarios/estado" onsubmit="return confirm('¿Marcar como eliminada esta cuenta?');">
+						<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 						<input type="hidden" name="email" value="{{ u['email'] }}">
 						<input type="hidden" name="status" value="deleted">
 						<button type="submit" class="btn-delete">Eliminar</button>
@@ -1694,6 +1861,7 @@ def usuarios():
 </html>
 """,
 			users=users,
+			csrf_token=session.get("admin_csrf") or "",
 		)
 		return html
 
@@ -1701,6 +1869,7 @@ def usuarios():
 @app.get("/login_resumen")
 def login_resumen():
 		"""Resumen: una fila por cuenta con cuántas veces inició sesión."""
+		_require_admin()
 
 		conn = get_db_connection()
 		cur = conn.cursor()
@@ -1788,6 +1957,7 @@ def login_resumen():
 @app.get("/ips")
 def ips():
 		"""Resumen por IP de cuántas veces se vio la página sin iniciar sesión."""
+		_require_admin()
 
 		conn = get_db_connection()
 		cur = conn.cursor()
@@ -1853,9 +2023,7 @@ def ips():
 @app.post("/usuarios/estado")
 def actualizar_estado_usuario():
 		"""Actualiza el estado de un usuario (activar/suspender/eliminar)."""
-
-		# Opcional: proteger con token
-		# _require_admin()
+		_require_admin_csrf()
 
 		email = request.form.get("email")
 		status = request.form.get("status")
@@ -1866,9 +2034,12 @@ def actualizar_estado_usuario():
 		conn = get_db_connection()
 		cur = conn.cursor()
 		if status == "deleted":
-				# Eliminación total: borrar visitas y el registro del usuario
-				cur.execute("DELETE FROM visits WHERE email = ?", (email,))
-				cur.execute("DELETE FROM users WHERE email = ?", (email,))
+				# Conserva una marca para impedir que la cuenta vuelva a registrarse.
+				cur.execute("UPDATE visits SET email = NULL, name = NULL WHERE email = ?", (email,))
+				cur.execute("DELETE FROM schedules WHERE email = ?", (email,))
+				cur.execute("DELETE FROM google_tokens WHERE email = ?", (email,))
+				cur.execute("DELETE FROM stripe_customers WHERE email = ?", (email,))
+				cur.execute("UPDATE users SET status = 'deleted', plan = 'free' WHERE email = ?", (email,))
 		else:
 				# Suspender o activar solo cambia el estado en la tabla de usuarios
 				cur.execute("UPDATE users SET status = ? WHERE email = ?", (status, email))
@@ -2065,35 +2236,8 @@ def api_plan_status():
 
 @app.post("/api/plan/activate-client")
 def api_plan_activate_client():
-		"""Activa un plan desde el frontend tras confirmar el pago.
-
-		Este endpoint existe para entornos donde el webhook de Stripe no
-		puede llegar (por ejemplo, desarrollo local). El frontend lo
-		invoca solo cuando Stripe confirma el pago como "succeeded".
-		"""
-
-		data = request.get_json(silent=True) or {}
-		email = str(data.get("email") or "").strip()
-		plan_id = str(data.get("plan_id") or "").strip()
-		name = data.get("name") or None
-
-		if not email:
-				return jsonify({"ok": False, "error": "missing_email"}), 400
-		if plan_id not in PLAN_DURATIONS_DAYS:
-				return jsonify({"ok": False, "error": "invalid_plan"}), 400
-
-		_activate_plan_for_user(email=email, plan_id=plan_id, name=name)
-		row = _get_user(email)
-		effective, stored, expires_ts = _calculate_effective_plan(row)
-		return jsonify(
-				{
-						"ok": True,
-						"plan_id": effective,
-						"raw_plan": stored,
-						"expires_at_ts": expires_ts,
-						"now_ts": _now_ts(),
-				},
-		)
+		"""Los planes solo se activan mediante el webhook firmado de Stripe."""
+		return jsonify({"ok": False, "error": "webhook_required"}), 403
 
 
 @app.post("/api/checkout/create-session")
@@ -2103,27 +2247,27 @@ def api_create_checkout_session():
 		El frontend envía: {"plan_id": "basic_20"|"Plan_xunu"|"pro_50", "email": "...", "name": "..."}
 		"""
 
-		if stripe is None or not STRIPE_SECRET_KEY:
+		if stripe is None or not _has_valid_stripe_secret_key():
 				return (
-						jsonify({"error": "Stripe no está configurado en el servidor (falta instalar o definir claves)."}),
-						500,
+						jsonify({"error": "La clave secreta de Stripe no es válida. Debe ser una clave que empiece con sk_test_ o sk_live_ y venir de tu panel de Stripe."}),
+					503,
 				)
 
 		data = request.get_json(silent=True) or {}
 		plan_id = str(data.get("plan_id") or "")
-		email = str(data.get("email") or "").strip()
-		name = str(data.get("name") or "").strip() or None
+		email = _require_app_session()
+		name = str(session.get("name") or "").strip() or None
 
 		if plan_id not in PLAN_DURATIONS_DAYS:
 				return jsonify({"error": "Plan no válido."}), 400
 		if not email:
-				return jsonify({"error": "Es necesario un correo para asociar el plan."}), 400
+				return jsonify({"error": "Debes iniciar sesión antes de comprar un plan."}), 401
 
 		price_id = STRIPE_PRICE_IDS.get(plan_id)
 		if not price_id:
 				return (
 						jsonify({"error": "El precio de Stripe para este plan no está configurado en el servidor."}),
-						500,
+					500,
 				)
 
 		base_url = request.url_root.rstrip("/")
@@ -2153,21 +2297,21 @@ def api_create_payment_intent():
 	El frontend envía: {"plan_id": "Plan_xunu", "email": "...", "name": "..."}
 	"""
 
-	if stripe is None or not STRIPE_SECRET_KEY:
+	if stripe is None or not _has_valid_stripe_secret_key():
 		return (
-				jsonify({"error": "Stripe no está configurado en el servidor (falta instalar o definir claves)."}),
-				500,
+				jsonify({"error": "La clave secreta de Stripe no es válida. Debe ser una clave que empiece con sk_test_ o sk_live_ y venir de tu panel de Stripe."}),
+			503,
 		)
 
 	data = request.get_json(silent=True) or {}
 	plan_id = str(data.get("plan_id") or "")
-	email = str(data.get("email") or "").strip()
-	name = str(data.get("name") or "").strip() or None
+	email = _require_app_session()
+	name = str(session.get("name") or "").strip() or None
 
 	if plan_id not in PLAN_DURATIONS_DAYS:
 		return jsonify({"error": "Plan no válido."}), 400
 	if not email:
-		return jsonify({"error": "Es necesario un correo para asociar el plan."}), 400
+		return jsonify({"error": "Debes iniciar sesión antes de comprar un plan."}), 401
 
 	# Monto fijo para el plan Plan_xunu: 49 MXN
 	amount = 4900  # en centavos de MXN
@@ -2187,10 +2331,9 @@ def api_create_payment_intent():
 			# Habilita métodos automáticos (tarjeta y otros compatibles en MX)
 			"automatic_payment_methods": {"enabled": True},
 	}
-	# Si tenemos un customer, lo asociamos y pedimos guardar la forma de pago
+	# Asociar el pago al cliente sin autorizar cargos futuros: este plan es de pago único.
 	if customer_id:
 		params["customer"] = customer_id
-		params["setup_future_usage"] = "off_session"
 
 	try:
 		intent = stripe.PaymentIntent.create(**params)  # type: ignore[call-arg]
@@ -2218,7 +2361,6 @@ def api_create_payment_intent():
 
 			# Reintentar crear el PaymentIntent sin asociar el customer obsoleto
 			params.pop("customer", None)
-			params.pop("setup_future_usage", None)
 			try:
 				intent = stripe.PaymentIntent.create(**params)  # type: ignore[call-arg]
 			except Exception as exc2:  # noqa: BLE001
@@ -2253,14 +2395,24 @@ def stripe_webhook():
 				email = metadata.get("email")
 				plan_id = metadata.get("plan_id")
 				name = metadata.get("name")
-				_activate_plan_for_user(email=email, plan_id=plan_id, name=name)
+				_activate_plan_for_user(
+						email=email,
+						plan_id=plan_id,
+						name=name,
+						payment_event_id=str(event.get("id") or "") or None,
+				)
 		elif event["type"] == "payment_intent.succeeded":
 				payment_intent = event["data"]["object"]
 				metadata = payment_intent.get("metadata") or {}
 				email = metadata.get("email")
 				plan_id = metadata.get("plan_id")
 				name = metadata.get("name")
-				_activate_plan_for_user(email=email, plan_id=plan_id, name=name)
+				_activate_plan_for_user(
+						email=email,
+						plan_id=plan_id,
+						name=name,
+						payment_event_id=str(event.get("id") or "") or None,
+				)
 
 		return "OK", 200
 
@@ -2329,5 +2481,6 @@ def pago_cancelado():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5500))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    debug_mode = os.environ.get("FLASK_DEBUG", "0") == "1"
+    app.run(host="0.0.0.0", port=port, debug=debug_mode, use_reloader=debug_mode)
 

@@ -21,6 +21,8 @@ carpeta_que_no_deben_subir/
 css/styles.css
 css/styles copy.css
 security_logs.db
+security_logs.db-*
+*.bak
 xunito/applocal.js
 .vercel
 .env*

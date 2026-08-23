@@ -2,7 +2,7 @@
   "name": "horario",
   "version": "1.0.0",
   "scripts": {
-    "build-js": "javascript-obfuscator src/js --output dist/js",
+    "build-js": "javascript-obfuscator src/js --output dist/js --compact true --control-flow-flattening true --control-flow-flattening-threshold 0.45 --dead-code-injection true --dead-code-injection-threshold 0.15 --identifier-names-generator hexadecimal --rename-globals false --self-defending true --string-array true --string-array-encoding base64 --string-array-threshold 0.75",
     "build-css": "cleancss -o dist/css/styles.css src/css/styles.css",
     "build": "npm run build-js && npm run build-css"
   },
