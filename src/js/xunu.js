@@ -9540,11 +9540,13 @@ function renderPlanInProfile() {
 function renderPlanCountdown() {
     var wrapper = document.getElementById('planExpiryCountdownWrap');
     var value = document.getElementById('planExpiryCountdown');
+    var expiryDate = document.getElementById('planExpiryDate');
     if (!wrapper || !value) return;
     var isInvitation = currentPlanState.planId === 'invite_24h' && currentPlanState.expiresAtTs !== null;
     wrapper.classList.toggle('hidden', !isInvitation);
     if (!isInvitation) {
         value.textContent = '--:--:--';
+        if (expiryDate) expiryDate.textContent = '';
         return;
     }
     var remainingSeconds = Math.max(Math.floor(Number(currentPlanState.expiresAtTs) - Date.now() / 1000), 0);
@@ -9554,6 +9556,11 @@ function renderPlanCountdown() {
     value.textContent = remainingSeconds > 0
         ? String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0')
         : 'Vencido';
+    if (expiryDate) {
+        expiryDate.textContent = 'Vence: ' + new Date(Number(currentPlanState.expiresAtTs) * 1000).toLocaleString('es-MX', {
+            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+    }
 }
 
 planCountdownIntervalId = setInterval(renderPlanCountdown, 1000);
