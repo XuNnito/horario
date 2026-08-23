@@ -11,6 +11,7 @@ Configura en Vercel, como mínimo:
 - `DATABASE_URL`: conexión PostgreSQL con SSL de Neon, Vercel Postgres u otro proveedor.
 - `SESSION_SECRET`: cadena aleatoria larga para firmar sesiones.
 - `ADMIN_TOKEN`: token aleatorio largo para proteger el panel administrativo.
+- `INVITATION_CODE`: código que concede acceso completo gratuito durante 72 horas.
 - `STRIPE_SECRET_KEY`: clave secreta de producción (`sk_live_...`).
 - `STRIPE_PUBLISHABLE_KEY`: clave publicable de producción (`pk_live_...`).
 - `STRIPE_WEBHOOK_SECRET`: secreto del endpoint de producción (`whsec_...`).

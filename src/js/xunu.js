@@ -9346,90 +9346,6 @@ window.addEventListener('DOMContentLoaded', function () {
     setInterval(nextImage, displayTime);
 });
 
-// --- Código de invitación en el modal de perfil ---
-document.addEventListener('DOMContentLoaded', function () {
-    var toggleBtn = document.getElementById('pmInviteCodeToggle');
-    var input = document.getElementById('pmInviteCodeInput');
-    var submitBtn = document.getElementById('pmInviteCodeSubmit');
-    var message = document.getElementById('pmInviteCodeMessage');
-
-    // Modal centrado para el código y el modal de perfil
-    var inviteModal = document.getElementById('inviteCodeModal');
-    var inviteModalClose = document.getElementById('inviteCodeModalClose');
-    var profileModal = document.getElementById('profileModal');
-
-    if (!toggleBtn || !input || !submitBtn || !message || !inviteModal) {
-        return;
-    }
-
-    // Al tocar "Código de invitación" se cierra el perfil y se abre el modal centrado
-    toggleBtn.addEventListener('click', function () {
-        if (profileModal) {
-            profileModal.classList.add('hidden');
-            profileModal.setAttribute('aria-hidden', 'true');
-        }
-
-        inviteModal.classList.remove('hidden');
-        inviteModal.setAttribute('aria-hidden', 'false');
-        message.classList.remove('error', 'success');
-        message.textContent = '';
-        if (input) {
-            input.focus();
-        }
-    });
-
-    // Cerrar el modal de código
-    function closeInviteModal() {
-        inviteModal.classList.add('hidden');
-        inviteModal.setAttribute('aria-hidden', 'true');
-    }
-
-    if (inviteModalClose) {
-        inviteModalClose.addEventListener('click', closeInviteModal);
-    }
-
-    inviteModal.addEventListener('click', function (e) {
-        if (e.target === inviteModal) {
-            closeInviteModal();
-        }
-    });
-
-    // Mostrar mensaje dentro del propio modal
-    function showInviteMessage(text, isError) {
-        message.textContent = text;
-        message.classList.remove('hidden');
-        message.classList.toggle('error', !!isError);
-        message.classList.toggle('success', !isError);
-    }
-
-    function handleInviteCode() {
-        var code = (input.value || '').trim();
-        if (!code) {
-            showInviteMessage('Ingresa un código de invitación.', true);
-            return;
-        }
-
-        
-        if (code.toLowerCase() === 'xunito') {
-            showInviteMessage('Código válido, espere un momento...', false);
-            setTimeout(function () {
-                window.location.href = 'http://127.0.0.1:5500/xunito';
-            }, 900);
-        } else {
-            showInviteMessage('Código no válido. Verifica tu invitación.', true);
-        }
-    }
-
-    submitBtn.addEventListener('click', handleInviteCode);
-
-    input.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleInviteCode();
-        }
-    });
-});
-
        (function () {
             var link = document.getElementById('whatsappSupportLink');
             if (!link) return;
@@ -9605,6 +9521,7 @@ var currentUsageState = {
 
 function describePlan(planId) {
     if (!planId || planId === 'free') return 'Gratis';
+    if (planId === 'invite_72h') return 'Acceso gratuito 72 horas';
     // "Plan_xunu" es nuestro plan de 49.99 MXN basado en usos
     return 'Plan $49.99 MXN';
 }
@@ -9665,6 +9582,12 @@ function renderUsageInPlanModal() {
 
             var fallbackLimit = null;
             var isPaidPlan = currentPlanState.planId && currentPlanState.planId !== 'free';
+
+            if (currentPlanState.planId === 'invite_72h') {
+                usedEl.textContent = 'Ilimitado';
+                remEl.textContent = 'Ilimitado';
+                return;
+            }
 
             if (isPaidPlan) {
                 // Plan de pago actual (Plan_xunu): 10 usos por tipo.
@@ -9741,6 +9664,16 @@ async function fetchPlanStatusFromBackend() {
             expiresAtTs: data.expires_at_ts != null ? Number(data.expires_at_ts) : null,
             nowTs: data.now_ts != null ? Number(data.now_ts) : null
         };
+        if (currentPlanState.rawPlan === 'invite_72h' && currentPlanState.planId === 'free' &&
+            currentPlanState.expiresAtTs !== null && currentPlanState.nowTs >= currentPlanState.expiresAtTs) {
+            var expiryNoticeKey = 'invite_72h_expired_notice';
+            if (!sessionStorage.getItem(expiryNoticeKey)) {
+                sessionStorage.setItem(expiryNoticeKey, '1');
+                if (typeof showMessage === 'function') {
+                    showMessage('Tu código ya se venció.', 'warning', 7000);
+                }
+            }
+        }
         renderPlanInProfile();
         updatePlanButtonsUI();
         return currentPlanState;

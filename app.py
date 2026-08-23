@@ -45,6 +45,12 @@ STRIPE_SECRET_KEY = (os.environ.get("STRIPE_SECRET_KEY") or "").strip()
 STRIPE_PUBLISHABLE_KEY = (os.environ.get("STRIPE_PUBLISHABLE_KEY") or "").strip()
 STRIPE_WEBHOOK_SECRET = (os.environ.get("STRIPE_WEBHOOK_SECRET") or "").strip()
 
+# Código que concede acceso completo temporal. En producción se recomienda
+# definir INVITATION_CODE en Vercel; se conserva "xunito" por compatibilidad.
+INVITATION_CODE = (os.environ.get("INVITATION_CODE") or "xunito").strip()
+INVITATION_PLAN_ID = "invite_72h"
+INVITATION_DURATION_SECONDS = 72 * 60 * 60
+
 # Planes disponibles en la app (ids lógicos internos)
 # En este proyecto usamos un único plan de pago basado en usos:
 #   Plan_xunu -> 49.99 MXN, sin fecha de expiración (se limita por número de usos).
@@ -165,6 +171,20 @@ def init_db() -> None:
 				cur.execute(f"ALTER TABLE users ADD COLUMN {clause}plan_expires_at TEXT")  # epoch en segundos o NULL
 		except sqlite3.OperationalError:
 				# Ya existe la columna
+				pass
+
+		# Auditoría independiente del acceso temporal. Permite saber quién usó el
+		# código aun después de que venza o un administrador lo cancele.
+		try:
+				clause = "IF NOT EXISTS " if is_postgres else ""
+				cur.execute(f"ALTER TABLE users ADD COLUMN {clause}invitation_redeemed_at TEXT")
+		except sqlite3.OperationalError:
+				pass
+
+		try:
+				clause = "IF NOT EXISTS " if is_postgres else ""
+				cur.execute(f"ALTER TABLE users ADD COLUMN {clause}invitation_status TEXT")
+		except sqlite3.OperationalError:
 				pass
 
 		# Columnas para contar usos (límites del plan gratuito)
@@ -357,6 +377,17 @@ def _format_ts_for_display(raw: str | None) -> str:
 		return dt_local.strftime("%d/%m/%Y %H:%M")
 
 
+def _format_epoch_for_display(raw: int | str | None) -> str:
+		if raw is None:
+				return "-"
+		try:
+				dt_utc = datetime.fromtimestamp(int(raw), timezone.utc)
+				offset_hours = int(os.environ.get("LOCAL_UTC_OFFSET_HOURS", "-6"))
+		except (TypeError, ValueError, OSError):
+				return "-"
+		return (dt_utc + timedelta(hours=offset_hours)).strftime("%d/%m/%Y %H:%M")
+
+
 def _get_ip() -> str | None:
 		# Respeta cabecera X-Forwarded-For si estás detrás de un proxy/reverso
 		fwd = request.headers.get("X-Forwarded-For")
@@ -410,6 +441,8 @@ def _get_user(email: str) -> sqlite3.Row | None:
 					status,
 					plan,
 					plan_expires_at,
+					invitation_redeemed_at,
+					invitation_status,
 					catalog_created_count,
 					print_count,
 					download_count
@@ -678,7 +711,7 @@ def _calculate_effective_plan(row: sqlite3.Row | None) -> tuple[str, str, int | 
 		if effective == "Plan_xunu":
 				expires_ts = None
 
-		# Cualquier plan de pago con fecha de expiración vencida vuelve a "free".
+		# Cualquier acceso temporal con fecha vencida vuelve a "free".
 		if effective != "free" and expires_ts is not None and expires_ts < now_ts:
 				effective = "free"
 
@@ -2047,6 +2080,136 @@ def actualizar_estado_usuario():
 		conn.close()
 
 		return redirect("/usuarios")
+
+
+@app.post("/api/invitation/redeem")
+def api_invitation_redeem():
+		"""Canjea una invitación una sola vez y concede 72 horas sin límites."""
+
+		data = request.get_json(silent=True) or {}
+		code = str(data.get("code") or "").strip()
+		email = str(session.get("email") or "").strip()
+		if not email:
+				return jsonify({"ok": False, "reason": "login_required", "message": "Primero inicia sesión con Google."}), 401
+		if not code or not INVITATION_CODE or not hmac.compare_digest(code.casefold(), INVITATION_CODE.casefold()):
+				return jsonify({"ok": False, "reason": "invalid_code", "message": "Código no válido. Verifica tu invitación."}), 400
+
+		row = _get_user(email)
+		if row is None:
+				_upsert_user(session.get("name"), email, session.get("avatar_url"))
+				row = _get_user(email)
+		if row is not None and row["status"] in {"suspended", "deleted"}:
+				return jsonify({"ok": False, "reason": "account_blocked", "message": "Tu cuenta no puede activar esta invitación."}), 403
+		if row is not None and row["plan"] == "Plan_xunu":
+				return jsonify({"ok": False, "reason": "paid_plan_active", "message": "Tu cuenta ya tiene un plan activo."}), 409
+
+		now_ts = _now_ts()
+		redeemed_at = row["invitation_redeemed_at"] if row is not None else None
+		invitation_status = (row["invitation_status"] if row is not None else None) or ""
+		expires_raw = row["plan_expires_at"] if row is not None else None
+		try:
+				expires_ts = int(expires_raw) if expires_raw is not None else None
+		except (TypeError, ValueError):
+				expires_ts = None
+
+		if redeemed_at:
+				if invitation_status == "cancelled":
+						message = "Tu acceso gratuito fue cancelado por el administrador."
+				elif expires_ts is not None and expires_ts <= now_ts:
+						message = "Tu código ya se venció."
+				else:
+						message = "Este código ya fue activado en tu cuenta."
+				return jsonify({"ok": False, "reason": "already_redeemed", "message": message, "expires_at_ts": expires_ts}), 409
+
+		expires_ts = now_ts + INVITATION_DURATION_SECONDS
+		conn = get_db_connection()
+		cur = conn.cursor()
+		cur.execute(
+				"""
+				UPDATE users
+				SET plan = ?, plan_expires_at = ?, invitation_redeemed_at = ?, invitation_status = 'active'
+				WHERE email = ?
+				""",
+				(INVITATION_PLAN_ID, str(expires_ts), _now_iso(), email),
+		)
+		conn.commit()
+		conn.close()
+		return jsonify({
+				"ok": True,
+				"plan_id": INVITATION_PLAN_ID,
+				"expires_at_ts": expires_ts,
+				"now_ts": now_ts,
+				"message": "Código activado. Tienes acceso completo gratis durante 72 horas.",
+		})
+
+
+@app.get("/invitaciones")
+def invitaciones_admin():
+		"""Panel de cuentas que canjearon el acceso gratuito de 72 horas."""
+
+		_require_admin()
+		conn = get_db_connection()
+		cur = conn.cursor()
+		cur.execute(
+				"""
+				SELECT email, name, plan, plan_expires_at, invitation_redeemed_at, invitation_status
+				FROM users
+				WHERE invitation_redeemed_at IS NOT NULL
+				ORDER BY invitation_redeemed_at DESC
+				"""
+		)
+		rows = cur.fetchall()
+		conn.close()
+		now_ts = _now_ts()
+		invitees = []
+		for row in rows:
+				try:
+						expires_ts = int(row["plan_expires_at"]) if row["plan_expires_at"] else None
+				except (TypeError, ValueError):
+						expires_ts = None
+				stored_status = row["invitation_status"] or "active"
+				if stored_status == "cancelled":
+						display_status = "cancelled"
+				elif expires_ts is None or expires_ts <= now_ts or row["plan"] != INVITATION_PLAN_ID:
+						display_status = "expired"
+				else:
+						display_status = "active"
+				invitees.append({
+						"email": row["email"], "name": row["name"],
+						"redeemed_at": _format_ts_for_display(row["invitation_redeemed_at"]),
+						"expires_at": _format_epoch_for_display(expires_ts),
+						"status": display_status,
+				})
+
+		return render_template_string("""<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Accesos gratuitos de 72 horas</title>
+<style>body{font-family:system-ui,sans-serif;background:#020617;color:#e5e7eb;padding:20px}a{color:#93c5fd}table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px solid #1f2937;text-align:left}.badge{padding:3px 8px;border-radius:999px;font-size:12px}.active{background:#14532d;color:#bbf7d0}.expired{background:#3f3f46;color:#d4d4d8}.cancelled{background:#7f1d1d;color:#fecaca}form{display:inline}button{border:0;border-radius:8px;padding:6px 10px;cursor:pointer;margin:2px}.activate{background:#22c55e}.cancel{background:#ef4444;color:white}</style></head><body>
+<p><a href="/panel">← Volver al panel</a></p><h1>Accesos gratuitos de 72 horas</h1>
+<p>Aquí aparecen todas las cuentas que utilizaron el código, incluso si su acceso venció o fue cancelado.</p>
+<table><thead><tr><th>Correo</th><th>Nombre</th><th>Activado</th><th>Vence</th><th>Estado</th><th>Control</th></tr></thead><tbody>
+{% for u in invitees %}<tr><td>{{ u.email }}</td><td>{{ u.name or '-' }}</td><td>{{ u.redeemed_at }}</td><td>{{ u.expires_at }}</td><td><span class="badge {{ u.status }}">{{ u.status }}</span></td><td>
+<form method="post" action="/invitaciones/estado"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="email" value="{{ u.email }}"><input type="hidden" name="action" value="activate"><button class="activate">Activar 72 h</button></form>
+<form method="post" action="/invitaciones/estado" onsubmit="return confirm('¿Cancelar este acceso gratuito?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="email" value="{{ u.email }}"><input type="hidden" name="action" value="cancel"><button class="cancel">Cancelar</button></form>
+</td></tr>{% else %}<tr><td colspan="6">Nadie ha utilizado todavía el código.</td></tr>{% endfor %}</tbody></table></body></html>""", invitees=invitees, csrf_token=session.get("admin_csrf") or "")
+
+
+@app.post("/invitaciones/estado")
+def invitaciones_estado():
+		_require_admin_csrf()
+		email = str(request.form.get("email") or "").strip()
+		action = str(request.form.get("action") or "").strip()
+		if not email or action not in {"activate", "cancel"}:
+				return redirect("/invitaciones")
+		conn = get_db_connection()
+		cur = conn.cursor()
+		if action == "activate":
+				expires_ts = _now_ts() + INVITATION_DURATION_SECONDS
+				cur.execute("UPDATE users SET plan = ?, plan_expires_at = ?, invitation_status = 'active', invitation_redeemed_at = COALESCE(invitation_redeemed_at, ?) WHERE email = ?", (INVITATION_PLAN_ID, str(expires_ts), _now_iso(), email))
+		else:
+				cur.execute("UPDATE users SET plan = 'free', plan_expires_at = NULL, invitation_status = 'cancelled' WHERE email = ?", (email,))
+		conn.commit()
+		conn.close()
+		return redirect("/invitaciones")
 
 
 @app.post("/api/usage/catalog-create")
