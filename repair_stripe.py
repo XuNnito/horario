@@ -12,7 +12,7 @@ def api_create_checkout_session():
 
 		if stripe is None or not _has_valid_stripe_secret_key():
 				return (
-						jsonify({"error": "La clave secreta de Stripe no es válida. Debe ser una clave que empiece con sk_test_ o sk_live_ y venir de tu panel de Stripe."}),
+						jsonify({"error": "error contacta con el desarrollador."}),
 					500,
 				)
 
@@ -62,7 +62,7 @@ def api_create_payment_intent():
 
 	if stripe is None or not _has_valid_stripe_secret_key():
 		return (
-				jsonify({"error": "La clave secreta de Stripe no es válida. Debe ser una clave que empiece con sk_test_ o sk_live_ y venir de tu panel de Stripe."}),
+				jsonify({"error": "error contacta con el desarrollador."}),
 			500,
 		)
 
