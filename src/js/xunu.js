@@ -9519,9 +9519,11 @@ var currentUsageState = {
     download: { used: 0, limit: null, remaining: null }
 };
 
+var planCountdownIntervalId = null;
+
 function describePlan(planId) {
     if (!planId || planId === 'free') return 'Gratis';
-    if (planId === 'invite_72h') return 'Acceso gratuito 24 horas';
+    if (planId === 'invite_24h') return 'Acceso gratuito 24 horas';
     // "Plan_xunu" es nuestro plan de 49.99 MXN basado en usos
     return 'Plan $49.99 MXN';
 }
@@ -9532,7 +9534,29 @@ function renderPlanInProfile() {
     var label = describePlan(currentPlanState.planId);
     // El plan de 49.99 MXN ya no expira por días, solo por límites de uso.
     pmPlan.textContent = label;
+    renderPlanCountdown();
 }
+
+function renderPlanCountdown() {
+    var wrapper = document.getElementById('planExpiryCountdownWrap');
+    var value = document.getElementById('planExpiryCountdown');
+    if (!wrapper || !value) return;
+    var isInvitation = currentPlanState.planId === 'invite_24h' && currentPlanState.expiresAtTs !== null;
+    wrapper.classList.toggle('hidden', !isInvitation);
+    if (!isInvitation) {
+        value.textContent = '--:--:--';
+        return;
+    }
+    var remainingSeconds = Math.max(Math.floor(Number(currentPlanState.expiresAtTs) - Date.now() / 1000), 0);
+    var hours = Math.floor(remainingSeconds / 3600);
+    var minutes = Math.floor((remainingSeconds % 3600) / 60);
+    var seconds = remainingSeconds % 60;
+    value.textContent = remainingSeconds > 0
+        ? String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0')
+        : 'Vencido';
+}
+
+planCountdownIntervalId = setInterval(renderPlanCountdown, 1000);
 
 function updateUsageState(kind, payload) {
     if (!payload) return;
@@ -9583,7 +9607,7 @@ function renderUsageInPlanModal() {
             var fallbackLimit = null;
             var isPaidPlan = currentPlanState.planId && currentPlanState.planId !== 'free';
 
-            if (currentPlanState.planId === 'invite_72h') {
+            if (currentPlanState.planId === 'invite_24h') {
                 usedEl.textContent = 'Ilimitado';
                 remEl.textContent = 'Ilimitado';
                 return;
@@ -9664,9 +9688,9 @@ async function fetchPlanStatusFromBackend() {
             expiresAtTs: data.expires_at_ts != null ? Number(data.expires_at_ts) : null,
             nowTs: data.now_ts != null ? Number(data.now_ts) : null
         };
-        if (currentPlanState.rawPlan === 'invite_72h' && currentPlanState.planId === 'free' &&
+        if (currentPlanState.rawPlan === 'invite_24h' && currentPlanState.planId === 'free' &&
             currentPlanState.expiresAtTs !== null && currentPlanState.nowTs >= currentPlanState.expiresAtTs) {
-            var expiryNoticeKey = 'invite_72h_expired_notice';
+            var expiryNoticeKey = 'invite_24h_expired_notice';
             if (!sessionStorage.getItem(expiryNoticeKey)) {
                 sessionStorage.setItem(expiryNoticeKey, '1');
                 if (typeof showMessage === 'function') {

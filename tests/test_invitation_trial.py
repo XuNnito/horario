@@ -41,7 +41,7 @@ class InvitationTrialTests(unittest.TestCase):
         response = self.client.post("/api/invitation/redeem", json={"code": "xunito"})
         self.assertEqual(response.status_code, 200)
         payload = response.get_json()
-        self.assertEqual(payload["plan_id"], "invite_72h")
+        self.assertEqual(payload["plan_id"], "invite_24h")
         self.assertEqual(payload["expires_at_ts"] - payload["now_ts"], 24 * 60 * 60)
 
         usage = self.client.post("/api/usage/print", json={"email": "prueba@example.com"})
@@ -81,7 +81,7 @@ class InvitationTrialTests(unittest.TestCase):
         })
         self.assertEqual(activated.status_code, 302)
         row = app_module._get_user("prueba@example.com")
-        self.assertEqual(row["plan"], "invite_72h")
+        self.assertEqual(row["plan"], "invite_24h")
         self.assertEqual(row["invitation_status"], "active")
 
 

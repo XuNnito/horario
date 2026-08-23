@@ -48,8 +48,8 @@ STRIPE_WEBHOOK_SECRET = (os.environ.get("STRIPE_WEBHOOK_SECRET") or "").strip()
 # Código que concede acceso completo temporal. En producción se recomienda
 # definir INVITATION_CODE en Vercel; se conserva "xunito" por compatibilidad.
 INVITATION_CODE = (os.environ.get("INVITATION_CODE") or "xunito").strip()
-# Se mantiene este identificador interno para no romper invitaciones ya guardadas.
-INVITATION_PLAN_ID = "invite_72h"
+INVITATION_PLAN_ID = "invite_24h"
+LEGACY_INVITATION_PLAN_ID = f"invite_{3 * 24}h"
 INVITATION_DURATION_SECONDS = 24 * 60 * 60
 
 # Planes disponibles en la app (ids lógicos internos)
@@ -187,6 +187,25 @@ def init_db() -> None:
 				cur.execute(f"ALTER TABLE users ADD COLUMN {clause}invitation_status TEXT")
 		except sqlite3.OperationalError:
 				pass
+
+		# Migra el identificador anterior y limita también las invitaciones que ya
+		# existían a 24 horas desde su fecha original de canje.
+		cur.execute(
+				"SELECT email, plan_expires_at, invitation_redeemed_at FROM users WHERE plan = ?",
+				(LEGACY_INVITATION_PLAN_ID,),
+		)
+		for legacy_invite in cur.fetchall():
+				legacy_expiry = legacy_invite["plan_expires_at"]
+				try:
+						redeemed_iso = str(legacy_invite["invitation_redeemed_at"] or "").replace("Z", "+00:00")
+						twenty_four_hour_expiry = int(datetime.fromisoformat(redeemed_iso).timestamp()) + INVITATION_DURATION_SECONDS
+						legacy_expiry = str(min(int(legacy_expiry), twenty_four_hour_expiry))
+				except (TypeError, ValueError):
+						pass
+				cur.execute(
+						"UPDATE users SET plan = ?, plan_expires_at = ? WHERE email = ?",
+						(INVITATION_PLAN_ID, legacy_expiry, legacy_invite["email"]),
+				)
 
 		# Columnas para contar usos (límites del plan gratuito)
 		try:
