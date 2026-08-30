@@ -7394,7 +7394,6 @@ const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata openid prof
 function notifySessionExpired() {
     if (sessionExpiredWarningShown) return;
     sessionExpiredWarningShown = true;
-    showMessage('Tu sesión sigue activa. Google se reconectará cuando necesites sincronizar.', 'info');
 }
 
 function restoreCachedProfileSession() {
