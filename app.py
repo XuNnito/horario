@@ -1369,7 +1369,7 @@ def _increment_usage_counter(email: str, field: str, free_limit: int | None) -> 
 	"""Incrementa un contador de uso y aplica límites según el plan.
 
 	Actualmente:
-	- Plan free: usa ``free_limit`` pasado por parámetro.
+	- Plan free: consulta horarios oficiales, pero no consume funciones Pro.
 	- Plan Plan_xunu: límite fijo de 10 usos por tipo (crear, imprimir, descargar).
 
 	Devuelve (allowed, payload) donde payload es un dict listo para devolver al frontend.
@@ -2242,7 +2242,7 @@ def invitaciones_estado():
 def api_usage_catalog_create():
 		"""Registra la creación de una materia de catálogo.
 
-		Plan gratuito: máximo 2 creaciones (aunque luego se eliminen).
+		Plan gratuito: la creación manual es una función Pro.
 		"""
 
 		data = request.get_json(silent=True) or {}
@@ -2250,7 +2250,7 @@ def api_usage_catalog_create():
 		if not email:
 				return jsonify({"allowed": False, "reason": "missing_email"}), 400
 
-		allowed, payload = _increment_usage_counter(email, "catalog_created_count", free_limit=2)
+		allowed, payload = _increment_usage_counter(email, "catalog_created_count", free_limit=0)
 		status_code = 200 if allowed else 403
 		return jsonify(payload), status_code
 
@@ -2259,7 +2259,7 @@ def api_usage_catalog_create():
 def api_usage_print():
 		"""Registra una impresión de horario.
 
-		Plan gratuito: solo 1 impresión.
+		Plan gratuito: la impresión es una función Pro.
 		"""
 
 		data = request.get_json(silent=True) or {}
@@ -2267,7 +2267,7 @@ def api_usage_print():
 		if not email:
 				return jsonify({"allowed": False, "reason": "missing_email"}), 400
 
-		allowed, payload = _increment_usage_counter(email, "print_count", free_limit=1)
+		allowed, payload = _increment_usage_counter(email, "print_count", free_limit=0)
 		status_code = 200 if allowed else 403
 		return jsonify(payload), status_code
 
@@ -2276,7 +2276,7 @@ def api_usage_print():
 def api_usage_download():
 		"""Registra una descarga de PDF (reinscripción).
 
-		Plan gratuito: solo 1 descarga.
+		Plan gratuito: las descargas y envíos son funciones Pro.
 		"""
 
 		data = request.get_json(silent=True) or {}
@@ -2284,7 +2284,7 @@ def api_usage_download():
 		if not email:
 				return jsonify({"allowed": False, "reason": "missing_email"}), 400
 
-		allowed, payload = _increment_usage_counter(email, "download_count", free_limit=1)
+		allowed, payload = _increment_usage_counter(email, "download_count", free_limit=0)
 		status_code = 200 if allowed else 403
 		return jsonify(payload), status_code
 
@@ -2302,9 +2302,9 @@ def api_usage_status():
 
 		# Límites del plan gratuito
 		free_limits = {
-				"catalog": 2,
-				"print": 1,
-				"download": 1,
+				"catalog": 0,
+				"print": 0,
+				"download": 0,
 		}
 
 		if not email:

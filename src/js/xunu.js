@@ -5507,7 +5507,12 @@ async function createReinscriptionEmailDraft({ pdfBytes, tutorEmail, data }) {
     return { draftId, messageId, subject: subjectText };
 }
 
-function openReinscriptionModal() {
+async function openReinscriptionModal() {
+    try {
+        await requirePaidFeature('Generar la solicitud de reinscripción, firmarla o enviarla');
+    } catch (error) {
+        return;
+    }
     const modal = document.getElementById('reinscriptionModal');
     if (!modal) return;
     const defaults = buildReinscriptionDefaults();
@@ -5718,6 +5723,11 @@ function setupReinscriptionModal() {
     if (sendEmailBtn) {
         sendEmailBtn.addEventListener('click', async () => {
             if (reinscriptionEmailSending) return;
+            try {
+                await ensureFeatureAllowed('download');
+            } catch (error) {
+                return;
+            }
             const data = collectReinscriptionFormData();
             if (!data || !data.fullName || !data.matricula || !data.career) {
                 showMessage('Completa nombre, matrícula y carrera.', 'warning');
@@ -5858,6 +5868,11 @@ function setupReinscriptionModal() {
     const downloadBtn = document.getElementById('reinscriptionDownload');
     if (downloadBtn) {
         downloadBtn.addEventListener('click', async () => {
+            try {
+                await ensureFeatureAllowed('download');
+            } catch (error) {
+                return;
+            }
             const data = collectReinscriptionFormData();
             if (!data || !data.fullName || !data.matricula || !data.career) {
                 showMessage('Completa al menos el nombre completo, la matrícula y la carrera.', 'warning');
@@ -6246,11 +6261,20 @@ function refreshReinscriptionDefaultsAfterScheduleChange() {
 }
 
 // Función para añadir una materia del catálogo al horario
-function addSubjectToSchedule(id) {
+async function addSubjectToSchedule(id) {
     // Buscar la materia en el catálogo
     const subject = catalogSubjects.find(s => s.id === id);
 
     if (!subject) return;
+
+    const isDifferentGroup = normalizeAcademicGroup(subject.group) !== getStudentStudyGroup();
+    if (isDifferentGroup || subject.isEquivalence || subject.isOtherCareer) {
+        try {
+            await requirePaidFeature('Mezclar materias de otros grupos, cuatrimestres o equivalencias');
+        } catch (error) {
+            return;
+        }
+    }
 
     if (!Array.isArray(subject.sessions) || subject.sessions.length === 0) {
         showMessage(`Primero agrega el horario de "${subject.name}".`, 'warning');
@@ -6879,7 +6903,12 @@ function saveCustomSubjects(arr) {
     localStorage.setItem(CUSTOM_KEY, JSON.stringify(arr));
 }
 
-function openCustomSubjectEditor(subjectId) {
+async function openCustomSubjectEditor(subjectId) {
+    try {
+        await requirePaidFeature('Crear o editar materias manualmente');
+    } catch (error) {
+        return;
+    }
     const selectedSubject = catalogSubjects.find(s => s.id === subjectId);
 
     if (!selectedSubject) {
@@ -6927,7 +6956,12 @@ function openSlotsModal() {
 }
 function closeSlotsModal() { modalSlots.style.display = 'none'; }
 
-btnMas.addEventListener('click', () => {
+btnMas.addEventListener('click', async () => {
+    try {
+        await requirePaidFeature('Crear materias manualmente');
+    } catch (error) {
+        return;
+    }
     // Nuevo registro: limpiar campos y selección de horas
     editingSubjectId = null;
     m_inputMateria.value = '';
@@ -9430,7 +9464,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var shareText = 'Te invito a usar Horarios Bio para crear y organizar tu horario académico.';
     var shareTitle = 'Horarios Bio';
 
-    shareBtn.addEventListener('click', function () {
+    shareBtn.addEventListener('click', async function () {
+        try {
+            await requirePaidFeature('Compartir el horario');
+        } catch (error) {
+            return;
+        }
         // 1) Intentar Web Share API (muestra menú nativo: WhatsApp, Telegram, correo, etc.)
         // Enviamos TODO en "text" para controlar el orden: primero URL, luego mensaje en otra línea
         if (navigator.share) {
@@ -9596,6 +9635,26 @@ function describePlan(planId) {
     return 'Plan $49.99 MXN';
 }
 
+async function requirePaidFeature(featureLabel) {
+    var email = (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : '';
+    if (!email) {
+        if (typeof showMessage === 'function') showMessage('Inicia sesión para comprobar tu plan.', 'warning');
+        try { lockInterface('Debes iniciar sesión para usar esta función.'); } catch (error) { }
+        throw new Error('missing_email');
+    }
+
+    await fetchPlanStatusFromBackend();
+    var hasProAccess = currentPlanState && currentPlanState.planId && currentPlanState.planId !== 'free';
+    if (!hasProAccess) {
+        if (typeof showMessage === 'function') {
+            showMessage((featureLabel || 'Esta función') + ' está disponible con el plan de $49.99 MXN.', 'warning', 6500);
+        }
+        openPlansModal('pro_feature', 'paid_required');
+        throw new Error('paid_plan_required');
+    }
+    return currentPlanState;
+}
+
 function renderPlanInProfile() {
     var pmPlan = document.getElementById('pmPlan');
     if (!pmPlan) return;
@@ -9693,8 +9752,7 @@ function renderUsageInPlanModal() {
                 fallbackLimit = 10;
             } else {
                 // Plan gratis: mismos límites que el backend.
-                if (kind === 'catalog') fallbackLimit = 2;
-                else if (kind === 'print' || kind === 'download') fallbackLimit = 1;
+                if (kind === 'catalog' || kind === 'print' || kind === 'download') fallbackLimit = 0;
             }
 
             if (fallbackLimit != null) {
@@ -10199,38 +10257,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 planProCheckoutBtn.disabled = false;
                 planProCheckoutBtn.textContent = originalText;
             }
-        });
-    }
-
-    // Reinscription download (botón "Descargar formato")
-    var downloadBtn = document.getElementById('reinscriptionDownload');
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', async function (ev) {
-            ev = ev || window.event;
-            try {
-                await ensureFeatureAllowed('download');
-            } catch (e) {
-                if (ev.preventDefault) ev.preventDefault();
-                if (ev.stopPropagation) ev.stopPropagation();
-                return false;
-            }
-            return true;
-        });
-    }
-
-    // Botón de enviar al tutor (también descarga un PDF)
-    var sendBtn = document.getElementById('reinscriptionSendEmail');
-    if (sendBtn) {
-        sendBtn.addEventListener('click', async function (ev) {
-            ev = ev || window.event;
-            try {
-                await ensureFeatureAllowed('download');
-            } catch (e) {
-                if (ev.preventDefault) ev.preventDefault();
-                if (ev.stopPropagation) ev.stopPropagation();
-                return false;
-            }
-            return true;
         });
     }
 

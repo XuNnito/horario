@@ -84,6 +84,37 @@ class InvitationTrialTests(unittest.TestCase):
         self.assertEqual(row["plan"], "invite_24h")
         self.assertEqual(row["invitation_status"], "active")
 
+    def test_free_plan_cannot_use_pro_actions(self):
+        for endpoint in ("catalog-create", "print", "download"):
+            response = self.client.post(
+                f"/api/usage/{endpoint}",
+                json={"email": "prueba@example.com"},
+            )
+            self.assertEqual(response.status_code, 403)
+            payload = response.get_json()
+            self.assertFalse(payload["allowed"])
+            self.assertEqual(payload["active_limit"], 0)
+            self.assertEqual(payload["current_value"], 0)
+
+    def test_paid_plan_can_use_pro_actions(self):
+        conn = app_module.get_db_connection()
+        conn.execute(
+            "UPDATE users SET plan = 'Plan_xunu', plan_expires_at = NULL WHERE email = ?",
+            ("prueba@example.com",),
+        )
+        conn.commit()
+        conn.close()
+
+        response = self.client.post(
+            "/api/usage/catalog-create",
+            json={"email": "prueba@example.com"},
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertTrue(payload["allowed"])
+        self.assertEqual(payload["active_limit"], 10)
+        self.assertEqual(payload["current_value"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
