@@ -136,7 +136,8 @@
                     'Integración de Sistemas Biomédicos',
                     'Metrología',
                     'Procesamiento de Imágenes'
-                ]
+                ],
+                10: ['Estadía']
             }
         },
         '004': plan004

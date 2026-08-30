@@ -1065,6 +1065,12 @@ body.theme-dark .panel-modal textarea::placeholder {
 }
 
 /* Colores de selección de slots según tipo de grupo */
+.academic-group-row button.is-unavailable,
+.academic-group-row button:disabled {
+    opacity: .38;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
 .slots-table td.slot.selected.slot-convalidacion {
     background: #9b59b6;
 }

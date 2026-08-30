@@ -351,6 +351,23 @@ let catalogBrowseGroup = null;
 let catalogBrowseEquivalences = false;
 let catalogBrowseCareerId = null;
 
+const BIOMEDICA_AVAILABLE_GROUPS = new Set(
+    (typeof window !== 'undefined' && window.BIOMEDICA_AVAILABLE_GROUPS) || []
+);
+
+function isBiomedicaScheduleAvailable(groupName, planCode = null) {
+    const group = normalizeAcademicGroup(groupName);
+    if (!BIOMEDICA_AVAILABLE_GROUPS.has(group)) return false;
+    const quarter = Number((group.match(/^\d+/) || [])[0]);
+    const expectedPlan = quarter >= 9 ? '003' : '004';
+    return !planCode || String(planCode) === expectedPlan;
+}
+
+function getBiomedicaScheduleSubjects(planCode = null) {
+    const source = (typeof window !== 'undefined' && window.BIOMEDICA_SCHEDULE_SUBJECTS) || [];
+    return source.filter(subject => !planCode || subject.academicPlan === String(planCode));
+}
+
 function getCareerCurriculum(careerId, planCode = getStudentAcademicPlan()) {
     const curriculaByPlan = (typeof window !== 'undefined' && window.UPCHIAPAS_CURRICULA_PLANS) || {};
     const effectivePlan = planCode === '003' && careerId === 'biomedica' ? '003' : '004';
@@ -2136,8 +2153,19 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         allAcademicGroups.querySelectorAll('[data-group]').forEach(button => {
             const plan003GroupUnavailable = academicGroupModalMode === 'settings' &&
-                getStudentAcademicPlan() === '003' && button.dataset.group !== '9A';
+                getStudentAcademicPlan() === '003' && !isBiomedicaScheduleAvailable(button.dataset.group, '003');
             button.classList.toggle('hidden', plan003GroupUnavailable);
+            if (activeCareer && activeCareer.id === 'biomedica') {
+                const groupPlan = Number(button.dataset.group.match(/^\d+/)?.[0]) >= 9 ? '003' : '004';
+                const unavailable = !isBiomedicaScheduleAvailable(button.dataset.group, groupPlan);
+                button.classList.toggle('is-unavailable', unavailable);
+                button.disabled = unavailable;
+                button.title = unavailable ? 'No disponible en el horario Sep-Dic 2026' : '';
+            } else {
+                button.classList.remove('is-unavailable');
+                button.disabled = false;
+                button.title = '';
+            }
             button.classList.toggle('is-selected', button.dataset.group === selectedGroup);
         });
         return maxQuarter;
@@ -2166,6 +2194,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function filterCatalogByGroup(groupName, browseEquivalences = catalogBrowseEquivalences) {
+        const browseCareer = getCareerById(catalogBrowseCareerId) || getSelectedCareerOption();
+        if (browseCareer && browseCareer.id === 'biomedica' && !isBiomedicaScheduleAvailable(groupName)) {
+            openGroupNotAvailableModal(groupName);
+            return;
+        }
         catalogBrowseGroup = normalizeAcademicGroup(groupName) || getStudentStudyGroup();
         catalogBrowseEquivalences = Boolean(browseEquivalences);
         showAllCatalogSubjects = false;
@@ -2191,7 +2224,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (academicGroupModalMode === 'settings') {
                 quarterSelectDescription.textContent = 'Elige tu grado. Esta opción define cuáles materias aparecen en verde como ordinarias.';
             } else if (getStudentAcademicPlan() === '003') {
-                quarterSelectDescription.innerHTML = 'cuatrimestres y grupos del <strong>Plan 004</strong>. Las materias se cargarán como equivalencias.';
+                quarterSelectDescription.innerHTML = 'cuatrimestres y grupos del <strong>Plan 004</strong>. Las materias se cargarán como equivalencias. <span style="color: red;">revisa bien si las horas son correctas con los horarios officiales.</span> solo disponible en biomedica horario';
             } else {
                 quarterSelectDescription.textContent = 'Selecciona el cuatrimestre y grupo.';
             }
@@ -2208,9 +2241,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const match = getActiveCatalogGroup().match(/^(1[0-2]|[1-9])([A-E])$/);
         const quarter = match ? match[1] : '8';
         groupLoadButtons.innerHTML = '';
-        const groupLetters = getStudentAcademicPlan() === '003' && !catalogBrowseEquivalences
-            ? ['A']
-            : ['A', 'B', 'C', 'D', 'E'];
+        const activeCareer = getCareerById(catalogBrowseCareerId) || getSelectedCareerOption();
+        const groupLetters = activeCareer && activeCareer.id === 'biomedica'
+            ? ['A', 'B', 'C', 'D', 'E'].filter(letter => isBiomedicaScheduleAvailable(`${quarter}${letter}`))
+            : (getStudentAcademicPlan() === '003' && !catalogBrowseEquivalences ? ['A'] : ['A', 'B', 'C', 'D', 'E']);
         groupLetters.forEach(letter => {
             const groupName = `${quarter}${letter}`;
             const button = document.createElement('button');
@@ -2306,13 +2340,36 @@ document.addEventListener('DOMContentLoaded', function initializeAcademicOnboard
 
     const refreshQuarterOptions = () => {
         const curriculum = getCareerCurriculum(selectedCareerId, selectedAcademicPlan) || {};
-        const quarters = Object.keys(curriculum).map(Number).filter(Number.isFinite).sort((a, b) => a - b);
+        const quarters = selectedCareerId === 'biomedica'
+            ? [...new Set([...BIOMEDICA_AVAILABLE_GROUPS]
+                .filter(group => isBiomedicaScheduleAvailable(group, selectedAcademicPlan))
+                .map(group => Number(group.match(/^\d+/)[0])))]
+                .sort((a, b) => a - b)
+            : Object.keys(curriculum).map(Number).filter(Number.isFinite).sort((a, b) => a - b);
         const previous = Number(quarterSelect.value) || 1;
         quarterSelect.innerHTML = '';
         quarters.forEach(quarter => {
             quarterSelect.add(new Option(`${quarter}.º cuatrimestre`, String(quarter)));
         });
         quarterSelect.value = String(quarters.includes(previous) ? previous : (quarters[0] || 1));
+        refreshOnboardingGroupAvailability();
+    };
+
+    const refreshOnboardingGroupAvailability = () => {
+        const quarter = quarterSelect.value;
+        groupButtons.querySelectorAll('button').forEach(button => {
+            const available = selectedCareerId !== 'biomedica' ||
+                isBiomedicaScheduleAvailable(`${quarter}${button.textContent}`, selectedAcademicPlan);
+            button.disabled = !available;
+            button.title = available ? '' : 'No disponible en el horario Sep-Dic 2026';
+        });
+        const selectedButton = [...groupButtons.querySelectorAll('button')]
+            .find(button => !button.disabled && button.textContent === selectedGroupLetter) ||
+            [...groupButtons.querySelectorAll('button')].find(button => !button.disabled);
+        if (selectedButton) selectedGroupLetter = selectedButton.textContent;
+        groupButtons.querySelectorAll('button').forEach(button => {
+            button.classList.toggle('is-selected', button.textContent === selectedGroupLetter);
+        });
     };
 
     const refreshAcademicPlanOptions = () => {
@@ -2323,11 +2380,7 @@ document.addEventListener('DOMContentLoaded', function initializeAcademicOnboard
         if (supportsPlan003) academicPlanSelect.add(new Option('Plan 003', '003'));
         academicPlanSelect.add(new Option('Plan 004', '004'));
         academicPlanSelect.value = selectedAcademicPlan;
-        if (selectedAcademicPlan === '003') selectedGroupLetter = 'A';
-        groupButtons.querySelectorAll('button').forEach(button => {
-            button.disabled = selectedAcademicPlan === '003' && button.textContent !== 'A';
-            button.classList.toggle('is-selected', button.textContent === selectedGroupLetter);
-        });
+        refreshOnboardingGroupAvailability();
     };
 
     BASE_CAREER_OPTIONS.filter(option => getCareerCurriculum(option.id)).forEach(option => {
@@ -2365,14 +2418,10 @@ document.addEventListener('DOMContentLoaded', function initializeAcademicOnboard
     if (academicPlanSelect) {
         academicPlanSelect.addEventListener('change', () => {
             selectedAcademicPlan = academicPlanSelect.value === '003' ? '003' : '004';
-            if (selectedAcademicPlan === '003') selectedGroupLetter = 'A';
-            groupButtons.querySelectorAll('button').forEach(button => {
-                button.disabled = selectedAcademicPlan === '003' && button.textContent !== 'A';
-                button.classList.toggle('is-selected', button.textContent === selectedGroupLetter);
-            });
             refreshQuarterOptions();
         });
     }
+    quarterSelect.addEventListener('change', refreshOnboardingGroupAvailability);
     refreshAcademicPlanOptions();
     refreshQuarterOptions();
 
@@ -2407,11 +2456,6 @@ document.addEventListener('DOMContentLoaded', function initializeAcademicOnboard
             button.classList.toggle('is-selected', button.textContent === selectedGroupLetter);
         });
         refreshAcademicPlanOptions();
-        if (selectedAcademicPlan === '003') selectedGroupLetter = 'A';
-        groupButtons.querySelectorAll('button').forEach(button => {
-            button.disabled = selectedAcademicPlan === '003' && button.textContent !== 'A';
-            button.classList.toggle('is-selected', button.textContent === selectedGroupLetter);
-        });
         refreshQuarterOptions();
         if (currentGroup) {
             const availableQuarters = Array.from(quarterSelect.options).map(option => Number(option.value));
@@ -2431,7 +2475,7 @@ document.addEventListener('DOMContentLoaded', function initializeAcademicOnboard
         const career = getCareerById(selectedCareerId) || getCareerById('biomedica');
         const savedAcademicPlan = setStudentAcademicPlan(selectedAcademicPlan, selectedCareerId);
         if (career) applyCareerSelection(career, { persistLocal: true });
-        setStudentStudyGroup(quarterSelect.value, savedAcademicPlan === '003' ? 'A' : selectedGroupLetter);
+        setStudentStudyGroup(quarterSelect.value, selectedGroupLetter);
         const predefinedIds = new Set(predefinedSubjects.map(subject => String(subject.id)));
         selectedSubjects = selectedSubjects.filter(subject => {
             if (!subject) return false;
@@ -2617,7 +2661,11 @@ function loadPredefinedSubjects() {
 
     ];
 
-    if (getSelectedCareerOption() && getCareerCurriculum(getSelectedCareerOption().id)) {
+    // El ciclo Sep-Dic 2026 reemplaza el horario anterior de 8A con los grupos
+    // oficiales publicados para Biomédica.
+    catalogSubjects = getBiomedicaScheduleSubjects();
+
+    if (getSelectedCareerOption() && getSelectedCareerOption().id !== 'biomedica' && getCareerCurriculum(getSelectedCareerOption().id)) {
         catalogSubjects.push(...getOfficialCurriculumSubjects(getSelectedCareerOption().id));
     }
 
@@ -7312,7 +7360,25 @@ const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata openid prof
 function notifySessionExpired() {
     if (sessionExpiredWarningShown) return;
     sessionExpiredWarningShown = true;
-    showMessage('Se recuperamos tu sesión.', 'success');
+    showMessage('Tu sesión sigue activa. Google se reconectará cuando necesites sincronizar.', 'info');
+}
+
+function restoreCachedProfileSession() {
+    try {
+        if (localStorage.getItem('google_signed_in') !== '1') return false;
+        const raw = localStorage.getItem('google_profile');
+        if (!raw) return false;
+        const profile = JSON.parse(raw);
+        if (!profile || !profile.email) return false;
+        gUserProfile = profile;
+        window.__googleProfile = profile;
+        onProfileLoaded();
+        updateAuthGateState();
+        return true;
+    } catch (error) {
+        console.warn('No se pudo restaurar el perfil local', error);
+        return false;
+    }
 }
 
 function initGoogleAuth() {
@@ -7427,12 +7493,9 @@ function restoreTokenFromStorage() {
                 waitForToken(8000).then(() => {
                     resolve(true);
                 }).catch(() => {
-                    // no se pudo obtener token silencioso -> sesión expirada
-                    try {
-                        localStorage.removeItem('google_signed_in');
-                        localStorage.removeItem('google_session_start');
-                        localStorage.removeItem(DRIVE_SCOPE_FLAG);
-                    } catch (e) { }
+                    // Google puede bloquear la renovación silenciosa aunque la
+                    // sesión propia y el perfil local continúen vigentes. No
+                    // cerrar la sesión por un fallo temporal del access token.
                     notifySessionExpired();
                     resolve(false);
                 });
@@ -8369,6 +8432,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let tries = 0;
     const maxTries = 40; // 40 * 250ms = 10s
 
+    // Restaurar la interfaz inmediatamente. La comprobación del backend y la
+    // renovación del token ocurren después, sin mostrar otra vez el login.
+    restoreCachedProfileSession();
+
     // Primero, intentar restaurar la sesión propia de la app desde el backend
     // usando la cookie HttpOnly; esto permite mantener la sesión hasta 4 meses
     // sin guardar tokens en localStorage.
@@ -8405,6 +8472,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             requireSignInOnInteraction = true;
                             try { addInteractionSignInGuard(); } catch (e) { console.warn('No se activó guard de interacción:', e); }
                             notifySessionExpired();
+                            restoreCachedProfileSession();
                             console.log('La sesión previa expiró o no se pudo restaurar; el usuario debe volver a iniciar sesión para sincronizar con Google, pero se conservó el horario local.');
 
                             // NUEVO: si ya había sesión previa, intentar cargar horario desde Drive
@@ -9096,17 +9164,17 @@ function rebuildCatalogFromPredefinedAndCustoms() {
         const selectedCareer = getSelectedCareerOption();
         const selectedCareerId = selectedCareer ? selectedCareer.id : 'biomedica';
         const academicPlan = getStudentAcademicPlan();
-        catalogSubjects = selectedCareerId === 'biomedica' && academicPlan === '004'
-            ? JSON.parse(JSON.stringify(baseSubjects))
+        catalogSubjects = selectedCareerId === 'biomedica'
+            ? JSON.parse(JSON.stringify(getBiomedicaScheduleSubjects(academicPlan)))
             : [];
-        if (getCareerCurriculum(selectedCareerId)) {
+        if (selectedCareerId !== 'biomedica' && getCareerCurriculum(selectedCareerId)) {
             catalogSubjects.push(...getOfficialCurriculumSubjects(selectedCareerId));
         }
         if (selectedCareerId === 'biomedica' && academicPlan === '003') {
-            catalogSubjects.push(...getOfficialCurriculumSubjects('biomedica', '004', {
-                groupLetters: ['A', 'B', 'C', 'D', 'E'],
+            catalogSubjects.push(...getBiomedicaScheduleSubjects('004').map(subject => ({
+                ...JSON.parse(JSON.stringify(subject)),
                 isEquivalence: true
-            }));
+            })));
         }
         BASE_CAREER_OPTIONS.forEach(option => {
             if (option.id === selectedCareerId || !getCareerCurriculum(option.id, '004')) return;

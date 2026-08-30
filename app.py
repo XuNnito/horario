@@ -299,12 +299,18 @@ app.permanent_session_lifetime = timedelta(days=120)
 # está en otro dominio (por ejemplo, GitHub Pages) y hace peticiones
 # al backend con credentials="include".
 #
-# Activa esto SOLO en producción y sobre HTTPS definiendo:
-#   SESSION_SAMESITE_NONE=1
-if os.environ.get("SESSION_SAMESITE_NONE", "0") == "1":
+# En Vercel el frontend vive en GitHub Pages y la cookie necesariamente viaja
+# entre sitios. Vercel siempre sirve HTTPS, así que activamos automáticamente
+# SameSite=None allí; fuera de Vercel se conserva el override explícito.
+cross_site_session_enabled = (
+		os.environ.get("SESSION_SAMESITE_NONE", "0") == "1"
+		or bool(os.environ.get("VERCEL"))
+)
+if cross_site_session_enabled:
 		app.config.update(
 				SESSION_COOKIE_SAMESITE="None",
 				SESSION_COOKIE_SECURE=True,
+				SESSION_COOKIE_HTTPONLY=True,
 		)
 
 # Flask 3 ya no tiene before_first_request; inicializamos la BD al importar el módulo.
